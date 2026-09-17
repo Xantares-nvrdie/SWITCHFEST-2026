@@ -1,9 +1,10 @@
-import { pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
 import { bidStatusEnum } from "./enums";
 import { tenders } from "./tenders";
 import { organizations } from "./organizations";
+import { user } from "./auth";
 
-// Metadata dan lifecycle bid — BUKAN plaintext bid (TenderSeal.md §12.3)
+// Metadata dan lifecycle bid — BUKAN plaintext bid (README §12.3)
 export const bids = pgTable(
     "bids",
     {
@@ -35,6 +36,20 @@ export const bids = pgTable(
     ],
 );
 
+// Tabel bid_reveals — Menyimpan payload bid yang sudah di-reveal & terverifikasi (README §11.1 & §12.3)
+export const bidReveals = pgTable("bid_reveals", {
+    id: text("id").primaryKey(),
+    bidId: text("bid_id")
+        .notNull()
+        .unique()
+        .references(() => bids.id, { onDelete: "cascade" }),
+    revealedPayload: jsonb("revealed_payload").notNull(),
+    revealHash: text("reveal_hash").notNull(),
+    verifiedAt: timestamp("verified_at", { withTimezone: true }).defaultNow().notNull(),
+    verifiedBy: text("verified_by").references(() => user.id, { onDelete: "set null" }),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+});
+
 // Metadata kriptografi — TIDAK menyimpan PIN/secret/key plaintext
 export const bidCrypto = pgTable("bid_crypto", {
     id: text("id").primaryKey(),
@@ -57,7 +72,7 @@ export const bidCrypto = pgTable("bid_crypto", {
         .notNull(),
 });
 
-// Payload bid terenkripsi — server tidak pernah simpan plaintext bid
+// Payload bid terenkripsi — server tidak pernah simpan plaintext bid sebelum reveal
 export const encryptedBids = pgTable("encrypted_bids", {
     id: text("id").primaryKey(),
     bidId: text("bid_id")

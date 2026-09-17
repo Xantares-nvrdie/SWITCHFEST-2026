@@ -5,6 +5,8 @@ export default defineConfig({
     out: "./drizzle",
     dialect: "postgresql",
     dbCredentials: {
-        url: process.env.DATABASE_URL || "",
+        // Direct connection (port 5432) untuk Drizzle Kit
+        // Supabase pooler (port 6543) tidak support DDL statements (CREATE TABLE, dll.)
+        url: process.env.DIRECT_URL || process.env.DATABASE_URL || "",
     },
 });

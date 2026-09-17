@@ -1,6 +1,8 @@
 import { pgEnum } from "drizzle-orm/pg-core";
 
 // ─── Organization ────────────────────────────────────────────────────────────
+export const organizationTypeEnum = pgEnum("organization_type", ["BUYER", "VENDOR", "BOTH"]);
+
 export const organizationMemberRoleEnum = pgEnum("organization_member_role", [
     "ORGANIZATION_ADMIN",
     "PROCUREMENT_OFFICER",
@@ -33,9 +35,8 @@ export const bidStatusEnum = pgEnum("bid_status", ["SEALED", "REVEALED_VALID", "
 
 // ─── Blockchain ───────────────────────────────────────────────────────────────
 export const blockchainTransactionTypeEnum = pgEnum("blockchain_transaction_type", [
-    "TENDER_CREATED",
     "COMMIT",
-    "REVEAL",
-    "TENDER_CLOSED",
-    "RESULT_RECORDED",
+    "REVEAL_ATTESTATION",
+    "TENDER_STATE",
+    "RESULT",
 ]);

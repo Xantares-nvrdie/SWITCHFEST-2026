@@ -1,4 +1,4 @@
-import { boolean, integer, pgTable, text, timestamp } from "drizzle-orm/pg-core";
+import { bigint, boolean, integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -64,5 +64,21 @@ export const verification = pgTable("verification", {
     updatedAt: timestamp("updated_at")
         .defaultNow()
         .$onUpdate(() => /* @__PURE__ */ new Date())
+        .notNull(),
+});
+
+// Tabel user_wallets — menghubungkan EVM wallet address ke user (README §12.3)
+export const userWallets = pgTable("user_wallets", {
+    id: text("id").primaryKey(),
+    userId: text("user_id")
+        .notNull()
+        .references(() => user.id, { onDelete: "cascade" }),
+    walletAddress: varchar("wallet_address", { length: 100 }).notNull(),
+    chainId: bigint("chain_id", { mode: "number" }),
+    isPrimary: boolean("is_primary").default(true).notNull(),
+    createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
+    updatedAt: timestamp("updated_at", { withTimezone: true })
+        .defaultNow()
+        .$onUpdate(() => new Date())
         .notNull(),
 });
