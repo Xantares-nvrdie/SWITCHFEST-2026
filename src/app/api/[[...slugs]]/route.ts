@@ -1,6 +1,12 @@
 import { fromTypes, openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 import baseRoute from "@/backend/modules/base";
+import organizationsModule from "@/backend/modules/organizations";
+import tendersModule from "@/backend/modules/tenders";
+import tenderParticipantsModule from "@/backend/modules/tender-participants";
+import bidsModule from "@/backend/modules/bids";
+import procurementModule from "@/backend/modules/procurement";
+import auditLogsModule from "@/backend/modules/audit-logs";
 import betterAuthView from "@/backend/utils/better-auth";
 import { AuthDocs } from "@/backend/utils/better-auth/docs";
 
@@ -13,12 +19,19 @@ export const app = new Elysia({ prefix: "/api" })
             references: fromTypes("route.ts"),
             documentation: {
                 info: {
-                    title: "Zendriva Starter Kit",
-                    version: "alpha 0.0.1",
-                    description: "Automatically generated documentation and testing for easier development.",
+                    title: "TenderSeal API Specification",
+                    version: "v1.0.0",
+                    description: "Secure Sealed Tendering API powered by Elysia, Drizzle ORM, and Better Auth.",
                 },
                 paths: authDocs.paths as unknown as Record<string, never>,
-                tags: [],
+                tags: [
+                    { name: "Organizations", description: "Multi-organization management & members" },
+                    { name: "Tenders", description: "Tender creation, dynamic fields & evaluation criteria" },
+                    { name: "Tender Participants", description: "Vendor participation & invitations" },
+                    { name: "Bids", description: "Client-side encrypted sealed bidding & reveal verification" },
+                    { name: "Procurement", description: "Scoring engine, winner results & blockchain logs" },
+                    { name: "Audit Logs", description: "System & audit trail tracking" },
+                ],
             },
             scalar: {
                 defaultModelExpandDepth: -1,
@@ -30,7 +43,14 @@ export const app = new Elysia({ prefix: "/api" })
     /* AUTH */
     .all("/auth/*", betterAuthView, { detail: { hide: true } })
 
-    .use(baseRoute);
+    /* FEATURE MODULES */
+    .use(baseRoute)
+    .use(organizationsModule)
+    .use(tendersModule)
+    .use(tenderParticipantsModule)
+    .use(bidsModule)
+    .use(procurementModule)
+    .use(auditLogsModule);
 
 export type app = typeof app;
 
