@@ -10,6 +10,25 @@ export namespace TenderModel {
         category: t.Optional(t.String()),
         commitDeadline: t.String({ description: "ISO 8601 Timestamp string" }),
         revealWindowHours: t.Optional(t.Number({ default: 48 })),
+        fields: t.Optional(t.Array(t.Object({
+            name: t.String(),
+            key: t.String(),
+            type: t.Union([
+                t.Literal("text"),
+                t.Literal("number"),
+                t.Literal("currency"),
+                t.Literal("file"),
+                t.Literal("select"),
+                t.Literal("multi-select"),
+            ]),
+            required: t.Optional(t.Boolean({ default: true })),
+        }))),
+        criteria: t.Optional(t.Array(t.Object({
+            name: t.String(),
+            description: t.Optional(t.String()),
+            weight: t.Number({ minimum: 0, maximum: 100 }),
+            maxScore: t.Optional(t.Number({ default: 100 })),
+        }))),
     });
 
     export const updateStatusBody = t.Object({

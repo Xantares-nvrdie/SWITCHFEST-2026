@@ -1,9 +1,9 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import Link from "next/link";
 import { useParams } from "next/navigation";
-import { useDemo } from "@/context/demo-context";
+import { useSession } from "@/lib/auth-client";
 import {
     calculateCommitmentHash,
     decryptBidPayload,
@@ -12,643 +12,675 @@ import {
     generateSalt,
 } from "@/lib/crypto";
 import {
-    ShieldCheck,
-    Lock,
-    KeyRound,
-    FileCode2,
-    CheckCircle2,
-    XCircle,
-    Clock,
-    Building2,
-    Layers,
-    Award,
-    History,
-    Sparkles,
-    ArrowLeft,
-    Cpu,
-    UploadCloud,
-    Eye,
-    Save,
-    Check,
+    connectMetaMask,
+    formatWalletAddress,
+    signCommitmentOnChain,
+} from "@/lib/web3";
+import {
+    ShieldCheck, Lock, KeyRound, FileCode2, CheckCircle2, XCircle,
+    Building2, Layers, Award, History, ArrowLeft, Cpu, Eye, Check,
+    Wallet, Copy, ExternalLink, Trophy, Loader2, Inbox, AlertCircle,
 } from "lucide-react";
 
+/* ─── Types ───────────────────────────────────────────────────── */
+interface TenderField { id: string; name: string; key: string; type: string; required: boolean; }
+interface TenderCriterion { id: string; name: string; weight: string; description?: string | null; }
+interface TenderData {
+    id: string; code: string; title: string; description: string | null;
+    category: string | null; status: string; organizationId: string;
+    commitDeadline: string; revealWindowHours: number;
+    organization?: { name: string } | null;
+    fields: TenderField[];
+    criteria: TenderCriterion[];
+    participants: Array<{ id: string; organizationId: string; organization?: { name: string } | null }>;
+}
+
+/* ─── Tab config ───────────────────────────────────────────────── */
+type TabId = "overview" | "encrypt" | "reveal" | "scoring" | "audit";
+const TABS: { id: TabId; label: string; icon: React.ElementType; activeClass: string }[] = [
+    { id: "overview", label: "Detail Tender",          icon: Layers,   activeClass: "active"         },
+    { id: "encrypt",  label: "Encrypt & Submit Bid",   icon: Lock,     activeClass: "active-cyan"    },
+    { id: "reveal",   label: "Commit-Reveal Verify",   icon: KeyRound, activeClass: "active-purple"  },
+    { id: "scoring",  label: "Scoring & Pemenang",     icon: Award,    activeClass: "active-amber"   },
+    { id: "audit",    label: "Audit & Blockchain Log", icon: History,  activeClass: "active-indigo"  },
+];
+
+const STATUS_CONFIG: Record<string, { badge: string; dot: string; label: string }> = {
+    DRAFT:     { badge: "badge-slate",   dot: "bg-[#484f58]", label: "Draft"     },
+    OPEN:      { badge: "badge-emerald", dot: "bg-[#3fb950]", label: "Open"      },
+    CLOSED:    { badge: "badge-amber",   dot: "bg-[#e3b341]", label: "Closed"    },
+    REVEAL:    { badge: "badge-cyan",    dot: "bg-[#58a6ff]", label: "Reveal"    },
+    SCORING:   { badge: "badge-purple",  dot: "bg-[#bc8cff]", label: "Scoring"   },
+    COMPLETED: { badge: "badge-slate",   dot: "bg-[#3fb950]", label: "Completed" },
+    CANCELLED: { badge: "badge-red",     dot: "bg-[#f85149]", label: "Cancelled" },
+};
+
+/* ─── Helper ───────────────────────────────────────────────────── */
+function CodeDisplay({ label, value, accent = "#8b949e" }: { label: string; value: string; accent?: string }) {
+    const [copied, setCopied] = useState(false);
+    return (
+        <div className="space-y-1.5">
+            <div className="flex items-center justify-between">
+                <span className="text-label">{label}</span>
+                <button
+                    onClick={() => { navigator.clipboard.writeText(value); setCopied(true); setTimeout(() => setCopied(false), 1800); }}
+                    className="flex items-center gap-1 text-xs transition-colors"
+                    style={{ color: copied ? "#3fb950" : "#484f58" }}
+                >
+                    <Copy style={{ width: 11, height: 11 }} />
+                    {copied ? "Copied!" : "Copy"}
+                </button>
+            </div>
+            <div className="code-block" style={{ color: accent }}>{value}</div>
+        </div>
+    );
+}
+
+/* ═══════════════════════════════════════════════════════════════
+   Main component
+═══════════════════════════════════════════════════════════════ */
 export default function TenderDetailPage() {
-    const params = useParams();
-    const tenderId = (params?.id as string) || "tnd-demo-001";
-    const { activeRole, vendorSecret, setVendorSecret } = useDemo();
+    const params   = useParams();
+    const tenderId = (params?.id as string) ?? "";
+    const { data: session } = useSession();
 
-    // Active Tab state
-    const [activeTab, setActiveTab] = useState<"overview" | "encrypt" | "reveal" | "scoring" | "audit">("overview");
+    // Data
+    const [tender, setTender]   = useState<TenderData | null>(null);
+    const [tLoading, setTLoading] = useState(true);
+    const [tError, setTError]   = useState<string | null>(null);
 
-    // Dynamic Form Input Values State
-    const [formData, setFormData] = useState<Record<string, string>>({
-        harga_total: "1150000000",
-        spesifikasi: "Intel i9 14900HX, 32GB DDR5, 1TB NVMe, RTX 4080 12GB",
-        garansi_tahun: "3",
-    });
+    // Wallet
+    const [walletAddress, setWalletAddress]   = useState("");
+    const [walletConnected, setWalletConnected] = useState(false);
+    const [signingOnChain, setSigningOnChain] = useState(false);
+    const [onChainTxHash, setOnChainTxHash]   = useState<string | null>(null);
 
-    // Encryption Workbench State
-    const [encrypting, setEncrypting] = useState(false);
-    const [encryptionResult, setEncryptionResult] = useState<{
-        kdfSalt: string;
-        bidSalt: string;
-        ivHex: string;
-        ciphertextHex: string;
-        commitmentHash: string;
-        payloadHash: string;
+    // Tabs
+    const [activeTab, setActiveTab] = useState<TabId>("overview");
+
+    // Form — filled dynamically from tender fields
+    const [formData, setFormData] = useState<Record<string, string>>({});
+    const [vendorSecret, setVendorSecret] = useState("");
+
+    // Encryption
+    const [encrypting, setEncrypting]   = useState(false);
+    const [encResult, setEncResult]     = useState<{
+        kdfSalt: string; bidSalt: string; ivHex: string;
+        ciphertextHex: string; commitmentHash: string; payloadHash: string;
     } | null>(null);
+    const [submitting, setSubmitting]   = useState(false);
     const [submittedSealed, setSubmittedSealed] = useState(false);
+    const [submitError, setSubmitError] = useState<string | null>(null);
 
-    // Reveal Workbench State
-    const [revealSecret, setRevealSecret] = useState(vendorSecret);
-    const [revealing, setRevealing] = useState(false);
-    const [revealResult, setRevealResult] = useState<{
-        isValid: boolean;
-        decryptedPayload: unknown;
-        message: string;
-    } | null>(null);
+    // Reveal
+    const [revealSecret, setRevealSecret]   = useState("");
+    const [revealing, setRevealing]         = useState(false);
+    const [revealResult, setRevealResult]   = useState<{    isValid: boolean; decryptedPayload: Record<string, unknown> | null; message: string } | null>(null);
 
-    // Officer Scoring State
-    const [scores, setScores] = useState<Record<string, number>>({
-        "Vendor A": 88,
-        "Vendor B": 92,
-        "Vendor C": 85,
-    });
-    const [winnerSelected, setWinnerSelected] = useState<string | null>("Vendor B");
+    // Audit logs from API
+    const [auditLogs, setAuditLogs] = useState<Array<{ id: string; action: string; description?: string | null; createdAt: string }>>([]);
 
-    // Execute Client-Side Encryption
-    const handleRunEncryption = async () => {
+    /* ─── Fetch tender from API ───────────────────────────────── */
+    useEffect(() => {
+        if (!tenderId) return;
+        async function fetchTender() {
+            setTLoading(true);
+            try {
+                const res = await fetch(`/api/tenders/${tenderId}`);
+                if (!res.ok) { setTError(res.status === 404 ? "Tender tidak ditemukan." : `Error ${res.status}`); return; }
+                const data: TenderData = await res.json();
+                setTender(data);
+                // Pre-fill form with empty values for each field
+                const init: Record<string, string> = {};
+                (data.fields ?? []).forEach((f) => { init[f.key] = ""; });
+                setFormData(init);
+            } catch (e) {
+                setTError("Gagal memuat data tender.");
+                console.error(e);
+            } finally {
+                setTLoading(false);
+            }
+        }
+        fetchTender();
+    }, [tenderId]);
+
+    /* ─── Fetch tender audit logs ─────────────────────────────── */
+    useEffect(() => {
+        if (!tenderId) return;
+        fetch(`/api/audit-logs/tender/${tenderId}`)
+            .then((r) => r.ok ? r.json() : [])
+            .then((data) => setAuditLogs(Array.isArray(data) ? data : []))
+            .catch(() => {});
+    }, [tenderId]);
+
+    /* ─── Handlers ───────────────────────────────────────────── */
+    const handleEncrypt = async () => {
+        if (!vendorSecret) return;
         setEncrypting(true);
         try {
             const kdfSalt = generateSalt(16);
             const bidSalt = generateSalt(16);
-
-            // 1. Derive KDF Key from Secret
-            const { key } = await deriveKdfKey(vendorSecret, kdfSalt);
-
-            // 2. Encrypt Payload using AES-GCM 256-bit
+            const { key }  = await deriveKdfKey(vendorSecret, kdfSalt);
             const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(formData, key);
+            const commitmentHash = await calculateCommitmentHash(tenderId, session?.user?.id ?? "anonymous", formData, bidSalt);
+            setEncResult({ kdfSalt, bidSalt, ivHex, ciphertextHex, commitmentHash, payloadHash });
+        } catch (e) { console.error(e); }
+        finally { setEncrypting(false); }
+    };
 
-            // 3. Compute Commitment Hash: Hash(tenderId + ":" + vendorOrgId + ":" + payload + ":" + bidSalt)
-            const commitmentHash = await calculateCommitmentHash(tenderId, "org-vendor-001", formData, bidSalt);
-
-            setEncryptionResult({
-                kdfSalt,
-                bidSalt,
-                ivHex,
-                ciphertextHex,
-                commitmentHash,
-                payloadHash,
+    const handleSubmitSealed = async () => {
+        if (!encResult || !session?.user?.id) return;
+        setSubmitting(true);
+        setSubmitError(null);
+        try {
+            const body = {
+                vendorUserId:   session.user.id,
+                commitmentHash: encResult.commitmentHash,
+                ciphertextHex:  encResult.ciphertextHex,
+                kdfSalt:        encResult.kdfSalt,
+                ivHex:          encResult.ivHex,
+                payloadHash:    encResult.payloadHash,
+                walletAddress:  walletAddress || undefined,
+            };
+            const res = await fetch(`/api/bids/tender/${tenderId}`, {
+                method:  "POST",
+                headers: { "Content-Type": "application/json" },
+                body:    JSON.stringify(body),
             });
-        } catch (err) {
-            console.error(err);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.message ?? `HTTP ${res.status}`);
+            }
+            setSubmittedSealed(true);
+        } catch (e: unknown) {
+            setSubmitError(e instanceof Error ? e.message : "Gagal submit bid.");
         } finally {
-            setEncrypting(false);
+            setSubmitting(false);
         }
     };
 
-    // Execute Client-Side Reveal Decryption & Verification
-    const handleRunReveal = async () => {
-        if (!encryptionResult) return;
+    const handleReveal = async () => {
+        if (!encResult || !revealSecret) return;
         setRevealing(true);
         try {
-            // 1. Re-derive KDF Key
-            const { key } = await deriveKdfKey(revealSecret, encryptionResult.kdfSalt);
-
-            // 2. Decrypt Ciphertext in Browser
-            const decryptedPayload = await decryptBidPayload(
-                encryptionResult.ciphertextHex,
-                encryptionResult.ivHex,
-                key,
-            );
-
-            // 3. Re-calculate Commitment Hash
-            const computedHash = await calculateCommitmentHash(
-                tenderId,
-                "org-vendor-001",
-                decryptedPayload,
-                encryptionResult.bidSalt,
-            );
-
-            const isValid = computedHash === encryptionResult.commitmentHash;
-
+            const { key } = await deriveKdfKey(revealSecret, encResult.kdfSalt);
+            const decryptedPayload = await decryptBidPayload(encResult.ciphertextHex, encResult.ivHex, key);
+            const computedHash = await calculateCommitmentHash(tenderId, session?.user?.id ?? "anonymous", decryptedPayload as Record<string, string>, encResult.bidSalt);
+            const isValid = computedHash === encResult.commitmentHash;
             setRevealResult({
                 isValid,
-                decryptedPayload,
+                decryptedPayload: decryptedPayload as Record<string, unknown>,
                 message: isValid
-                    ? "VALID! Commitment hash cocok 100% dengan data yang di-commit sebelum deadline."
-                    : "INVALID! Secret/PIN salah atau data penawaran telah diubah!",
+                    ? "VALID — Commitment hash cocok 100% dengan data yang di-commit sebelum deadline."
+                    : "INVALID — Secret/PIN salah atau data penawaran telah dimanipulasi!",
             });
-        } catch (_err) {
-            setRevealResult({
-                isValid: false,
-                decryptedPayload: null,
-                message: "INVALID! Gagal dekripsi — Secret/PIN salah!",
-            });
+        } catch {
+            setRevealResult({ isValid: false, decryptedPayload: null, message: "INVALID — Gagal dekripsi. Secret/PIN salah." });
         } finally {
             setRevealing(false);
         }
     };
 
-    return (
-        <div className="space-y-8">
-            {/* Header */}
-            <div className="space-y-3">
-                <Link
-                    href="/tenders"
-                    className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors"
-                >
-                    <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog Tender
-                </Link>
+    const handleConnectMetaMask = async () => {
+        try {
+            const addr = await connectMetaMask();
+            setWalletAddress(addr);
+            setWalletConnected(true);
+        } catch (e: unknown) {
+            alert(e instanceof Error ? e.message : "Gagal terhubung ke MetaMask.");
+        }
+    };
 
-                <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                    <div>
-                        <div className="flex items-center gap-3">
-                            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-slate-800 text-emerald-400 border border-slate-700">
-                                {tenderId.toUpperCase()}
+    const handleSignOnChain = async () => {
+        if (!encResult) return;
+        setSigningOnChain(true);
+        try {
+            const res = await signCommitmentOnChain(tenderId, encResult.commitmentHash, walletAddress);
+            setOnChainTxHash(res.txHash);
+            setSubmittedSealed(true);
+        } catch (e) { console.error(e); }
+        finally { setSigningOnChain(false); }
+    };
+
+    /* ─── Loading / Error ─────────────────────────────────────── */
+    if (tLoading) {
+        return (
+            <div className="flex items-center justify-center py-32 gap-3" style={{ color: "#484f58" }}>
+                <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite" }} />
+                <span className="text-sm">Memuat data tender...</span>
+            </div>
+        );
+    }
+
+    if (tError || !tender) {
+        return (
+            <div className="flex flex-col items-center justify-center py-32 gap-4 text-center">
+                <AlertCircle style={{ width: 36, height: 36, color: "#f85149" }} />
+                <p className="text-sm font-medium" style={{ color: "#e6edf3" }}>{tError ?? "Tender tidak ditemukan."}</p>
+                <Link href="/tenders" className="btn btn-ghost btn-sm">← Kembali ke Daftar Tender</Link>
+            </div>
+        );
+    }
+
+    const sc = STATUS_CONFIG[tender.status] ?? STATUS_CONFIG.DRAFT;
+    const deadline = new Date(tender.commitDeadline).toLocaleString("id-ID", { day: "2-digit", month: "short", year: "numeric", hour: "2-digit", minute: "2-digit" });
+    const isPast   = new Date(tender.commitDeadline) < new Date();
+
+    /* ─── Render ──────────────────────────────────────────────── */
+    return (
+        <div className="space-y-6 pb-6 animate-fade-up">
+
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2">
+                <Link href="/tenders" className="flex items-center gap-1.5 text-xs font-medium transition-colors" style={{ color: "#7d8590" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#e6edf3")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#7d8590")}
+                >
+                    <ArrowLeft style={{ width: 13, height: 13 }} />
+                    Tender
+                </Link>
+                <span style={{ color: "#484f58", fontSize: 12 }}>/</span>
+                <span className="tag-mono">{tender.code}</span>
+            </div>
+
+            {/* Tender Header */}
+            <div className="p-6 rounded-xl space-y-4" style={{ background: "#0d1117", border: "1px solid rgba(99,115,138,.14)" }}>
+                <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
+                    <div className="space-y-2 flex-1">
+                        <div className="flex items-center gap-2">
+                            <span className={`badge ${sc.badge}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${sc.dot}`} />
+                                {sc.label}
                             </span>
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
-                                OPEN
-                            </span>
+                            <span className="tag-mono">{tender.code}</span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-2">
-                            Pengadaan 100 Laptop High Performance Workstation
-                        </h1>
-                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
-                            <Building2 className="w-3.5 h-3.5" /> PT Global Tech Indonesia • Hardware & IT
+                        <h1 className="text-xl font-bold tracking-tight" style={{ color: "#e6edf3" }}>{tender.title}</h1>
+                        <p className="text-xs flex items-center gap-2" style={{ color: "#7d8590" }}>
+                            <Building2 style={{ width: 12, height: 12 }} />
+                            {tender.organization?.name ?? tender.organizationId ?? "Organisasi"}
+                            {tender.category && <><span style={{ color: "#484f58" }}>·</span>{tender.category}</>}
                         </p>
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400">Commit Deadline:</span>
-                        <span className="text-xs font-bold text-amber-400 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
-                            18 Sep 2026, 15:00 WIB
-                        </span>
+                    <div className="flex flex-wrap items-center gap-2 shrink-0">
+                        {/* MetaMask */}
+                        <button
+                            onClick={handleConnectMetaMask}
+                            className="btn btn-ghost btn-sm"
+                            style={{
+                                color: walletConnected ? "#e3b341" : "#7d8590",
+                                background: walletConnected ? "rgba(227,179,65,.08)" : undefined,
+                                borderColor: walletConnected ? "rgba(227,179,65,.3)" : undefined,
+                            }}
+                        >
+                            <Wallet style={{ width: 13, height: 13, color: "#e3b341" }} />
+                            {walletConnected ? formatWalletAddress(walletAddress) : "Hubungkan MetaMask"}
+                        </button>
+
+                        {/* Deadline */}
+                        <div
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-semibold"
+                            style={{
+                                background: isPast ? "rgba(99,115,138,.08)" : "rgba(227,179,65,.08)",
+                                border: `1px solid ${isPast ? "rgba(99,115,138,.2)" : "rgba(227,179,65,.2)"}`,
+                                color: isPast ? "#484f58" : "#e3b341",
+                            }}
+                        >
+                            {isPast ? "Deadline Berakhir" : `Deadline: ${deadline}`}
+                        </div>
                     </div>
                 </div>
             </div>
 
-            {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-800/80 pb-px overflow-x-auto">
-                <button
-                    onClick={() => setActiveTab("overview")}
-                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${
-                        activeTab === "overview"
-                            ? "border-emerald-400 text-emerald-400 bg-slate-900/60"
-                            : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                >
-                    <Layers className="w-4 h-4" /> Detail Tender
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("encrypt")}
-                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${
-                        activeTab === "encrypt"
-                            ? "border-cyan-400 text-cyan-400 bg-slate-900/60"
-                            : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                >
-                    <Lock className="w-4 h-4" /> Client AES-GCM Encrypt (Submit Bid)
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("reveal")}
-                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${
-                        activeTab === "reveal"
-                            ? "border-purple-400 text-purple-400 bg-slate-900/60"
-                            : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                >
-                    <KeyRound className="w-4 h-4" /> Commit-Reveal Verification
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("scoring")}
-                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${
-                        activeTab === "scoring"
-                            ? "border-amber-400 text-amber-400 bg-slate-900/60"
-                            : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                >
-                    <Award className="w-4 h-4" /> Scoring Engine & Winner
-                </button>
-
-                <button
-                    onClick={() => setActiveTab("audit")}
-                    className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${
-                        activeTab === "audit"
-                            ? "border-indigo-400 text-indigo-400 bg-slate-900/60"
-                            : "border-transparent text-slate-400 hover:text-slate-200"
-                    }`}
-                >
-                    <History className="w-4 h-4" /> Audit Log & On-Chain Log
-                </button>
+            {/* Tabs */}
+            <div className="tab-list">
+                {TABS.map((tab) => {
+                    const Icon = tab.icon;
+                    const isAct = activeTab === tab.id;
+                    return (
+                        <button key={tab.id} onClick={() => setActiveTab(tab.id)} className={`tab-item ${isAct ? tab.activeClass : ""}`}>
+                            <Icon style={{ width: 14, height: 14 }} />
+                            {tab.label}
+                        </button>
+                    );
+                })}
             </div>
 
-            {/* TAB 1: OVERVIEW */}
+            {/* ══ TAB 1 — OVERVIEW ══ */}
             {activeTab === "overview" && (
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
-                    <div className="md:col-span-2 space-y-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                            <h3 className="text-base font-bold text-white">Deskripsi Kebutuhan Tender</h3>
-                            <p className="text-xs text-slate-300 leading-relaxed">
-                                Pengadaan 100 unit laptop workstation kelas enterprise untuk pengembang sistem software
-                                dan desain grafis AI. Penawaran yang dikirimkan oleh vendor akan dienkripsi secara penuh
-                                di sisi client menggunakan standar AES-GCM 256-bit dan ditandai dengan cryptographic
-                                commitment hash sebelum batas waktu penutupan tender.
-                            </p>
-                        </div>
-
-                        {/* Dynamic Fields List Required */}
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                <FileCode2 className="w-4 h-4 text-cyan-400" />
-                                Form Penawaran Dinamis (Dynamic Bid Fields)
-                            </h3>
-                            <div className="space-y-2">
-                                {[
-                                    { name: "Harga Total Penawaran", key: "harga_total", type: "Currency (Rp)" },
-                                    { name: "Spesifikasi RAM & Processor", key: "spesifikasi", type: "Text String" },
-                                    { name: "Garansi Resmi (Tahun)", key: "garansi_tahun", type: "Number" },
-                                    {
-                                        name: "Proposal Dokumen Penawaran",
-                                        key: "proposal_pdf",
-                                        type: "File PDF (Encrypted)",
-                                    },
-                                ].map((field) => (
-                                    <div
-                                        key={field.key}
-                                        className="p-3 rounded-xl bg-slate-900/80 border border-slate-800 flex items-center justify-between text-xs"
-                                    >
-                                        <span className="font-semibold text-slate-200">{field.name}</span>
-                                        <div className="flex items-center gap-3">
-                                            <span className="font-mono text-cyan-400">{field.key}</span>
-                                            <span className="px-2 py-0.5 rounded bg-slate-800 text-slate-400 text-[11px]">
-                                                {field.type}
-                                            </span>
-                                        </div>
-                                    </div>
-                                ))}
+                <div className="grid grid-cols-1 lg:grid-cols-3 gap-5 animate-fade-in">
+                    <div className="lg:col-span-2 space-y-5">
+                        {tender.description && (
+                            <div className="surface p-5 space-y-3">
+                                <h3 className="text-sm font-semibold" style={{ color: "#e6edf3" }}>Deskripsi Tender</h3>
+                                <p className="text-sm leading-relaxed" style={{ color: "#7d8590" }}>{tender.description}</p>
                             </div>
-                        </div>
-                    </div>
+                        )}
 
-                    {/* Sidebar Stats */}
-                    <div className="space-y-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                            <h3 className="text-sm font-bold text-white uppercase tracking-wider">
-                                Kriteria & Bobot Penilaian
+                        <div className="surface p-5 space-y-4">
+                            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3" }}>
+                                <FileCode2 style={{ width: 14, height: 14, color: "#58a6ff" }} />
+                                Dynamic Bid Fields ({tender.fields.length} aspek)
                             </h3>
-                            <div className="space-y-3">
-                                {[
-                                    { name: "Harga Total", weight: 50 },
-                                    { name: "Spesifikasi Teknis", weight: 30 },
-                                    { name: "Garansi & Layanan", weight: 20 },
-                                ].map((c) => (
-                                    <div key={c.name} className="space-y-1">
-                                        <div className="flex justify-between text-xs">
-                                            <span className="text-slate-300 font-medium">{c.name}</span>
-                                            <span className="font-bold text-purple-400">{c.weight}%</span>
-                                        </div>
-                                        <div className="w-full h-2 rounded-full bg-slate-900 overflow-hidden">
-                                            <div
-                                                className="h-full bg-gradient-to-r from-purple-500 to-indigo-500"
-                                                style={{ width: `${c.weight}%` }}
-                                            />
-                                        </div>
-                                    </div>
-                                ))}
-                            </div>
-                        </div>
-                    </div>
-                </div>
-            )}
-
-            {/* TAB 2: CLIENT ENCRYPTION WORKBENCH */}
-            {activeTab === "encrypt" && (
-                <div className="space-y-6">
-                    <div className="p-4 rounded-xl bg-cyan-500/10 border border-cyan-500/30 text-xs text-cyan-300 flex items-center gap-3">
-                        <ShieldCheck className="w-5 h-5 text-cyan-400 shrink-0" />
-                        <span>
-                            <strong>Client-Side Encryption Workbench:</strong> Mengenkripsi data penawaran secara lokal
-                            di browser kamu sebelum dikirim ke backend. Server tidak pernah menerima plaintext
-                            penawaran.
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        {/* Dynamic Form Fill */}
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-5">
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                <Lock className="w-4 h-4 text-cyan-400" /> Form Isian Penawaran Vendor
-                            </h3>
-
-                            <div className="space-y-4">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300">Harga Total (Rp)</label>
-                                    <input
-                                        type="number"
-                                        value={formData.harga_total}
-                                        onChange={(e) => setFormData({ ...formData, harga_total: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/60"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300">
-                                        Spesifikasi RAM & Processor
-                                    </label>
-                                    <input
-                                        type="text"
-                                        value={formData.spesifikasi}
-                                        onChange={(e) => setFormData({ ...formData, spesifikasi: e.target.value })}
-                                        className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/60"
-                                    />
-                                </div>
-
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300">
-                                        Vendor Passphrase / PIN Secret (KDF Input)
-                                    </label>
-                                    <input
-                                        type="password"
-                                        value={vendorSecret}
-                                        onChange={(e) => setVendorSecret(e.target.value)}
-                                        className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-cyan-400 focus:outline-none focus:border-cyan-500/60"
-                                    />
-                                    <p className="text-[11px] text-slate-500">
-                                        PIN/Secret ini digunakan untuk derivasi AES Key di browser via Argon2id/PBKDF2
-                                    </p>
-                                </div>
-
-                                <button
-                                    onClick={handleRunEncryption}
-                                    disabled={encrypting}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-cyan-500 to-emerald-500 text-slate-950 font-bold text-xs hover:opacity-95 transition-all shadow-lg shadow-cyan-500/20 flex items-center justify-center gap-2"
-                                >
-                                    <Sparkles className="w-4 h-4" />
-                                    {encrypting
-                                        ? "Mengenkripsi di Client..."
-                                        : "Jalankan Client AES-GCM Encrypt & Compute Commitment"}
-                                </button>
-                            </div>
-                        </div>
-
-                        {/* Encryption Output Inspector */}
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4 font-mono text-xs">
-                            <h3 className="text-base font-sans font-bold text-white flex items-center gap-2">
-                                <Cpu className="w-4 h-4 text-emerald-400" /> Output Kriptografi Client
-                            </h3>
-
-                            {encryptionResult ? (
-                                <div className="space-y-3">
-                                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                                        <span className="text-[11px] text-slate-500 font-sans block">
-                                            Argon2id KDF Salt:
-                                        </span>
-                                        <span className="text-cyan-400 break-all">{encryptionResult.kdfSalt}</span>
-                                    </div>
-
-                                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                                        <span className="text-[11px] text-slate-500 font-sans block">
-                                            AES-GCM Initialization Vector (IV):
-                                        </span>
-                                        <span className="text-purple-400 break-all">{encryptionResult.ivHex}</span>
-                                    </div>
-
-                                    <div className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1">
-                                        <span className="text-[11px] text-slate-500 font-sans block">
-                                            Encrypted Ciphertext (Dikirim ke Server):
-                                        </span>
-                                        <span className="text-slate-300 break-all max-h-20 overflow-y-auto block">
-                                            {encryptionResult.ciphertextHex}
-                                        </span>
-                                    </div>
-
-                                    <div className="p-3 rounded-xl bg-emerald-500/10 border border-emerald-500/30 space-y-1">
-                                        <span className="text-[11px] text-emerald-400 font-sans font-bold block">
-                                            SHA-256 Commitment Hash (On-Chain):
-                                        </span>
-                                        <span className="text-emerald-300 break-all font-bold">
-                                            {encryptionResult.commitmentHash}
-                                        </span>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setSubmittedSealed(true)}
-                                        className="w-full py-2.5 rounded-xl bg-emerald-500 hover:bg-emerald-400 text-slate-950 font-sans font-bold text-xs transition-colors flex items-center justify-center gap-2"
-                                    >
-                                        <Check className="w-4 h-4" />
-                                        {submittedSealed
-                                            ? "Sealed Bid Terkirim ke Server & On-Chain!"
-                                            : "Kirim Sealed Bid ke Server"}
-                                    </button>
-                                </div>
+                            {tender.fields.length === 0 ? (
+                                <p className="text-xs" style={{ color: "#484f58" }}>Belum ada field yang didefinisikan.</p>
                             ) : (
-                                <div className="p-8 text-center text-slate-500 font-sans text-xs border border-dashed border-slate-800 rounded-xl">
-                                    Isi form dan klik tombol di sebelah kiri untuk melihat hasil enkripsi & commitment
-                                    hash.
+                                <div className="space-y-2">
+                                    {tender.fields.map((f) => (
+                                        <div key={f.id} className="flex items-center justify-between px-3 py-2.5 rounded-lg" style={{ background: "#06090f", border: "1px solid rgba(99,115,138,.1)" }}>
+                                            <div className="flex items-center gap-2.5">
+                                                {f.required && <span style={{ color: "#f85149", fontSize: 11, fontWeight: 700 }}>*</span>}
+                                                <span className="text-sm font-medium" style={{ color: "#e6edf3" }}>{f.name}</span>
+                                            </div>
+                                            <div className="flex items-center gap-2">
+                                                <span className="tag-mono">{f.key}</span>
+                                                <span className="badge badge-cyan" style={{ fontSize: 10 }}>{f.type}</span>
+                                            </div>
+                                        </div>
+                                    ))}
                                 </div>
                             )}
                         </div>
                     </div>
+
+                    {/* Right — Criteria */}
+                    <div className="space-y-5">
+                        <div className="surface p-5 space-y-4">
+                            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3" }}>
+                                <Award style={{ width: 14, height: 14, color: "#e3b341" }} />
+                                Kriteria Penilaian
+                            </h3>
+                            {tender.criteria.length === 0 ? (
+                                <p className="text-xs" style={{ color: "#484f58" }}>Belum ada kriteria penilaian.</p>
+                            ) : (
+                                <div className="space-y-3">
+                                    {tender.criteria.map((c) => (
+                                        <div key={c.id} className="space-y-1.5">
+                                            <div className="flex items-center justify-between text-xs">
+                                                <span style={{ color: "#8b949e" }}>{c.name}</span>
+                                                <span className="font-bold tabular-nums" style={{ color: "#bc8cff" }}>{c.weight}%</span>
+                                            </div>
+                                            <div className="progress-bar">
+                                                <div className="progress-fill" style={{ width: `${Math.min(Number(c.weight), 100)}%`, background: "linear-gradient(90deg, #6e40c9, #bc8cff)" }} />
+                                            </div>
+                                        </div>
+                                    ))}
+                                    <div className="flex items-center justify-between text-xs pt-1 font-bold" style={{ borderTop: "1px solid rgba(99,115,138,.12)", color: "#e6edf3" }}>
+                                        <span>Total Bobot</span>
+                                        <span style={{ color: tender.criteria.reduce((s, c) => s + Number(c.weight), 0) === 100 ? "#3fb950" : "#f85149" }}>
+                                            {tender.criteria.reduce((s, c) => s + Number(c.weight), 0)}%
+                                        </span>
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+
+                        <div className="surface p-5 space-y-3">
+                            <h3 className="text-sm font-semibold" style={{ color: "#e6edf3" }}>Info Tender</h3>
+                            {[
+                                { label: "Reveal Window",  val: `${tender.revealWindowHours} jam` },
+                                { label: "Peserta",        val: `${tender.participants.length} vendor` },
+                                { label: "Status",         val: tender.status },
+                            ].map(({ label, val }) => (
+                                <div key={label} className="flex items-center justify-between text-xs">
+                                    <span style={{ color: "#7d8590" }}>{label}</span>
+                                    <span className="font-semibold" style={{ color: "#e6edf3" }}>{val}</span>
+                                </div>
+                            ))}
+                        </div>
+                    </div>
                 </div>
             )}
 
-            {/* TAB 3: COMMIT-REVEAL VERIFICATION */}
-            {activeTab === "reveal" && (
-                <div className="space-y-6">
-                    <div className="p-4 rounded-xl bg-purple-500/10 border border-purple-500/30 text-xs text-purple-300 flex items-center gap-3">
-                        <KeyRound className="w-5 h-5 text-purple-400 shrink-0" />
-                        <span>
-                            <strong>Commit-Reveal Verification Workbench:</strong> Setelah deadline tercapai, vendor
-                            memasukkan kembali secret/PIN untuk melakukan dekripsi di browser. Hash hasil dekripsi
-                            diverifikasi ulang dengan Commitment Hash di Smart Contract.
-                        </span>
-                    </div>
-
-                    <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                <KeyRound className="w-4 h-4 text-purple-400" /> Dekripsi Penawaran di Browser
-                            </h3>
-
-                            <div className="space-y-3">
-                                <label className="text-xs font-semibold text-slate-300">
-                                    Masukkan Secret / PIN Vendor untuk Dekripsi
-                                </label>
-                                <input
-                                    type="password"
-                                    value={revealSecret}
-                                    onChange={(e) => setRevealSecret(e.target.value)}
-                                    className="w-full px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-purple-400 focus:outline-none"
-                                />
-
-                                <button
-                                    onClick={handleRunReveal}
-                                    disabled={revealing || !encryptionResult}
-                                    className="w-full py-3 rounded-xl bg-gradient-to-r from-purple-500 to-indigo-600 text-white font-bold text-xs hover:opacity-95 transition-all shadow-lg shadow-purple-500/20 flex items-center justify-center gap-2 disabled:opacity-50"
-                                >
-                                    <Eye className="w-4 h-4" />
-                                    {revealing ? "Verifikasi & Dekripsi..." : "Jalankan Decrypt & Verify Commitment"}
-                                </button>
-                            </div>
+            {/* ══ TAB 2 — ENCRYPT & SUBMIT ══ */}
+            {activeTab === "encrypt" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in">
+                    <div className="surface p-5 space-y-5">
+                        <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>
+                            <Lock style={{ width: 14, height: 14, color: "#58a6ff" }} />
+                            Step 1 — Isi Penawaran Vendor
+                        </h3>
+                        <div>
+                            <label className="form-label">Secret/PIN Enkripsi <span style={{ color: "#f85149" }}>*</span></label>
+                            <input type="password" placeholder="PIN rahasia Anda (tidak dikirim ke server)" value={vendorSecret} onChange={(e) => setVendorSecret(e.target.value)} className="form-input" />
+                            <p className="text-xs mt-1.5" style={{ color: "#484f58" }}>PIN digunakan sebagai KDF key untuk AES-GCM. Server tidak pernah melihat PIN ini.</p>
                         </div>
 
-                        {/* Reveal Verification Result */}
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                            <h3 className="text-base font-bold text-white flex items-center gap-2">
-                                Status Verifikasi Commitment Hash
-                            </h3>
-
-                            {revealResult ? (
-                                <div className="space-y-4">
-                                    <div
-                                        className={`p-4 rounded-xl border flex items-center gap-3 text-xs font-semibold ${
-                                            revealResult.isValid
-                                                ? "bg-emerald-500/10 border-emerald-500/30 text-emerald-300"
-                                                : "bg-red-500/10 border-red-500/30 text-red-300"
-                                        }`}
-                                    >
-                                        {revealResult.isValid ? (
-                                            <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" />
-                                        ) : (
-                                            <XCircle className="w-5 h-5 text-red-400 shrink-0" />
-                                        )}
-                                        <span>{revealResult.message}</span>
+                        {tender.fields.length > 0 ? (
+                            <div className="space-y-3">
+                                <h4 className="text-xs font-semibold" style={{ color: "#7d8590" }}>Data Penawaran</h4>
+                                {tender.fields.map((f) => (
+                                    <div key={f.key}>
+                                        <label className="form-label">
+                                            {f.name}
+                                            {f.required && <span style={{ color: "#f85149" }}> *</span>}
+                                            <span className="tag-mono ml-2">{f.type}</span>
+                                        </label>
+                                        <input
+                                            type={f.type === "number" || f.type === "currency" ? "number" : "text"}
+                                            placeholder={f.type === "currency" ? "mis. 1150000000" : f.type === "number" ? "mis. 3" : `Isi ${f.name}...`}
+                                            value={formData[f.key] ?? ""}
+                                            onChange={(e) => setFormData((prev) => ({ ...prev, [f.key]: e.target.value }))}
+                                            className="form-input"
+                                        />
                                     </div>
+                                ))}
+                            </div>
+                        ) : (
+                            <p className="text-xs" style={{ color: "#484f58" }}>Tender ini belum mendefinisikan field penawaran.</p>
+                        )}
 
-                                    {revealResult.isValid && (
-                                        <div className="p-4 rounded-xl bg-slate-900 border border-slate-800 space-y-2">
-                                            <span className="text-xs font-bold text-slate-300 block">
-                                                Hasil Dekripsi Plaintext Bid (Dikirim ke Scoring Engine):
-                                            </span>
-                                            <pre className="text-[11px] font-mono text-emerald-400 bg-slate-950 p-3 rounded-lg overflow-x-auto">
-                                                {JSON.stringify(revealResult.decryptedPayload, null, 2)}
-                                            </pre>
-                                        </div>
+                        <button onClick={handleEncrypt} disabled={encrypting || !vendorSecret} className="btn btn-primary w-full">
+                            {encrypting ? (
+                                <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />Mengenkripsi...</>
+                            ) : (
+                                <><Lock style={{ width: 14, height: 14 }} />Enkripsi Data (AES-GCM 256-bit)</>
+                            )}
+                        </button>
+                    </div>
+
+                    {/* Results */}
+                    {encResult ? (
+                        <div className="surface p-5 space-y-5">
+                            <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>
+                                <ShieldCheck style={{ width: 14, height: 14, color: "#3fb950" }} />
+                                Step 2 — Hasil Enkripsi
+                            </h3>
+                            <CodeDisplay label="Commitment Hash (SHA-256)" value={encResult.commitmentHash} accent="#3fb950" />
+                            <CodeDisplay label="Ciphertext (AES-GCM 256-bit)" value={encResult.ciphertextHex.slice(0, 80) + "..."} accent="#58a6ff" />
+                            <CodeDisplay label="KDF Salt (Argon2id)" value={encResult.kdfSalt} accent="#bc8cff" />
+                            <CodeDisplay label="IV Hex" value={encResult.ivHex} />
+
+                            {submitError && (
+                                <div className="flex items-center gap-2 p-3 rounded-lg text-xs" style={{ background: "rgba(248,81,73,.08)", border: "1px solid rgba(248,81,73,.2)", color: "#f85149" }}>
+                                    <AlertCircle style={{ width: 12, height: 12 }} />
+                                    {submitError}
+                                </div>
+                            )}
+
+                            {submittedSealed ? (
+                                <div className="flex items-center gap-2 p-3 rounded-xl text-sm font-medium" style={{ background: "rgba(63,185,80,.08)", border: "1px solid rgba(63,185,80,.22)", color: "#3fb950" }}>
+                                    <CheckCircle2 style={{ width: 16, height: 16 }} />
+                                    Sealed bid berhasil di-submit ke database!
+                                </div>
+                            ) : (
+                                <div className="flex flex-col gap-2">
+                                    <button onClick={handleSubmitSealed} disabled={submitting || !session} className="btn btn-primary w-full">
+                                        {submitting ? (
+                                            <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />Mengirim ke DB...</>
+                                        ) : (
+                                            <><Check style={{ width: 14, height: 14 }} />Submit Sealed Bid ke Database</>
+                                        )}
+                                    </button>
+                                    {walletConnected && (
+                                        <button onClick={handleSignOnChain} disabled={signingOnChain} className="btn btn-ghost w-full" style={{ fontSize: 12 }}>
+                                            {signingOnChain ? "Menunggu Konfirmasi MetaMask..." : "Sign On-Chain via MetaMask"}
+                                        </button>
                                     )}
                                 </div>
-                            ) : (
-                                <div className="p-8 text-center text-slate-500 text-xs border border-dashed border-slate-800 rounded-xl">
-                                    Lakukan Client Encrypt terlebih dahulu di Tab 2, lalu klik Verifikasi di sini.
+                            )}
+
+                            {onChainTxHash && (
+                                <div className="space-y-1.5">
+                                    <span className="text-label">On-Chain Transaction Hash</span>
+                                    <div className="code-block flex items-center justify-between gap-2">
+                                        <span style={{ color: "#e3b341" }}>{onChainTxHash}</span>
+                                        <ExternalLink style={{ width: 12, height: 12, color: "#484f58", flexShrink: 0 }} />
+                                    </div>
                                 </div>
                             )}
                         </div>
-                    </div>
+                    ) : (
+                        <div className="surface p-5 flex flex-col items-center justify-center gap-3 text-center" style={{ minHeight: 200 }}>
+                            <Lock style={{ width: 28, height: 28, color: "#484f58", opacity: 0.4 }} />
+                            <p className="text-xs" style={{ color: "#484f58" }}>Isi form di sebelah kiri dan klik Enkripsi untuk melihat hasil kriptografi di sini.</p>
+                        </div>
+                    )}
                 </div>
             )}
 
-            {/* TAB 4: SCORING ENGINE & WINNER */}
+            {/* ══ TAB 3 — COMMIT-REVEAL VERIFY ══ */}
+            {activeTab === "reveal" && (
+                <div className="grid grid-cols-1 lg:grid-cols-2 gap-5 animate-fade-in">
+                    <div className="surface p-5 space-y-5">
+                        <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>
+                            <KeyRound style={{ width: 14, height: 14, color: "#bc8cff" }} />
+                            Commit-Reveal Verification
+                        </h3>
+
+                        {!encResult ? (
+                            <div className="p-4 rounded-xl text-xs text-center" style={{ background: "rgba(227,179,65,.06)", border: "1px solid rgba(227,179,65,.18)", color: "#e3b341" }}>
+                                Lakukan enkripsi di Tab "Encrypt & Submit Bid" terlebih dahulu.
+                            </div>
+                        ) : (
+                            <>
+                                <div>
+                                    <label className="form-label">Secret/PIN untuk Reveal</label>
+                                    <input
+                                        type="password"
+                                        placeholder="Masukkan PIN yang sama saat enkripsi..."
+                                        value={revealSecret}
+                                        onChange={(e) => setRevealSecret(e.target.value)}
+                                        className="form-input"
+                                    />
+                                </div>
+                                <button onClick={handleReveal} disabled={revealing || !revealSecret} className="btn btn-primary w-full" style={{ background: "linear-gradient(135deg, #6e40c9, #9c5ff0)" }}>
+                                    {revealing ? (
+                                        <><span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />Memverifikasi...</>
+                                    ) : (
+                                        <><Eye style={{ width: 14, height: 14 }} />Decrypt & Verify Commitment Hash</>
+                                    )}
+                                </button>
+                                <CodeDisplay label="Commitment Hash yang di-commit" value={encResult.commitmentHash} accent="#bc8cff" />
+                            </>
+                        )}
+                    </div>
+
+                    {revealResult && (
+                        <div className="surface p-5 space-y-5">
+                            <h3 className="text-sm font-semibold" style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>Hasil Verifikasi</h3>
+                            <div
+                                className="flex items-start gap-3 p-4 rounded-xl"
+                                style={{
+                                    background: revealResult.isValid ? "rgba(63,185,80,.07)" : "rgba(248,81,73,.07)",
+                                    border: `1px solid ${revealResult.isValid ? "rgba(63,185,80,.25)" : "rgba(248,81,73,.25)"}`,
+                                }}
+                            >
+                                {revealResult.isValid
+                                    ? <CheckCircle2 style={{ width: 20, height: 20, color: "#3fb950", flexShrink: 0 }} />
+                                    : <XCircle style={{ width: 20, height: 20, color: "#f85149", flexShrink: 0 }} />}
+                                <div>
+                                    <p className="text-sm font-bold" style={{ color: revealResult.isValid ? "#3fb950" : "#f85149" }}>
+                                        {revealResult.isValid ? "VALID — Integritas Terjamin" : "INVALID — Manipulasi Terdeteksi"}
+                                    </p>
+                                    <p className="text-xs mt-1" style={{ color: "#7d8590" }}>{revealResult.message}</p>
+                                </div>
+                            </div>
+
+                            {revealResult.decryptedPayload && (
+                                <div>
+                                    <span className="text-label">Decrypted Payload</span>
+                                    <div className="code-block mt-1.5" style={{ color: "#3fb950", whiteSpace: "pre-wrap", wordBreak: "break-all" }}>
+                                        {JSON.stringify(revealResult.decryptedPayload, null, 2)}
+                                    </div>
+                                </div>
+                            )}
+                        </div>
+                    )}
+                </div>
+            )}
+
+            {/* ══ TAB 4 — SCORING ══ */}
             {activeTab === "scoring" && (
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <div>
-                            <h3 className="text-base font-bold text-white">Scoring Engine & Penetapan Pemenang</h3>
-                            <p className="text-xs text-slate-400">
-                                Penilaian otomatis berdasarkan kriteria & bobot terverifikasi
+                <div className="surface p-5 space-y-5 animate-fade-in">
+                    <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>
+                        <Award style={{ width: 14, height: 14, color: "#e3b341" }} />
+                        Scoring & Penetapan Pemenang
+                    </h3>
+                    {tender.participants.length === 0 ? (
+                        <div className="text-center py-12" style={{ color: "#484f58" }}>
+                            <Inbox style={{ width: 28, height: 28, margin: "0 auto 10px", opacity: 0.4 }} />
+                            <p className="text-sm">Belum ada vendor yang berpartisipasi dalam tender ini.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-3">
+                            {tender.participants.map((p, idx) => (
+                                <div key={p.id} className="flex items-center gap-4 px-4 py-3 rounded-lg" style={{ background: "#06090f", border: "1px solid rgba(99,115,138,.1)" }}>
+                                    <span className="text-sm font-bold tabular-nums" style={{ color: "#484f58", width: 20 }}>#{idx + 1}</span>
+                                    <span className="text-sm font-medium flex-1" style={{ color: "#e6edf3" }}>{p.organization?.name ?? `Vendor ${p.organizationId.slice(0, 8)}...`}</span>
+                                    <span className="badge badge-slate text-xs">Terdaftar</span>
+                                </div>
+                            ))}
+                            <p className="text-xs text-center" style={{ color: "#484f58" }}>
+                                Scoring otomatis akan tersedia setelah fase Reveal selesai dan semua bid terverifikasi.
                             </p>
                         </div>
-                    </div>
-
-                    <div className="space-y-4">
-                        {[
-                            {
-                                vendor: "Vendor A (PT Tech Solusindo)",
-                                score: 88,
-                                status: "REVEALED_VALID",
-                                total: "Rp 1.250.000.000",
-                            },
-                            {
-                                vendor: "Vendor B (CV Utama Karya)",
-                                score: 94,
-                                status: "REVEALED_VALID",
-                                total: "Rp 1.150.000.000",
-                            },
-                            {
-                                vendor: "Vendor C (PT Media Cipta)",
-                                score: 82,
-                                status: "REVEALED_VALID",
-                                total: "Rp 1.180.000.000",
-                            },
-                        ].map((v) => (
-                            <div
-                                key={v.vendor}
-                                className={`p-4 rounded-xl border flex items-center justify-between text-xs ${
-                                    winnerSelected === v.vendor
-                                        ? "bg-emerald-500/10 border-emerald-500/40"
-                                        : "bg-slate-900 border-slate-800"
-                                }`}
-                            >
-                                <div className="space-y-1">
-                                    <span className="font-bold text-white text-sm block">{v.vendor}</span>
-                                    <span className="text-slate-400">Penawaran: {v.total}</span>
-                                </div>
-
-                                <div className="flex items-center gap-4">
-                                    <div className="text-right">
-                                        <span className="text-xs text-slate-400 block">Nilai Akhir</span>
-                                        <span className="text-lg font-bold text-emerald-400">{v.score} / 100</span>
-                                    </div>
-
-                                    <button
-                                        onClick={() => setWinnerSelected(v.vendor)}
-                                        className={`px-3 py-1.5 rounded-lg font-bold text-xs ${
-                                            winnerSelected === v.vendor
-                                                ? "bg-emerald-500 text-slate-950"
-                                                : "bg-slate-800 text-slate-300 hover:bg-slate-700"
-                                        }`}
-                                    >
-                                        {winnerSelected === v.vendor ? "Pemenang Ditetapkan ✓" : "Pilih Pemenang"}
-                                    </button>
-                                </div>
-                            </div>
-                        ))}
-                    </div>
+                    )}
                 </div>
             )}
 
-            {/* TAB 5: AUDIT LOG & BLOCKCHAIN LOG */}
+            {/* ══ TAB 5 — AUDIT ══ */}
             {activeTab === "audit" && (
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-4">
-                    <h3 className="text-base font-bold text-white flex items-center gap-2">
-                        <History className="w-4 h-4 text-indigo-400" /> Log Transaksi Blockchain & Audit Trail
-                    </h3>
+                <div className="surface p-5 space-y-5 animate-fade-in">
+                    <div className="flex items-center justify-between" style={{ borderBottom: "1px solid rgba(99,115,138,.1)", paddingBottom: 12 }}>
+                        <h3 className="text-sm font-semibold flex items-center gap-2" style={{ color: "#e6edf3" }}>
+                            <History style={{ width: 14, height: 14, color: "#818cf8" }} />
+                            Audit Trail — Tender {tender.code}
+                        </h3>
+                        <span className="badge badge-slate">{auditLogs.length} event</span>
+                    </div>
 
-                    <div className="space-y-3 font-mono text-xs">
-                        {[
-                            {
-                                type: "COMMIT",
-                                hash: "0x8f2a9b4c1d6e7f3a8b2c4d6e8f0a2b4c6d8e0f2a",
-                                sender: "0x71C...39A2",
-                                time: "17 Sep 2026, 16:30:12",
-                            },
-                            {
-                                type: "REVEAL_ATTESTATION",
-                                hash: "0x3e5f7a9b1c3d5e7f9a1b3c5d7e9f1a3b5c7d9e1f",
-                                sender: "Relayer System",
-                                time: "17 Sep 2026, 17:01:45",
-                            },
-                            {
-                                type: "RESULT",
-                                hash: "0x1a2b3c4d5e6f7a8b9c0d1e2f3a4b5c6d7e8f9a0b",
-                                sender: "0x71C...39A2",
-                                time: "17 Sep 2026, 17:10:00",
-                            },
-                        ].map((tx) => (
-                            <div
-                                key={tx.hash}
-                                className="p-3 rounded-xl bg-slate-900 border border-slate-800 space-y-1"
-                            >
-                                <div className="flex justify-between text-slate-400 font-sans">
-                                    <span className="font-bold text-emerald-400">{tx.type}</span>
-                                    <span>{tx.time}</span>
+                    {auditLogs.length === 0 ? (
+                        <div className="text-center py-10" style={{ color: "#484f58" }}>
+                            <History style={{ width: 28, height: 28, margin: "0 auto 10px", opacity: 0.4 }} />
+                            <p className="text-sm">Belum ada aktivitas yang tercatat untuk tender ini.</p>
+                        </div>
+                    ) : (
+                        <div className="space-y-0">
+                            {auditLogs.map((log, idx) => (
+                                <div key={log.id} className="flex gap-4 py-3.5" style={{ borderBottom: idx < auditLogs.length - 1 ? "1px solid rgba(99,115,138,.08)" : "none" }}>
+                                    <div className="flex flex-col items-center pt-1 shrink-0">
+                                        <div className="w-2 h-2 rounded-full" style={{ background: "#58a6ff" }} />
+                                        {idx < auditLogs.length - 1 && <div className="w-px flex-1 mt-2" style={{ background: "rgba(99,115,138,.12)", minHeight: 20 }} />}
+                                    </div>
+                                    <div className="flex-1">
+                                        <div className="flex items-center justify-between gap-2">
+                                            <span className="text-xs font-mono font-semibold" style={{ color: "#58a6ff" }}>{log.action}</span>
+                                            <span className="text-xs font-mono" style={{ color: "#484f58" }}>
+                                                {new Date(log.createdAt).toLocaleString("id-ID")}
+                                            </span>
+                                        </div>
+                                        {log.description && <p className="text-xs mt-0.5" style={{ color: "#7d8590" }}>{log.description}</p>}
+                                    </div>
                                 </div>
-                                <span className="text-slate-300 block truncate">Tx Hash: {tx.hash}</span>
-                                <span className="text-slate-500 text-[11px] block">Sender Wallet: {tx.sender}</span>
-                            </div>
-                        ))}
+                            ))}
+                        </div>
+                    )}
+
+                    {/* Blockchain integrity note */}
+                    <div className="flex items-center gap-2 p-3 rounded-xl text-xs" style={{ background: "rgba(63,185,80,.05)", border: "1px solid rgba(63,185,80,.12)", color: "#484f58" }}>
+                        <ShieldCheck style={{ width: 12, height: 12, color: "#3fb950" }} />
+                        Commitment hash on-chain dapat diverifikasi secara independen via Smart Contract yang di-deploy di blockchain.
                     </div>
                 </div>
             )}

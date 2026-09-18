@@ -1,18 +1,24 @@
 import type { Metadata } from "next";
 import { Inter } from "next/font/google";
 import "./globals.css";
-import { DemoProvider } from "@/context/demo-context";
 import Navbar from "@/components/navbar";
 
 const inter = Inter({
     subsets: ["latin"],
     variable: "--font-inter",
+    display: "swap",
 });
 
 export const metadata: Metadata = {
     title: "TenderSeal — Secure Sealed Tendering Platform",
     description:
-        "Client-side Encryption, Commit-Reveal, Smart Contract & Audit Trail for Trusted Digital Procurement (SDG 16 & SDG 9).",
+        "Client-side AES-GCM Encryption, Commit-Reveal Scheme, Smart Contract & full Audit Trail for trusted digital procurement. SDG 16 & SDG 9.",
+    keywords: ["tender", "procurement", "blockchain", "encryption", "commit-reveal", "smart contract"],
+    openGraph: {
+        title: "TenderSeal — Secure Sealed Tendering",
+        description: "Zero-knowledge sealed procurement with cryptographic audit trail.",
+        type: "website",
+    },
 };
 
 export default function RootLayout({
@@ -21,26 +27,40 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="en" className="dark">
-            <body
-                className={`${inter.variable} font-sans bg-[#090d16] text-slate-100 min-h-screen antialiased selection:bg-emerald-500/30 selection:text-emerald-200`}
-            >
-                <DemoProvider>
-                    <div className="flex flex-col min-h-screen">
-                        <Navbar />
-                        <main className="flex-1 max-w-7xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-8">{children}</main>
-                        <footer className="border-t border-slate-800/60 bg-slate-950/60 py-6 text-center text-xs text-slate-500">
-                            <div className="max-w-7xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-4">
-                                <p>© 2026 TenderSeal — Secure Sealed Tendering Platform</p>
-                                <div className="flex items-center gap-4 text-slate-400 font-medium">
-                                    <span>SDG 16 (Peace, Justice & Strong Institutions)</span>
-                                    <span>•</span>
-                                    <span>SDG 9 (Innovation & Infrastructure)</span>
-                                </div>
+        <html lang="id" className="dark">
+            <body className={`${inter.variable} font-sans min-h-screen antialiased`}>
+                <div className="flex flex-col min-h-screen">
+                    <Navbar />
+                    <main className="flex-1 max-w-7xl w-full mx-auto px-5 py-8">
+                        {children}
+                    </main>
+                    <footer
+                        className="py-5 mt-4"
+                        style={{ borderTop: "1px solid rgba(99,115,138,.1)" }}
+                    >
+                        <div className="max-w-7xl mx-auto px-5 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <p className="text-xs" style={{ color: "#484f58" }}>
+                                © 2026 TenderSeal · Secure Sealed Procurement
+                            </p>
+                            <div className="flex items-center gap-4" style={{ color: "#484f58", fontSize: 11 }}>
+                                <span className="flex items-center gap-1.5">
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{ background: "#3fb950" }}
+                                    />
+                                    SDG 16 · Peace & Justice
+                                </span>
+                                <span className="flex items-center gap-1.5">
+                                    <span
+                                        className="w-1.5 h-1.5 rounded-full"
+                                        style={{ background: "#58a6ff" }}
+                                    />
+                                    SDG 9 · Innovation
+                                </span>
                             </div>
-                        </footer>
-                    </div>
-                </DemoProvider>
+                        </div>
+                    </footer>
+                </div>
             </body>
         </html>
     );

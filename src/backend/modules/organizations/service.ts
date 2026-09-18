@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { organizationMembers, organizations } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, inArray } from "drizzle-orm";
 import type { OrganizationModel } from "./model";
 
 export abstract class OrganizationService {
@@ -37,6 +37,31 @@ export abstract class OrganizationService {
         });
 
         return { id: orgId };
+    }
+
+    static async getByUserId(userId: string) {
+        // Two separate queries to avoid Drizzle relation typing issues
+        const memberships = await db
+            .select()
+            .from(organizationMembers)
+            .where(eq(organizationMembers.userId, userId));
+
+        if (memberships.length === 0) return [];
+
+        const orgIds = memberships.map((m) => m.organizationId);
+        const orgs = await db
+            .select()
+            .from(organizations)
+            .where(inArray(organizations.id, orgIds));
+
+        return orgs.map((org) => {
+            const membership = memberships.find((m) => m.organizationId === org.id);
+            return {
+                ...org,
+                memberRole:   membership?.role   ?? null,
+                memberStatus: membership?.status ?? null,
+            };
+        });
     }
 
     static async getAll() {

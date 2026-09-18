@@ -2,167 +2,173 @@
 
 import Link from "next/link";
 import { usePathname } from "next/navigation";
-import { useDemo, type DemoRole } from "@/context/demo-context";
-import {
-    ShieldCheck,
-    FileText,
-    Building2,
-    History,
-    PlusCircle,
-    UserCheck,
-    BookOpen,
-    Lock,
-    Sparkles,
-    Briefcase,
-    Eye,
-} from "lucide-react";
+import { useSession, signOut } from "@/lib/auth-client";
+import { ShieldCheck, PlusCircle, ChevronDown, LogIn, LogOut } from "lucide-react";
+import { useState } from "react";
+
+const NAV_LINKS = [
+    { href: "/",              label: "Overview",      exact: true  },
+    { href: "/tenders",       label: "Tenders",       exact: false },
+    { href: "/organizations", label: "Organizations", exact: true  },
+    { href: "/audit",         label: "Audit Trail",   exact: true  },
+];
 
 export default function Navbar() {
     const pathname = usePathname();
-    const { activeRole, setActiveRole } = useDemo();
+    const { data: session, isPending } = useSession();
 
-    const roleBadges: Record<DemoRole, { label: string; icon: React.ElementType; color: string }> = {
-        PROCUREMENT_OFFICER: {
-            label: "Procurement Officer",
-            icon: Briefcase,
-            color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-        },
-        VENDOR: {
-            label: "Vendor Organization",
-            icon: Lock,
-            color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
-        },
-        AUDITOR: {
-            label: "Auditor",
-            icon: Eye,
-            color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
-        },
-    };
-
-    const ActiveRoleIcon = roleBadges[activeRole].icon;
+    const isActive = (href: string, exact: boolean) =>
+        exact ? pathname === href : pathname.startsWith(href) && !(href === "/tenders" && pathname === "/tenders/create");
 
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    {/* Brand Logo */}
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-600 p-[1px] shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
-                            <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-                                <ShieldCheck className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-                            </div>
+        <header
+            className="sticky top-0 z-50 w-full"
+            style={{
+                background: "rgba(6, 9, 15, 0.92)",
+                backdropFilter: "blur(20px) saturate(1.6)",
+                WebkitBackdropFilter: "blur(20px) saturate(1.6)",
+                borderBottom: "1px solid rgba(99, 115, 138, 0.12)",
+            }}
+        >
+            <div className="max-w-7xl mx-auto px-5">
+                <div className="flex items-center justify-between h-14">
+
+                    {/* ── Brand ────────────────────────────────── */}
+                    <Link href="/" className="flex items-center gap-2.5">
+                        <div
+                            className="w-8 h-8 rounded-lg flex items-center justify-center"
+                            style={{
+                                background: "linear-gradient(135deg, #238636 0%, #1a7f37 100%)",
+                                boxShadow: "0 0 12px rgba(63,185,80,.25)",
+                            }}
+                        >
+                            <ShieldCheck style={{ width: 18, height: 18, color: "#fff" }} />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg tracking-tight text-white">
-                                    Tender<span className="gradient-text">Seal</span>
-                                </span>
-                                <span className="text-[10px] font-medium uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    MVP
-                                </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-normal">Secure Sealed Procurement</p>
+                        <div className="flex items-baseline gap-1.5">
+                            <span className="font-bold text-base tracking-tight" style={{ color: "#e6edf3" }}>
+                                Tender<span className="gradient-text">Seal</span>
+                            </span>
+                            <span
+                                className="text-[9px] font-bold uppercase tracking-widest px-1.5 py-0.5 rounded"
+                                style={{
+                                    background: "rgba(63,185,80,.1)",
+                                    color: "#3fb950",
+                                    border: "1px solid rgba(63,185,80,.2)",
+                                    letterSpacing: "0.1em",
+                                }}
+                            >
+                                BETA
+                            </span>
                         </div>
                     </Link>
 
-                    {/* Navigation Links */}
-                    <nav className="hidden md:flex items-center gap-1">
-                        <Link
-                            href="/"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <Sparkles className="w-4 h-4 text-emerald-400" />
-                            Overview
-                        </Link>
+                    {/* ── Nav Links ─────────────────────────────── */}
+                    <nav className="hidden md:flex items-center gap-0.5">
+                        {NAV_LINKS.map(({ href, label, exact }) => {
+                            const active = isActive(href, exact);
+                            return (
+                                <Link
+                                    key={href}
+                                    href={href}
+                                    className="px-3 py-1.5 rounded-md text-sm font-medium transition-all duration-150"
+                                    style={{
+                                        color: active ? "#e6edf3" : "#7d8590",
+                                        background: active ? "rgba(99,115,138,.14)" : "transparent",
+                                    }}
+                                    onMouseEnter={(e) => {
+                                        if (!active) {
+                                            (e.currentTarget as HTMLElement).style.color = "#e6edf3";
+                                            (e.currentTarget as HTMLElement).style.background = "rgba(99,115,138,.08)";
+                                        }
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        if (!active) {
+                                            (e.currentTarget as HTMLElement).style.color = "#7d8590";
+                                            (e.currentTarget as HTMLElement).style.background = "transparent";
+                                        }
+                                    }}
+                                >
+                                    {label}
+                                </Link>
+                            );
+                        })}
 
-                        <Link
-                            href="/tenders"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname.startsWith("/tenders") && pathname !== "/tenders/create"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <FileText className="w-4 h-4 text-cyan-400" />
-                            Tenders
-                        </Link>
-
-                        {activeRole === "PROCUREMENT_OFFICER" && (
+                        {/* New Tender — only when logged in */}
+                        {session && (
                             <Link
                                 href="/tenders/create"
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                    pathname === "/tenders/create"
-                                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                                        : "text-emerald-400 hover:bg-emerald-500/10"
-                                }`}
+                                className="btn btn-primary btn-sm ml-2"
+                                style={{ fontSize: 12 }}
                             >
-                                <PlusCircle className="w-4 h-4" />
-                                Create Tender
+                                <PlusCircle style={{ width: 13, height: 13 }} />
+                                New Tender
                             </Link>
                         )}
-
-                        <Link
-                            href="/organizations"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/organizations"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <Building2 className="w-4 h-4 text-indigo-400" />
-                            Organizations
-                        </Link>
-
-                        <Link
-                            href="/audit"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/audit"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <History className="w-4 h-4 text-amber-400" />
-                            Audit Trail
-                        </Link>
-
-                        <a
-                            href="/api/labs"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors flex items-center gap-2"
-                        >
-                            <BookOpen className="w-4 h-4 text-purple-400" />
-                            API Docs
-                        </a>
                     </nav>
 
-                    {/* Interactive Role Switcher Pill */}
-                    <div className="flex items-center gap-3">
-                        <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-                            <span className="text-xs text-slate-500 font-medium px-2 hidden lg:inline">Demo Role:</span>
-                            {(["PROCUREMENT_OFFICER", "VENDOR", "AUDITOR"] as DemoRole[]).map((r) => {
-                                const isSelected = activeRole === r;
-                                return (
-                                    <button
-                                        key={r}
-                                        onClick={() => setActiveRole(r)}
-                                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                                            isSelected
-                                                ? roleBadges[r].color + " border shadow-sm"
-                                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                                        }`}
+                    {/* ── Auth Area ─────────────────────────────── */}
+                    <div className="flex items-center gap-2">
+                        {isPending ? (
+                            <div
+                                className="w-7 h-7 rounded-full animate-pulse"
+                                style={{ background: "rgba(99,115,138,.2)" }}
+                            />
+                        ) : session ? (
+                            <>
+                                {/* Avatar + name */}
+                                <div className="hidden sm:flex items-center gap-2">
+                                    <div
+                                        className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold shrink-0"
+                                        style={{
+                                            background: "rgba(63,185,80,.15)",
+                                            border: "1px solid rgba(63,185,80,.25)",
+                                            color: "#3fb950",
+                                        }}
+                                        title={session.user?.email ?? ""}
                                     >
-                                        {r === "PROCUREMENT_OFFICER" && "Officer"}
-                                        {r === "VENDOR" && "Vendor"}
-                                        {r === "AUDITOR" && "Auditor"}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                                        {(session.user?.name ?? session.user?.email ?? "U")[0].toUpperCase()}
+                                    </div>
+                                    <span className="text-xs font-medium max-w-[120px] truncate" style={{ color: "#8b949e" }}>
+                                        {session.user?.name ?? session.user?.email}
+                                    </span>
+                                </div>
+
+                                {/* Logout */}
+                                <button
+                                    onClick={() =>
+                                        signOut({
+                                            fetchOptions: { onSuccess: () => window.location.replace("/login") },
+                                        })
+                                    }
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                    style={{ color: "#7d8590" }}
+                                    onMouseEnter={(e) => {
+                                        (e.currentTarget as HTMLElement).style.color = "#f85149";
+                                        (e.currentTarget as HTMLElement).style.background = "rgba(248,81,73,.08)";
+                                    }}
+                                    onMouseLeave={(e) => {
+                                        (e.currentTarget as HTMLElement).style.color = "#7d8590";
+                                        (e.currentTarget as HTMLElement).style.background = "transparent";
+                                    }}
+                                >
+                                    <LogOut style={{ width: 13, height: 13 }} />
+                                    <span className="hidden sm:block">Keluar</span>
+                                </button>
+                            </>
+                        ) : (
+                            <Link
+                                href="/login"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-xs font-medium transition-all"
+                                style={{
+                                    background: "rgba(63,185,80,.1)",
+                                    border: "1px solid rgba(63,185,80,.22)",
+                                    color: "#3fb950",
+                                }}
+                            >
+                                <LogIn style={{ width: 13, height: 13 }} />
+                                <span>Masuk</span>
+                            </Link>
+                        )}
                     </div>
                 </div>
             </div>

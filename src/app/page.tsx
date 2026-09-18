@@ -1,286 +1,158 @@
 "use client";
 
 import Link from "next/link";
-import { useDemo } from "@/context/demo-context";
+import { useSession } from "@/lib/auth-client";
 import {
-    ShieldCheck,
-    Lock,
-    KeyRound,
-    FileCode2,
-    Database,
-    PlusCircle,
-    ArrowRight,
-    Sparkles,
-    CheckCircle2,
-    FileSpreadsheet,
-    Activity,
-    Layers,
-    Cpu,
-    ExternalLink,
+    ShieldCheck, Lock, KeyRound, FileCode2, PlusCircle, ArrowRight,
+    CheckCircle2, Cpu, Eye,
 } from "lucide-react";
 
+const STEPS = [
+    {
+        n: "01", title: "Client Encryption",
+        body: "Penawaran dienkripsi di browser vendor menggunakan AES-GCM 256-bit. Key diderivasi via Argon2id dari PIN rahasia vendor — server tidak pernah melihat plaintext.",
+        color: "#3fb950", icon: Lock,
+    },
+    {
+        n: "02", title: "Commitment On-Chain",
+        body: "SHA-256 hash dari penawaran + salt dikirim ke Smart Contract sebelum deadline. Bukti kriptografis bahwa isi bid sudah dikunci dan tidak dapat diubah.",
+        color: "#58a6ff", icon: Cpu,
+    },
+    {
+        n: "03", title: "Sealed Storage",
+        body: "Server hanya menyimpan ciphertext terenkripsi. Bahkan admin sistem tidak dapat membaca penawaran sebelum fase reveal dibuka oleh panitia.",
+        color: "#bc8cff", icon: ShieldCheck,
+    },
+    {
+        n: "04", title: "Reveal & Verify",
+        body: "Setelah deadline, vendor memasukkan PIN untuk dekripsi di browser. Commitment hash diverifikasi ulang dengan data yang tersimpan di blockchain.",
+        color: "#e3b341", icon: Eye,
+    },
+];
+
 export default function HomePage() {
-    const { activeRole } = useDemo();
+    const { data: session } = useSession();
 
     return (
-        <div className="space-y-12">
-            {/* Hero Section */}
-            <section className="relative overflow-hidden rounded-3xl glass-panel p-8 lg:p-12 border-slate-800">
-                <div className="absolute -right-20 -top-20 w-96 h-96 bg-emerald-500/10 rounded-full blur-3xl pointer-events-none" />
-                <div className="absolute -left-20 -bottom-20 w-96 h-96 bg-cyan-500/10 rounded-full blur-3xl pointer-events-none" />
+        <div className="space-y-16 pb-4">
 
-                <div className="relative z-10 max-w-3xl space-y-6">
-                    <div className="inline-flex items-center gap-2 px-3 py-1.5 rounded-full bg-emerald-500/10 border border-emerald-500/20 text-emerald-400 text-xs font-semibold tracking-wide">
-                        <Sparkles className="w-3.5 h-3.5" />
-                        <span>NextGen Secure Digital Procurement</span>
+            {/* ── Hero ─────────────────────────────────────────────── */}
+            <section className="relative pt-8 pb-12">
+                <div className="absolute inset-0 pointer-events-none overflow-hidden" style={{ zIndex: 0 }}>
+                    <div
+                        className="absolute -top-32 left-1/2 -translate-x-1/2 w-[640px] h-[400px] rounded-full"
+                        style={{ background: "radial-gradient(ellipse at center, rgba(63,185,80,.06) 0%, transparent 70%)" }}
+                    />
+                </div>
+
+                <div className="relative z-10 max-w-2xl">
+                    <div className="flex items-center gap-2 mb-6">
+                        <span
+                            className="flex items-center gap-1.5 px-3 py-1 rounded-full text-xs font-semibold"
+                            style={{ background: "rgba(63,185,80,.1)", border: "1px solid rgba(63,185,80,.22)", color: "#3fb950" }}
+                        >
+                            <span className="w-1.5 h-1.5 rounded-full bg-[#3fb950] animate-pulse" />
+                            NextGen Secure Procurement
+                        </span>
                     </div>
 
-                    <h1 className="text-4xl sm:text-5xl font-extrabold tracking-tight text-white leading-tight">
-                        Your Tender. Your Bid. <br />
-                        <span className="gradient-text">Sealed Until Deadline.</span>
+                    <h1 className="text-5xl font-extrabold tracking-tight leading-[1.1] mb-4" style={{ color: "#e6edf3" }}>
+                        Tender dibuka.{" "}
+                        <br />
+                        <span className="gradient-text">Bid tersegel sampai deadline.</span>
                     </h1>
 
-                    <p className="text-lg text-slate-300 leading-relaxed">
-                        TenderSeal melindungi kerahasiaan penawaran vendor menggunakan{" "}
-                        <strong>Client-side AES-GCM Encryption</strong>,<strong> Commit-Reveal Scheme</strong>, dan{" "}
-                        <strong>Smart Contract Audit Trail</strong> untuk mengeliminasi risiko kebocoran harga oleh
-                        pihak internal.
+                    <p className="text-base leading-relaxed mb-8" style={{ color: "#7d8590", maxWidth: 520 }}>
+                        TenderSeal melindungi penawaran vendor dengan{" "}
+                        <strong style={{ color: "#8b949e", fontWeight: 600 }}>Client-Side AES-GCM Encryption</strong>,{" "}
+                        <strong style={{ color: "#8b949e", fontWeight: 600 }}>Commit-Reveal Scheme</strong>, dan{" "}
+                        <strong style={{ color: "#8b949e", fontWeight: 600 }}>Smart Contract Audit Trail</strong>{" "}
+                        — eliminasi risiko kebocoran harga oleh pihak internal.
                     </p>
 
-                    <div className="flex flex-wrap items-center gap-4 pt-2">
-                        {activeRole === "PROCUREMENT_OFFICER" ? (
-                            <Link
-                                href="/tenders/create"
-                                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 text-slate-950 font-bold text-sm hover:opacity-95 transition-all shadow-lg shadow-emerald-500/25 flex items-center gap-2 group"
-                            >
-                                <PlusCircle className="w-5 h-5 group-hover:rotate-90 transition-transform" />
-                                Create New Tender
+                    <div className="flex flex-wrap items-center gap-3">
+                        {session ? (
+                            <Link href="/tenders/create" className="btn btn-primary btn-lg">
+                                <PlusCircle style={{ width: 18, height: 18 }} />
+                                Buat Tender Baru
                             </Link>
                         ) : (
-                            <Link
-                                href="/tenders"
-                                className="px-6 py-3.5 rounded-xl bg-gradient-to-r from-cyan-500 to-indigo-600 text-white font-bold text-sm hover:opacity-95 transition-all shadow-lg shadow-cyan-500/25 flex items-center gap-2 group"
-                            >
-                                <Lock className="w-5 h-5" />
-                                Browse & Submit Bids
-                                <ArrowRight className="w-4 h-4 group-hover:translate-x-1 transition-transform" />
+                            <Link href="/login" className="btn btn-primary btn-lg">
+                                <Lock style={{ width: 18, height: 18 }} />
+                                Masuk ke Platform
+                                <ArrowRight style={{ width: 16, height: 16 }} />
                             </Link>
                         )}
-
-                        <Link
-                            href="/tenders"
-                            className="px-6 py-3.5 rounded-xl glass-panel text-slate-200 font-semibold text-sm hover:bg-slate-800/80 transition-colors border border-slate-700 flex items-center gap-2"
-                        >
-                            Explore Tenders
+                        <Link href="/tenders" className="btn btn-ghost btn-lg">
+                            Jelajahi Tender
                         </Link>
                     </div>
                 </div>
             </section>
 
-            {/* Quick Stats Grid */}
-            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-5">
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Active Tenders
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-emerald-500/10 flex items-center justify-center text-emerald-400">
-                            <FileSpreadsheet className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-white">4</div>
-                    <p className="text-xs text-emerald-400 font-medium">1 Open • 2 Sealed • 1 Scoring</p>
+            {/* ── How it Works ─────────────────────────────────────── */}
+            <section className="space-y-8">
+                <div>
+                    <h2 className="text-2xl font-bold tracking-tight" style={{ color: "#e6edf3" }}>
+                        Perlindungan Berlapis TenderSeal
+                    </h2>
+                    <p className="text-sm mt-1.5" style={{ color: "#7d8590" }}>
+                        Alur kriptografi dari browser vendor sampai penetapan pemenang — setiap tahap teraudit.
+                    </p>
                 </div>
 
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Sealed Bids
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-cyan-500/10 flex items-center justify-center text-cyan-400">
-                            <Lock className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-white">12</div>
-                    <p className="text-xs text-cyan-400 font-medium">100% Client Encrypted</p>
-                </div>
-
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Commitments On-Chain
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-purple-500/10 flex items-center justify-center text-purple-400">
-                            <Cpu className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-white">12</div>
-                    <p className="text-xs text-purple-400 font-medium">Anchored on Smart Contract</p>
-                </div>
-
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-2">
-                    <div className="flex items-center justify-between">
-                        <span className="text-xs font-semibold text-slate-400 uppercase tracking-wider">
-                            Audited Actions
-                        </span>
-                        <div className="w-8 h-8 rounded-lg bg-indigo-500/10 flex items-center justify-center text-indigo-400">
-                            <Activity className="w-4 h-4" />
-                        </div>
-                    </div>
-                    <div className="text-3xl font-bold text-white">38</div>
-                    <p className="text-xs text-indigo-400 font-medium">100% Audit Trail Verified</p>
-                </div>
-            </div>
-
-            {/* Architecture Highlights & Commit-Reveal Workflow */}
-            <section className="space-y-6">
-                <div className="flex flex-col md:flex-row items-start md:items-end justify-between gap-4">
-                    <div>
-                        <h2 className="text-2xl font-bold text-white tracking-tight">
-                            Perlindungan Berlapis TenderSeal
-                        </h2>
-                        <p className="text-sm text-slate-400 mt-1">
-                            Alur keamanan kriptografi dari browser vendor sampai tahap penilaian.
-                        </p>
-                    </div>
-                    <Link
-                        href="/audit"
-                        className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1"
-                    >
-                        View Audit Log Details <ArrowRight className="w-3.5 h-3.5" />
-                    </Link>
-                </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
-                    <div className="glass-panel glass-panel-hover p-6 rounded-2xl border-slate-800 space-y-4">
-                        <div className="w-10 h-10 rounded-xl bg-emerald-500/10 border border-emerald-500/20 flex items-center justify-center text-emerald-400 font-bold">
-                            1
-                        </div>
-                        <h3 className="font-bold text-white text-base">Client Encryption</h3>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Penawaran dienkripsi di browser vendor (AES-GCM 256-bit) menggunakan key dari PIN/Secret
-                            vendor via Argon2id/PBKDF2.
-                        </p>
-                    </div>
-
-                    <div className="glass-panel glass-panel-hover p-6 rounded-2xl border-slate-800 space-y-4">
-                        <div className="w-10 h-10 rounded-xl bg-cyan-500/10 border border-cyan-500/20 flex items-center justify-center text-cyan-400 font-bold">
-                            2
-                        </div>
-                        <h3 className="font-bold text-white text-base">Commitment On-Chain</h3>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Hash SHA-256 penawaran + salt dicatat ke Smart Contract sebagai bukti bahwa isi bid sudah
-                            dikunci sebelum deadline.
-                        </p>
-                    </div>
-
-                    <div className="glass-panel glass-panel-hover p-6 rounded-2xl border-slate-800 space-y-4">
-                        <div className="w-10 h-10 rounded-xl bg-purple-500/10 border border-purple-500/20 flex items-center justify-center text-purple-400 font-bold">
-                            3
-                        </div>
-                        <h3 className="font-bold text-white text-base">Sealed Backup</h3>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Server hanya menyimpan ciphertext terenkripsi. Server <strong>TIDAK PERNAH</strong>{" "}
-                            menyimpan plaintext bid atau PIN vendor.
-                        </p>
-                    </div>
-
-                    <div className="glass-panel glass-panel-hover p-6 rounded-2xl border-slate-800 space-y-4">
-                        <div className="w-10 h-10 rounded-xl bg-indigo-500/10 border border-indigo-500/20 flex items-center justify-center text-indigo-400 font-bold">
-                            4
-                        </div>
-                        <h3 className="font-bold text-white text-base">Reveal & Verify</h3>
-                        <p className="text-xs text-slate-400 leading-relaxed">
-                            Setelah deadline, vendor memasukkan PIN untuk dekripsi di client. Hash diverifikasi ulang
-                            dengan commitment di Smart Contract.
-                        </p>
-                    </div>
+                <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
+                    {STEPS.map((step) => {
+                        const Icon = step.icon;
+                        return (
+                            <div key={step.n} className="surface p-5 space-y-4 interactive">
+                                <div className="flex items-center gap-3">
+                                    <div
+                                        className="w-8 h-8 rounded-lg flex items-center justify-center shrink-0"
+                                        style={{ background: `${step.color}12`, border: `1px solid ${step.color}28` }}
+                                    >
+                                        <Icon style={{ width: 15, height: 15, color: step.color }} />
+                                    </div>
+                                    <span className="text-xs font-bold font-mono" style={{ color: `${step.color}88` }}>
+                                        {step.n}
+                                    </span>
+                                </div>
+                                <div>
+                                    <h3 className="font-semibold text-sm mb-1.5" style={{ color: "#e6edf3" }}>
+                                        {step.title}
+                                    </h3>
+                                    <p className="text-xs leading-relaxed" style={{ color: "#7d8590" }}>
+                                        {step.body}
+                                    </p>
+                                </div>
+                            </div>
+                        );
+                    })}
                 </div>
             </section>
 
-            {/* Featured Interactive Tenders Showcase */}
-            <section className="glass-panel p-8 rounded-3xl border-slate-800 space-y-6">
-                <div className="flex items-center justify-between">
-                    <div>
-                        <h2 className="text-xl font-bold text-white">Daftar Tender Terbaru</h2>
-                        <p className="text-xs text-slate-400">Tender aktif yang dapat dikelola atau diikuti</p>
-                    </div>
-                    <Link
-                        href="/tenders"
-                        className="px-4 py-2 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-200 transition-colors"
-                    >
-                        Lihat Semua Tender
-                    </Link>
+            {/* ── CTA / Assurance ──────────────────────────────────── */}
+            <section
+                className="rounded-xl p-5 flex flex-col sm:flex-row items-center justify-between gap-4"
+                style={{ background: "rgba(63,185,80,.05)", border: "1px solid rgba(63,185,80,.12)" }}
+            >
+                <div className="flex items-center gap-3">
+                    <ShieldCheck style={{ width: 20, height: 20, color: "#3fb950", flexShrink: 0 }} />
+                    <p className="text-sm font-medium" style={{ color: "#8b949e" }}>
+                        Zero-Knowledge Architecture — server tidak pernah menyimpan plaintext penawaran vendor.
+                    </p>
                 </div>
-
-                <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                    {/* Demo Tender Card 1 */}
-                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80 space-y-4 hover:border-emerald-500/40 transition-colors">
-                        <div className="flex items-start justify-between">
-                            <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                TND-2026-001
-                            </span>
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-emerald-500/20 text-emerald-300">
-                                OPEN
-                            </span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white">Pengadaan 100 Laptop High Performance</h3>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                                Pengadaan laptop workstation untuk tim pengembang software dan desain grafis.
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
-                            <div>
-                                <span className="block text-slate-500">Commit Deadline</span>
-                                <span className="font-semibold text-slate-200">18 Sep 2026, 15:00</span>
-                            </div>
-                            <div>
-                                <span className="block text-slate-500">Reveal Window</span>
-                                <span className="font-semibold text-slate-200">48 Jam</span>
-                            </div>
-                        </div>
-                        <Link
-                            href="/tenders/tnd-demo-001"
-                            className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-center text-xs font-semibold text-emerald-400 transition-colors block"
-                        >
-                            Buka Interactive Workbench →
-                        </Link>
-                    </div>
-
-                    {/* Demo Tender Card 2 */}
-                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80 space-y-4 hover:border-cyan-500/40 transition-colors">
-                        <div className="flex items-start justify-between">
-                            <span className="text-xs font-mono px-2.5 py-1 rounded-md bg-cyan-500/10 text-cyan-400 border border-cyan-500/20">
-                                TND-2026-002
-                            </span>
-                            <span className="text-xs font-semibold px-2.5 py-1 rounded-full bg-amber-500/20 text-amber-300">
-                                REVEAL
-                            </span>
-                        </div>
-                        <div>
-                            <h3 className="text-lg font-bold text-white">Jasa Pengembangan Platform E-Procurement</h3>
-                            <p className="text-xs text-slate-400 mt-1 line-clamp-2">
-                                Jasa konsultan dan pengembang perangkat lunak e-procurement berbasis blockchain.
-                            </p>
-                        </div>
-                        <div className="grid grid-cols-2 gap-2 text-xs text-slate-400 pt-2 border-t border-slate-800">
-                            <div>
-                                <span className="block text-slate-500">Status Reveal</span>
-                                <span className="font-semibold text-cyan-300">3 dari 4 Vendor Revealed</span>
-                            </div>
-                            <div>
-                                <span className="block text-slate-500">Reveal Window Sisa</span>
-                                <span className="font-semibold text-amber-300">14 Jam</span>
-                            </div>
-                        </div>
-                        <Link
-                            href="/tenders/tnd-demo-002"
-                            className="w-full py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-center text-xs font-semibold text-cyan-400 transition-colors block"
-                        >
-                            Buka Interactive Workbench →
-                        </Link>
-                    </div>
+                <div className="flex items-center gap-4 text-xs font-semibold" style={{ color: "#484f58", whiteSpace: "nowrap" }}>
+                    {[
+                        { label: "AES-GCM 256-bit", color: "#3fb950" },
+                        { label: "Argon2id KDF",    color: "#58a6ff" },
+                        { label: "Smart Contract",  color: "#bc8cff" },
+                    ].map((badge) => (
+                        <span key={badge.label} className="flex items-center gap-1.5">
+                            <CheckCircle2 style={{ width: 13, height: 13, color: badge.color }} />
+                            {badge.label}
+                        </span>
+                    ))}
                 </div>
             </section>
         </div>

@@ -1,450 +1,505 @@
 "use client";
 
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
-import {
-    PlusCircle,
-    Trash2,
-    Save,
-    ArrowLeft,
-    Layers,
-    FileSpreadsheet,
-    HelpCircle,
-    CheckCircle2,
-    AlertCircle,
-    Clock,
-    Percent,
-} from "lucide-react";
+import { useSession } from "@/lib/auth-client";
+import { PlusCircle, Trash2, ArrowLeft, Check, AlertCircle, Loader2 } from "lucide-react";
 
 interface DynamicField {
     id: string;
     name: string;
     key: string;
-    type: "text" | "number" | "currency" | "file" | "select" | "multi-select";
+    type: "text" | "number" | "currency" | "file" | "select";
     required: boolean;
+    weight: number;
+    description?: string;
 }
 
-interface Criterion {
-    id: string;
-    name: string;
-    description: string;
-    weight: number;
-    maxScore: number;
-}
+const TYPE_OPTIONS: { value: DynamicField["type"]; label: string }[] = [
+    { value: "currency", label: "Currency (Rp)" },
+    { value: "text",     label: "Text"          },
+    { value: "number",   label: "Number"        },
+    { value: "file",     label: "File (PDF)"    },
+    { value: "select",   label: "Dropdown"      },
+];
+
+const CATEGORY_OPTIONS = [
+    "Hardware & IT",
+    "Software Development",
+    "Cybersecurity",
+    "Cloud Infrastructure",
+    "Konstruksi & Fasilitas",
+    "Jasa Konsultasi",
+];
 
 export default function CreateTenderPage() {
-    const router = useRouter();
-    const [loading, setLoading] = useState(false);
-    const [successMessage, setSuccessMessage] = useState<string | null>(null);
+    const router  = useRouter();
+    const { data: session, isPending: sessionLoading } = useSession();
 
-    // Form State
-    const [title, setTitle] = useState("");
-    const [code, setCode] = useState(`TND-2026-${Math.floor(100 + Math.random() * 900)}`);
-    const [category, setCategory] = useState("Hardware & IT");
+    const [orgId, setOrgId]     = useState<string | null>(null);
+    const [orgLoading, setOrgLoading] = useState(true);
+
+    const [loading, setLoading] = useState(false);
+    const [error, setError]     = useState<string | null>(null);
+    const [success, setSuccess] = useState(false);
+    const [currentStep, setCurrentStep] = useState<1 | 2>(1);
+
+    // Step 1 — Basic Info
+    const [title, setTitle]           = useState("");
+    const [code, setCode]             = useState(`TND-2026-${Math.floor(100 + Math.random() * 900)}`);
+    const [category, setCategory]     = useState("Hardware & IT");
     const [description, setDescription] = useState("");
-    const [commitDeadline, setCommitDeadline] = useState("2026-09-25T15:00");
+    const [commitDeadline, setCommitDeadline] = useState(() => {
+        const d = new Date();
+        d.setDate(d.getDate() + 7);
+        d.setHours(15, 0, 0, 0);
+        return d.toISOString().slice(0, 16);
+    });
     const [revealWindowHours, setRevealWindowHours] = useState(48);
 
-    // Dynamic Fields Builder State
+    // Step 2 — Fields & Weights
     const [fields, setFields] = useState<DynamicField[]>([
-        { id: "f-1", name: "Harga Penawaran Total", key: "harga_total", type: "currency", required: true },
-        { id: "f-2", name: "Spesifikasi RAM & Storage", key: "spesifikasi", type: "text", required: true },
-        { id: "f-3", name: "Proposal Penawaran PDF", key: "proposal_pdf", type: "file", required: true },
+        { id: "f-1", name: "Harga Penawaran Total",  key: "harga_total",    type: "currency", required: true, weight: 50, description: "Nilai komersial dan efisiensi harga" },
+        { id: "f-2", name: "Spesifikasi Teknis",     key: "spesifikasi",    type: "text",     required: true, weight: 25, description: "Kesesuaian spesifikasi produk" },
+        { id: "f-3", name: "Garansi Resmi (Tahun)",  key: "garansi_tahun",  type: "number",   required: true, weight: 15, description: "Jaminan garansi dan purna jual" },
+        { id: "f-4", name: "Proposal PDF",           key: "proposal_pdf",   type: "file",     required: true, weight: 10, description: "Kelengkapan dokumen penawaran" },
     ]);
 
-    // Evaluation Criteria State
-    const [criteria, setCriteria] = useState<Criterion[]>([
-        {
-            id: "c-1",
-            name: "Harga Penawaran",
-            description: "Penilaian aspek komersial dan efisiensi harga",
-            weight: 50,
-            maxScore: 100,
-        },
-        {
-            id: "c-2",
-            name: "Spesifikasi Teknis",
-            description: "Kesesuaian dengan spesifikasi perangkat yang diminta",
-            weight: 30,
-            maxScore: 100,
-        },
-        {
-            id: "c-3",
-            name: "Garansi & Layanan Purna Jual",
-            description: "Jaminan garansi dan ketersediaan service center",
-            weight: 20,
-            maxScore: 100,
-        },
-    ]);
+    const totalWeight = fields.reduce((s, f) => s + (Number(f.weight) || 0), 0);
+    const weightOk    = totalWeight === 100;
 
-    // Add Dynamic Field
-    const handleAddField = () => {
-        const newId = `f-${Date.now()}`;
-        setFields([
-            ...fields,
-            { id: newId, name: "Field Baru", key: `field_${fields.length + 1}`, type: "text", required: true },
+    // Fetch user's organization
+    useEffect(() => {
+        if (!session?.user?.id) return;
+        async function fetchOrg() {
+            setOrgLoading(true);
+            try {
+                const res = await fetch(`/api/organizations/by-user/${session!.user.id}`);
+                if (res.ok) {
+                    const orgs = await res.json();
+                    if (Array.isArray(orgs) && orgs.length > 0) {
+                        setOrgId(orgs[0].id);
+                    }
+                }
+            } catch (e) {
+                console.error("Failed to fetch org:", e);
+            } finally {
+                setOrgLoading(false);
+            }
+        }
+        fetchOrg();
+    }, [session?.user?.id]);
+
+    const updateField = (idx: number, key: keyof DynamicField, val: string | number | boolean) => {
+        setFields((prev) => {
+            const next = [...prev];
+            (next[idx] as unknown as Record<string, unknown>)[key as string] = val;
+            return next;
+        });
+    };
+
+    const addField = () =>
+        setFields((prev) => [
+            ...prev,
+            { id: `f-${Date.now()}`, name: `Aspek ${prev.length + 1}`, key: `aspek_${prev.length + 1}`, type: "text", required: true, weight: 0, description: "" },
         ]);
-    };
 
-    // Remove Dynamic Field
-    const handleRemoveField = (id: string) => {
-        setFields(fields.filter((f) => f.id !== id));
-    };
+    const removeField = (id: string) => setFields((prev) => prev.filter((f) => f.id !== id));
 
-    // Add Criterion
-    const handleAddCriterion = () => {
-        const newId = `c-${Date.now()}`;
-        setCriteria([...criteria, { id: newId, name: "Kriteria Baru", description: "", weight: 10, maxScore: 100 }]);
-    };
+    const step1Valid = title.trim().length > 0 && !!commitDeadline;
 
-    // Remove Criterion
-    const handleRemoveCriterion = (id: string) => {
-        setCriteria(criteria.filter((c) => c.id !== id));
-    };
+    const handleSubmit = async () => {
+        if (!weightOk || !session?.user?.id) return;
 
-    // Calculate Total Weight
-    const totalWeight = criteria.reduce((sum, c) => sum + (Number(c.weight) || 0), 0);
+        if (!orgId) {
+            setError("Anda belum terdaftar di organisasi manapun. Daftarkan organisasi Anda terlebih dahulu di halaman Organizations.");
+            return;
+        }
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
         setLoading(true);
+        setError(null);
 
         try {
-            // Call backend API POST /api/tenders
+            const body = {
+                organizationId:    orgId,
+                createdBy:         session.user.id,
+                code,
+                title,
+                description:       description || undefined,
+                category:          category || undefined,
+                commitDeadline:    new Date(commitDeadline).toISOString(),
+                revealWindowHours,
+                fields: fields.map(({ name, key, type, required }) => ({ name, key, type, required })),
+                criteria: fields.map(({ name, description: desc, weight }) => ({
+                    name,
+                    description: desc || name,
+                    weight,
+                    maxScore: 100,
+                })),
+            };
+
             const res = await fetch("/api/tenders", {
-                method: "POST",
+                method:  "POST",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({
-                    organizationId: "org-buyer-001",
-                    createdBy: "user-demo-001",
-                    code,
-                    title,
-                    description,
-                    category,
-                    commitDeadline: new Date(commitDeadline).toISOString(),
-                    revealWindowHours,
-                }),
+                body:    JSON.stringify(body),
             });
 
-            if (res.ok) {
-                setSuccessMessage("Tender berhasil dibuat dan dipublikasikan!");
-                setTimeout(() => {
-                    router.push("/tenders");
-                }, 1500);
-            } else {
-                setSuccessMessage("Tender berhasil didaftarkan di sistem!");
-                setTimeout(() => {
-                    router.push("/tenders");
-                }, 1500);
+            if (!res.ok) {
+                const err = await res.json().catch(() => ({}));
+                throw new Error(err?.message ?? `HTTP ${res.status}`);
             }
-        } catch (_err) {
-            setSuccessMessage("Tender berhasil disimpan!");
-            setTimeout(() => {
-                router.push("/tenders");
-            }, 1500);
+
+            setSuccess(true);
+            setTimeout(() => router.push("/tenders"), 1400);
+        } catch (e: unknown) {
+            setError(e instanceof Error ? e.message : "Gagal membuat tender. Coba lagi.");
         } finally {
             setLoading(false);
         }
     };
 
-    return (
-        <div className="max-w-4xl mx-auto space-y-8">
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
-                    <Link
-                        href="/tenders"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-2"
-                    >
-                        <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog Tender
+    // Show loading while checking session/org
+    if (sessionLoading || orgLoading) {
+        return (
+            <div className="flex items-center justify-center py-32 gap-3" style={{ color: "#484f58" }}>
+                <Loader2 style={{ width: 20, height: 20, animation: "spin 1s linear infinite" }} />
+                <span className="text-sm">Memuat...</span>
+            </div>
+        );
+    }
+
+    // No org — show notice
+    if (!orgId && !orgLoading) {
+        return (
+            <div className="max-w-lg mx-auto py-16 text-center space-y-4">
+                <AlertCircle style={{ width: 40, height: 40, color: "#e3b341", margin: "0 auto" }} />
+                <h2 className="text-lg font-semibold" style={{ color: "#e6edf3" }}>
+                    Anda belum bergabung di organisasi
+                </h2>
+                <p className="text-sm" style={{ color: "#7d8590" }}>
+                    Tender harus dikaitkan dengan organisasi. Daftarkan organisasi Anda terlebih dahulu, lalu kembali ke sini.
+                </p>
+                <div className="flex justify-center gap-3 pt-2">
+                    <Link href="/organizations" className="btn btn-primary">
+                        Daftarkan Organisasi
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Buat Tender Baru</h1>
-                    <p className="text-sm text-slate-400">
-                        Atur detail tender, batas waktu commit & reveal, dynamic bid fields, dan kriteria penilaian.
-                    </p>
+                    <Link href="/tenders" className="btn btn-ghost">
+                        Kembali ke Tender
+                    </Link>
                 </div>
             </div>
+        );
+    }
 
-            {successMessage && (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span>{successMessage}</span>
+    return (
+        <div className="max-w-3xl mx-auto space-y-7 pb-8 animate-fade-up">
+
+            {/* Breadcrumb */}
+            <div className="flex items-center gap-2">
+                <Link
+                    href="/tenders"
+                    className="flex items-center gap-1.5 text-xs font-medium transition-colors"
+                    style={{ color: "#7d8590" }}
+                    onMouseEnter={(e) => ((e.currentTarget as HTMLElement).style.color = "#e6edf3")}
+                    onMouseLeave={(e) => ((e.currentTarget as HTMLElement).style.color = "#7d8590")}
+                >
+                    <ArrowLeft style={{ width: 13, height: 13 }} />
+                    Tender
+                </Link>
+                <span style={{ color: "#484f58", fontSize: 12 }}>/</span>
+                <span className="text-xs font-medium" style={{ color: "#484f58" }}>Buat Tender Baru</span>
+            </div>
+
+            {/* Title */}
+            <div>
+                <h1 className="text-2xl font-bold tracking-tight" style={{ color: "#e6edf3" }}>
+                    Buat Tender Baru
+                </h1>
+                <p className="text-sm mt-0.5" style={{ color: "#7d8590" }}>
+                    Atur detail tender, bid fields, dan bobot penilaian yang akan tersimpan ke database.
+                </p>
+            </div>
+
+            {/* Step Progress */}
+            <div className="flex items-center gap-3">
+                {[1, 2].map((step) => {
+                    const active    = currentStep === step;
+                    const completed = currentStep > step;
+                    return (
+                        <button
+                            key={step}
+                            onClick={() => { if (step === 1 || step1Valid) setCurrentStep(step as 1 | 2); }}
+                            disabled={step === 2 && !step1Valid}
+                            className="flex items-center gap-2 transition-all"
+                        >
+                            <span
+                                className="w-7 h-7 rounded-full flex items-center justify-center text-xs font-bold transition-all"
+                                style={{
+                                    background: completed ? "#238636" : active ? "rgba(63,185,80,.15)" : "rgba(99,115,138,.1)",
+                                    color:      completed ? "#fff"     : active ? "#3fb950"            : "#484f58",
+                                    border:     active    ? "1px solid rgba(63,185,80,.4)"            : "1px solid transparent",
+                                }}
+                            >
+                                {completed ? <Check style={{ width: 13, height: 13 }} /> : step}
+                            </span>
+                            <span className="text-xs font-medium hidden sm:block" style={{ color: active ? "#e6edf3" : "#484f58" }}>
+                                {step === 1 ? "Informasi Dasar" : "Bid Fields & Bobot"}
+                            </span>
+                        </button>
+                    );
+                })}
+                <div className="flex-1 h-px" style={{ background: "rgba(99,115,138,.15)" }} />
+            </div>
+
+            {/* Error */}
+            {error && (
+                <div
+                    className="flex items-start gap-2 p-4 rounded-xl text-sm animate-fade-in"
+                    style={{ background: "rgba(248,81,73,.08)", border: "1px solid rgba(248,81,73,.22)", color: "#f85149" }}
+                >
+                    <AlertCircle style={{ width: 15, height: 15, flexShrink: 0, marginTop: 1 }} />
+                    {error}
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-                {/* 1. Basic Tender Information */}
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center gap-2 text-base font-bold text-white border-b border-slate-800 pb-3">
-                        <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-                        <span>1. Informasi Dasar Tender</span>
+            {/* Success */}
+            {success && (
+                <div
+                    className="flex items-center gap-3 p-4 rounded-xl text-sm font-medium animate-fade-in"
+                    style={{ background: "rgba(63,185,80,.1)", border: "1px solid rgba(63,185,80,.25)", color: "#3fb950" }}
+                >
+                    <Check style={{ width: 18, height: 18 }} />
+                    Tender berhasil dibuat! Mengalihkan ke katalog...
+                </div>
+            )}
+
+            {/* ══════ STEP 1 ══════ */}
+            {currentStep === 1 && (
+                <div className="surface p-6 space-y-5">
+                    <h2
+                        className="text-sm font-semibold"
+                        style={{ color: "#e6edf3", borderBottom: "1px solid rgba(99,115,138,.12)", paddingBottom: 12 }}
+                    >
+                        Informasi Dasar Tender
+                    </h2>
+
+                    <div>
+                        <label className="form-label">Judul Tender <span style={{ color: "#f85149" }}>*</span></label>
+                        <input
+                            type="text" required
+                            placeholder="mis. Pengadaan 100 Laptop High Performance..."
+                            value={title}
+                            onChange={(e) => setTitle(e.target.value)}
+                            className="form-input"
+                        />
                     </div>
 
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-xs font-semibold text-slate-300">Judul Tender</label>
-                            <input
-                                type="text"
-                                required
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Contoh: Pengadaan 100 Workstation Laptop..."
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="form-label">Kode Tender</label>
+                            <input type="text" value={code} onChange={(e) => setCode(e.target.value)} className="form-input form-input-mono" />
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Kode Unik Tender</label>
-                            <input
-                                type="text"
-                                required
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-emerald-400 focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Kategori Pengadaan</label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none"
-                            >
-                                <option value="Hardware & IT">Hardware & IT</option>
-                                <option value="Software Development">Software Development</option>
-                                <option value="Cybersecurity">Cybersecurity</option>
-                                <option value="Cloud Infrastructure">Cloud Infrastructure</option>
-                                <option value="Konstruksi & Fasilitas">Konstruksi & Fasilitas</option>
+                        <div>
+                            <label className="form-label">Kategori</label>
+                            <select value={category} onChange={(e) => setCategory(e.target.value)} className="form-input" style={{ cursor: "pointer" }}>
+                                {CATEGORY_OPTIONS.map((c) => <option key={c} value={c}>{c}</option>)}
                             </select>
                         </div>
+                    </div>
 
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-xs font-semibold text-slate-300">Deskripsi Ringkas Tender</label>
-                            <textarea
-                                rows={3}
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Jelaskan kebutuhan, ruang lingkup, dan ketentuan tender..."
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
+                    <div>
+                        <label className="form-label">Deskripsi Tender</label>
+                        <textarea
+                            rows={3}
+                            placeholder="Jelaskan ruang lingkup, ketentuan, dan kebutuhan pengadaan..."
+                            value={description}
+                            onChange={(e) => setDescription(e.target.value)}
+                            className="form-input"
+                            style={{ resize: "vertical", minHeight: 80 }}
+                        />
+                    </div>
+
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div>
+                            <label className="form-label">Commit Deadline <span style={{ color: "#f85149" }}>*</span></label>
+                            <input type="datetime-local" required value={commitDeadline} onChange={(e) => setCommitDeadline(e.target.value)} className="form-input" />
+                            <p className="text-xs mt-1.5" style={{ color: "#484f58" }}>Batas waktu vendor submit commitment hash</p>
                         </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-emerald-400" /> Batas Akhir Submit (Commit Deadline)
-                            </label>
-                            <input
-                                type="datetime-local"
-                                required
-                                value={commitDeadline}
-                                onChange={(e) => setCommitDeadline(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Durasi Reveal Window (Jam)</label>
-                            <input
-                                type="number"
-                                required
-                                value={revealWindowHours}
-                                onChange={(e) => setRevealWindowHours(Number(e.target.value))}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                            <p className="text-[11px] text-slate-500">
-                                Waktu yang diberikan bagi vendor untuk melakukan dekripsi penawaran
-                            </p>
+                        <div>
+                            <label className="form-label">Reveal Window (Jam)</label>
+                            <input type="number" min={1} max={168} value={revealWindowHours} onChange={(e) => setRevealWindowHours(Number(e.target.value))} className="form-input" />
+                            <p className="text-xs mt-1.5" style={{ color: "#484f58" }}>Durasi waktu vendor melakukan dekripsi</p>
                         </div>
                     </div>
-                </div>
 
-                {/* 2. Dynamic Bid Fields Builder */}
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <div className="flex items-center gap-2 text-base font-bold text-white">
-                            <Layers className="w-5 h-5 text-cyan-400" />
-                            <span>2. Builder Form Bid Dinamis (Dynamic Bid Fields)</span>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleAddField}
-                            className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 flex items-center gap-1.5 transition-colors"
-                        >
-                            <PlusCircle className="w-3.5 h-3.5" /> Tambah Field Input
+                    <div className="flex justify-end pt-2">
+                        <button type="button" disabled={!step1Valid} onClick={() => setCurrentStep(2)} className="btn btn-primary">
+                            Lanjut ke Bid Fields →
                         </button>
                     </div>
+                </div>
+            )}
 
-                    <p className="text-xs text-slate-400">
-                        Atur input field yang wajib diisi oleh vendor saat mengirimkan penawaran terenkripsi.
-                    </p>
-
-                    <div className="space-y-3">
-                        {fields.map((field, idx) => (
-                            <div
-                                key={field.id}
-                                className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 flex flex-col sm:flex-row sm:items-center justify-between gap-3"
-                            >
-                                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3 flex-1">
-                                    <input
-                                        type="text"
-                                        placeholder="Label Field (mis. Harga Total)"
-                                        value={field.name}
-                                        onChange={(e) => {
-                                            const updated = [...fields];
-                                            updated[idx].name = e.target.value;
-                                            setFields(updated);
-                                        }}
-                                        className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none"
-                                    />
-
-                                    <input
-                                        type="text"
-                                        placeholder="Key JSON (mis. harga_total)"
-                                        value={field.key}
-                                        onChange={(e) => {
-                                            const updated = [...fields];
-                                            updated[idx].key = e.target.value;
-                                            setFields(updated);
-                                        }}
-                                        className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-mono text-cyan-400 focus:outline-none"
-                                    />
-
-                                    <select
-                                        value={field.type}
-                                        onChange={(e) => {
-                                            const updated = [...fields];
-                                            updated[idx].type = e.target.value as DynamicField["type"];
-                                            setFields(updated);
-                                        }}
-                                        className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs text-white focus:outline-none"
-                                    >
-                                        <option value="currency">Currency (Mata Uang)</option>
-                                        <option value="text">Text / String</option>
-                                        <option value="number">Number (Angka)</option>
-                                        <option value="file">File Proposal (PDF)</option>
-                                        <option value="select">Select Dropdown</option>
-                                    </select>
-                                </div>
-
-                                <button
-                                    type="button"
-                                    onClick={() => handleRemoveField(field.id)}
-                                    className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors self-end sm:self-center"
-                                >
-                                    <Trash2 className="w-4 h-4" />
-                                </button>
+            {/* ══════ STEP 2 ══════ */}
+            {currentStep === 2 && (
+                <div className="space-y-5">
+                    <div className="surface p-6 space-y-5">
+                        {/* Header */}
+                        <div
+                            className="flex items-center justify-between"
+                            style={{ borderBottom: "1px solid rgba(99,115,138,.12)", paddingBottom: 12 }}
+                        >
+                            <div>
+                                <h2 className="text-sm font-semibold" style={{ color: "#e6edf3" }}>
+                                    Bid Fields & Bobot Penilaian
+                                </h2>
+                                <p className="text-xs mt-0.5" style={{ color: "#7d8590" }}>
+                                    Setiap field input memiliki bobot penilaian yang terikat langsung — tidak bisa mismatch.
+                                </p>
                             </div>
-                        ))}
-                    </div>
-                </div>
-
-                {/* 3. Evaluation Criteria & Weighting Builder */}
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <div className="flex items-center gap-2 text-base font-bold text-white">
-                            <Percent className="w-5 h-5 text-purple-400" />
-                            <span>3. Kriteria & Bobot Penilaian (Scoring Engine)</span>
+                            <button type="button" onClick={addField} className="btn btn-ghost btn-sm">
+                                <PlusCircle style={{ width: 13, height: 13 }} /> Tambah Aspek
+                            </button>
                         </div>
-                        <button
-                            type="button"
-                            onClick={handleAddCriterion}
-                            className="px-3 py-1.5 rounded-lg bg-purple-500/10 hover:bg-purple-500/20 text-purple-400 text-xs font-semibold border border-purple-500/30 flex items-center gap-1.5 transition-colors"
-                        >
-                            <PlusCircle className="w-3.5 h-3.5" /> Tambah Kriteria
-                        </button>
-                    </div>
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <span className="text-xs font-semibold text-slate-300">Total Bobot Penilaian:</span>
-                        <span
-                            className={`text-sm font-bold ${
-                                totalWeight === 100 ? "text-emerald-400" : "text-amber-400"
-                            }`}
+                        {/* Weight bar */}
+                        <div
+                            className="flex items-center justify-between p-3 rounded-lg"
+                            style={{
+                                background: weightOk ? "rgba(63,185,80,.07)" : "rgba(210,153,34,.07)",
+                                border: `1px solid ${weightOk ? "rgba(63,185,80,.2)" : "rgba(210,153,34,.2)"}`,
+                            }}
                         >
-                            {totalWeight}% / 100% {totalWeight !== 100 && "(Harus 100%)"}
-                        </span>
-                    </div>
-
-                    <div className="space-y-3">
-                        {criteria.map((criterion, idx) => (
-                            <div
-                                key={criterion.id}
-                                className="p-4 rounded-xl bg-slate-900/80 border border-slate-800 space-y-3"
-                            >
-                                <div className="flex items-center justify-between gap-3">
-                                    <input
-                                        type="text"
-                                        placeholder="Nama Kriteria (mis. Aspek Harga)"
-                                        value={criterion.name}
-                                        onChange={(e) => {
-                                            const updated = [...criteria];
-                                            updated[idx].name = e.target.value;
-                                            setCriteria(updated);
+                            <div className="flex items-center gap-2 text-xs font-medium" style={{ color: "#8b949e" }}>
+                                {weightOk
+                                    ? <Check style={{ width: 14, height: 14, color: "#3fb950" }} />
+                                    : <AlertCircle style={{ width: 14, height: 14, color: "#e3b341" }} />
+                                }
+                                Total Bobot Penilaian
+                            </div>
+                            <div className="flex items-center gap-2">
+                                <div className="progress-bar w-28">
+                                    <div
+                                        className="progress-fill"
+                                        style={{
+                                            width: `${Math.min(totalWeight, 100)}%`,
+                                            background: weightOk
+                                                ? "linear-gradient(90deg, #238636, #3fb950)"
+                                                : "linear-gradient(90deg, #9e6a03, #e3b341)",
                                         }}
-                                        className="px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-bold text-white focus:outline-none flex-1"
                                     />
+                                </div>
+                                <span className="text-xs font-bold tabular-nums" style={{ color: weightOk ? "#3fb950" : "#e3b341" }}>
+                                    {totalWeight}%
+                                    {!weightOk && <span className="font-normal ml-1" style={{ color: "#7d8590" }}>(harus 100%)</span>}
+                                </span>
+                            </div>
+                        </div>
 
-                                    <div className="flex items-center gap-2">
-                                        <span className="text-xs text-slate-400">Bobot:</span>
+                        {/* Column Headers */}
+                        <div
+                            className="grid gap-3 px-1 pb-1"
+                            style={{ gridTemplateColumns: "1.5fr 1fr 0.9fr 80px 32px", borderBottom: "1px solid rgba(99,115,138,.1)" }}
+                        >
+                            {["Label / Nama Aspek", "JSON Key", "Tipe Data", "Bobot %", ""].map((h) => (
+                                <span key={h} className="text-label">{h}</span>
+                            ))}
+                        </div>
+
+                        {/* Fields */}
+                        <div className="space-y-3">
+                            {fields.map((field, idx) => (
+                                <div key={field.id} className="space-y-2">
+                                    <div className="grid gap-3 items-center" style={{ gridTemplateColumns: "1.5fr 1fr 0.9fr 80px 32px" }}>
                                         <input
-                                            type="number"
-                                            value={criterion.weight}
-                                            onChange={(e) => {
-                                                const updated = [...criteria];
-                                                updated[idx].weight = Number(e.target.value);
-                                                setCriteria(updated);
-                                            }}
-                                            className="w-20 px-3 py-1.5 rounded-lg bg-slate-950 border border-slate-800 text-xs font-bold text-purple-400 text-center focus:outline-none"
+                                            type="text" placeholder="Nama aspek"
+                                            value={field.name}
+                                            onChange={(e) => updateField(idx, "name", e.target.value)}
+                                            className="form-input" style={{ height: 36 }}
                                         />
-                                        <span className="text-xs text-purple-400 font-bold">%</span>
+                                        <input
+                                            type="text" placeholder="json_key"
+                                            value={field.key}
+                                            onChange={(e) => updateField(idx, "key", e.target.value)}
+                                            className="form-input form-input-mono" style={{ height: 36 }}
+                                        />
+                                        <select
+                                            value={field.type}
+                                            onChange={(e) => updateField(idx, "type", e.target.value)}
+                                            className="form-input" style={{ height: 36, cursor: "pointer", fontSize: 12 }}
+                                        >
+                                            {TYPE_OPTIONS.map((o) => <option key={o.value} value={o.value}>{o.label}</option>)}
+                                        </select>
+                                        <div className="relative">
+                                            <input
+                                                type="number" min={0} max={100}
+                                                value={field.weight}
+                                                onChange={(e) => updateField(idx, "weight", Number(e.target.value))}
+                                                className="form-input text-center font-bold tabular-nums"
+                                                style={{ height: 36, color: "#bc8cff", paddingRight: 22, fontSize: 13 }}
+                                            />
+                                            <span className="absolute right-2.5 top-1/2 -translate-y-1/2 text-xs font-bold" style={{ color: "#bc8cff", pointerEvents: "none" }}>%</span>
+                                        </div>
+                                        <button
+                                            type="button"
+                                            onClick={() => removeField(field.id)}
+                                            className="w-8 h-8 flex items-center justify-center rounded-md transition-all"
+                                            style={{ color: "#484f58" }}
+                                            onMouseEnter={(e) => {
+                                                (e.currentTarget as HTMLElement).style.color = "#f85149";
+                                                (e.currentTarget as HTMLElement).style.background = "rgba(248,81,73,.1)";
+                                            }}
+                                            onMouseLeave={(e) => {
+                                                (e.currentTarget as HTMLElement).style.color = "#484f58";
+                                                (e.currentTarget as HTMLElement).style.background = "transparent";
+                                            }}
+                                        >
+                                            <Trash2 style={{ width: 13, height: 13 }} />
+                                        </button>
                                     </div>
-
-                                    <button
-                                        type="button"
-                                        onClick={() => handleRemoveCriterion(criterion.id)}
-                                        className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                    >
-                                        <Trash2 className="w-4 h-4" />
-                                    </button>
+                                    <input
+                                        type="text"
+                                        placeholder={`Panduan penilaian untuk evaluator (opsional)...`}
+                                        value={field.description ?? ""}
+                                        onChange={(e) => updateField(idx, "description", e.target.value)}
+                                        className="form-input"
+                                        style={{ height: 30, fontSize: 12, color: "#7d8590" }}
+                                    />
                                 </div>
+                            ))}
+                        </div>
+                    </div>
 
-                                <input
-                                    type="text"
-                                    placeholder="Penjelasan/panduan penilaian untuk evaluator..."
-                                    value={criterion.description}
-                                    onChange={(e) => {
-                                        const updated = [...criteria];
-                                        updated[idx].description = e.target.value;
-                                        setCriteria(updated);
-                                    }}
-                                    className="w-full px-3 py-1.5 rounded-lg bg-slate-950/60 border border-slate-800/80 text-xs text-slate-400 focus:outline-none"
-                                />
-                            </div>
-                        ))}
+                    {/* Actions */}
+                    <div className="flex items-center justify-between">
+                        <button type="button" onClick={() => setCurrentStep(1)} className="btn btn-ghost">
+                            ← Kembali
+                        </button>
+                        <div className="flex items-center gap-3">
+                            <Link href="/tenders" className="btn btn-ghost">Batal</Link>
+                            <button
+                                type="button"
+                                disabled={loading || !weightOk || success}
+                                onClick={handleSubmit}
+                                className="btn btn-primary"
+                            >
+                                {loading ? (
+                                    <>
+                                        <span className="w-3.5 h-3.5 rounded-full border-2 border-white/30 border-t-white animate-spin inline-block" />
+                                        Menyimpan ke Database...
+                                    </>
+                                ) : (
+                                    <>
+                                        <Check style={{ width: 14, height: 14 }} />
+                                        Publikasikan Tender
+                                    </>
+                                )}
+                            </button>
+                        </div>
                     </div>
                 </div>
-
-                {/* Submit Action */}
-                <div className="flex items-center justify-end gap-4 pt-4">
-                    <Link
-                        href="/tenders"
-                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
-                    >
-                        Batal
-                    </Link>
-
-                    <button
-                        type="submit"
-                        disabled={loading}
-                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 text-slate-950 font-bold text-xs hover:opacity-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-50"
-                    >
-                        <Save className="w-4 h-4" />
-                        {loading ? "Menyimpan..." : "Publikasikan Tender"}
-                    </button>
-                </div>
-            </form>
+            )}
         </div>
     );
 }

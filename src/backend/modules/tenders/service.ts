@@ -27,6 +27,40 @@ export abstract class TenderService {
             updatedAt: now,
         });
 
+        if (data.fields && data.fields.length > 0) {
+            for (let i = 0; i < data.fields.length; i++) {
+                const f = data.fields[i];
+                await db.insert(tenderFields).values({
+                    id: crypto.randomUUID(),
+                    tenderId,
+                    name: f.name,
+                    key: f.key,
+                    type: f.type,
+                    required: f.required ?? true,
+                    sortOrder: i,
+                    createdAt: now,
+                });
+            }
+        }
+
+        if (data.criteria && data.criteria.length > 0) {
+            for (let i = 0; i < data.criteria.length; i++) {
+                const c = data.criteria[i];
+                await db.insert(tenderCriteria).values({
+                    id: crypto.randomUUID(),
+                    tenderId,
+                    name: c.name,
+                    description: c.description,
+                    weight: c.weight.toString(),
+                    scoringType: "MANUAL",
+                    maxScore: (c.maxScore ?? 100).toString(),
+                    sortOrder: i,
+                    createdAt: now,
+                    updatedAt: now,
+                });
+            }
+        }
+
         return { id: tenderId };
     }
 

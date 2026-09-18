@@ -17,6 +17,20 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
     )
 
     .get(
+        "/by-user/:userId",
+        async ({ params }) => {
+            return await OrganizationService.getByUserId(params.userId);
+        },
+        {
+            params: t.Object({ userId: t.String() }),
+            detail: {
+                summary: "Get organizations by user ID",
+                description: "Mengambil daftar organisasi yang diikuti oleh user tertentu berdasarkan keanggotaan.",
+            },
+        },
+    )
+
+    .get(
         "/:id",
         async ({ params, set }) => {
             const data = await OrganizationService.getById(params.id);
@@ -37,9 +51,17 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
 
     .post(
         "/",
-        async ({ body, set }) => {
-            // Note: creator ID static placeholder or resolve from session context
-            const result = await OrganizationService.create(body, "system-user");
+        async ({ body, set, request }) => {
+            // Extract user from better-auth session cookie
+            const cookieHeader = request.headers.get("cookie") ?? "";
+            const sessionToken = cookieHeader
+                .split(";")
+                .map((c) => c.trim())
+                .find((c) => c.startsWith("better-auth.session_token="))
+                ?.split("=")[1];
+
+            const creatorId = sessionToken ?? "system-user";
+            const result = await OrganizationService.create(body, creatorId);
             set.status = 201;
             return { message: "Organization created successfully", data: result };
         },
