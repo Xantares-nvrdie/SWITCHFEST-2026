@@ -16,8 +16,6 @@ export const requireAuth = async ({ request, set }: Context) => {
         set.status = 401;
         return { message: "Unauthorized: Please login to continue" };
     }
-    // Attach to context for downstream guards
-    (request as Record<string, unknown>).__session = session;
 };
 
 // ─── Org-scoped Role Guards ──────────────────────────────────────────────────

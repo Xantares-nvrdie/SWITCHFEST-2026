@@ -7,6 +7,7 @@ export * from "./enums";
 // Organizations
 export * from "./organizations";
 export * from "./organization-members";
+export * from "./organization-invites";
 
 // Tenders
 export * from "./tenders";
@@ -21,3 +22,6 @@ export * from "./procurement";
 
 // Audit
 export * from "./audit-logs";
+
+// Drizzle relations (required for with:{} eager loading)
+export * from "./relations";
