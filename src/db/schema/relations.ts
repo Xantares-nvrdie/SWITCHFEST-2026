@@ -22,6 +22,7 @@ export const userWalletsRelations = relations(userWallets, ({ one }) => ({
 // ─── Organization Relations ───────────────────────────────────────────────────
 export const organizationsRelations = relations(organizations, ({ many }) => ({
     members: many(organizationMembers),
+    invites: many(organizationInvites),
     tenders: many(tenders),
     tenderParticipants: many(tenderParticipants),
 }));
@@ -36,6 +37,18 @@ export const organizationMembersRelations = relations(organizationMembers, ({ on
         references: [user.id],
     }),
 }));
+
+export const organizationInvitesRelations = relations(organizationInvites, ({ one }) => ({
+    organization: one(organizations, {
+        fields: [organizationInvites.organizationId],
+        references: [organizations.id],
+    }),
+    createdBy: one(user, {
+        fields: [organizationInvites.createdBy],
+        references: [user.id],
+    }),
+}));
+
 
 // ─── Tender Relations ─────────────────────────────────────────────────────────
 export const tendersRelations = relations(tenders, ({ one, many }) => ({

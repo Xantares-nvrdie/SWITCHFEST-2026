@@ -2,6 +2,7 @@ import { fromTypes, openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 import baseRoute from "@/backend/modules/base";
 import organizationsModule from "@/backend/modules/organizations";
+import invitesModule, { joinViaInviteModule } from "@/backend/modules/organizations/invites";
 import tendersModule from "@/backend/modules/tenders";
 import tenderParticipantsModule from "@/backend/modules/tender-participants";
 import bidsModule from "@/backend/modules/bids";
@@ -46,6 +47,8 @@ export const app = new Elysia({ prefix: "/api" })
     /* FEATURE MODULES */
     .use(baseRoute)
     .use(organizationsModule)
+    .use(invitesModule)
+    .use(joinViaInviteModule)
     .use(tendersModule)
     .use(tenderParticipantsModule)
     .use(bidsModule)
