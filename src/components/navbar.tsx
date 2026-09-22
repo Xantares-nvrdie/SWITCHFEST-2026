@@ -136,9 +136,22 @@ export default function Navbar() {
                                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
                             }`}
                         >
-                            <History className="w-4 h-4 text-amber-400" />
+                            <History className="w-4 h-4 text-emerald-400" />
                             Audit Trail
                         </Link>
+
+                        <Link
+                            href="/admin"
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                pathname.startsWith("/admin")
+                                    ? "bg-slate-800 text-amber-300 border border-amber-500/30"
+                                    : "text-amber-400/90 hover:text-amber-300 hover:bg-slate-900"
+                            }`}
+                        >
+                            <ShieldCheck className="w-4 h-4 text-amber-400" />
+                            Admin Control
+                        </Link>
+
 
                         <a
                             href="/api/labs"
