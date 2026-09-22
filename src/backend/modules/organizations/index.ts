@@ -1,8 +1,14 @@
 import { Elysia, t } from "elysia";
 import { OrganizationModel } from "./model";
 import { OrganizationService } from "./service";
+import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
+import { db } from "@/db";
+import { organizationMembers, organizations } from "@/db/schema";
+import { eq } from "drizzle-orm";
 
 const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organizations"] })
+    .use(betterAuthMiddleware)
+
     .get(
         "/",
         async () => {
@@ -12,6 +18,35 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
             detail: {
                 summary: "Get all organizations",
                 description: "Mengambil daftar seluruh organisasi yang terdaftar di TenderSeal.",
+            },
+        },
+    )
+
+    // Get organizations that the current logged-in user belongs to
+    .get(
+        "/me",
+        async ({ user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const memberships = await db.query.organizationMembers.findMany({
+                where: (m, { eq }) => eq(m.userId, user.id),
+                with: { organization: true },
+            });
+
+            return memberships.map((m) => ({
+                ...m.organization,
+                memberRole: m.role,
+                memberStatus: m.status,
+            }));
+        },
+        {
+            auth: true,
+            detail: {
+                summary: "Get my organizations",
+                description: "Mengambil daftar organisasi yang diikuti oleh user yang sedang login.",
             },
         },
     )
@@ -37,13 +72,17 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
 
     .post(
         "/",
-        async ({ body, set }) => {
-            // Note: creator ID static placeholder or resolve from session context
-            const result = await OrganizationService.create(body, "system-user");
+        async ({ body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+            const result = await OrganizationService.create(body, user.id);
             set.status = 201;
             return { message: "Organization created successfully", data: result };
         },
         {
+            auth: true,
             body: OrganizationModel.createBody,
             detail: {
                 summary: "Create a new organization",
