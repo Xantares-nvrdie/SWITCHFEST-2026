@@ -4,7 +4,8 @@ import { eq } from "drizzle-orm";
 import type { TenderModel } from "./model";
 
 export abstract class TenderService {
-    static async create(data: TenderModel.createInput) {
+    static async create(data: TenderModel.createInput & { createdBy: string }) {
+
         const tenderId = crypto.randomUUID();
         const now = new Date();
         const commitDeadlineDate = new Date(data.commitDeadline);
