@@ -6,7 +6,7 @@ import { organizationInvites } from "./organization-invites";
 import { tenders } from "./tenders";
 import { tenderParticipants } from "./tender-participants";
 import { tenderCriteria } from "./tender-criteria";
-import { bids } from "./bids";
+import { bidCrypto, bidReveals, bids, encryptedBids } from "./bids";
 
 // ─── User Relations ───────────────────────────────────────────────────────────
 export const userRelations = relations(user, ({ many }) => ({
@@ -20,12 +20,17 @@ export const userWalletsRelations = relations(userWallets, ({ one }) => ({
 }));
 
 // ─── Organization Relations ───────────────────────────────────────────────────
-export const organizationsRelations = relations(organizations, ({ many }) => ({
+export const organizationsRelations = relations(organizations, ({ one, many }) => ({
     members: many(organizationMembers),
     invites: many(organizationInvites),
     tenders: many(tenders),
     tenderParticipants: many(tenderParticipants),
+    verifier: one(user, {
+        fields: [organizations.verifiedBy],
+        references: [user.id],
+    }),
 }));
+
 
 export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
     organization: one(organizations, {
@@ -57,6 +62,10 @@ export const tendersRelations = relations(tenders, ({ one, many }) => ({
         references: [organizations.id],
     }),
     createdBy: one(user, {
+        fields: [tenders.createdBy],
+        references: [user.id],
+    }),
+    creator: one(user, {
         fields: [tenders.createdBy],
         references: [user.id],
     }),
@@ -93,4 +102,38 @@ export const bidsRelations = relations(bids, ({ one }) => ({
         fields: [bids.organizationId],
         references: [organizations.id],
     }),
+    crypto: one(bidCrypto, {
+        fields: [bids.id],
+        references: [bidCrypto.bidId],
+    }),
+    encryptedPayload: one(encryptedBids, {
+        fields: [bids.id],
+        references: [encryptedBids.bidId],
+    }),
+    reveal: one(bidReveals, {
+        fields: [bids.id],
+        references: [bidReveals.bidId],
+    }),
 }));
+
+export const bidCryptoRelations = relations(bidCrypto, ({ one }) => ({
+    bid: one(bids, {
+        fields: [bidCrypto.bidId],
+        references: [bids.id],
+    }),
+}));
+
+export const encryptedBidsRelations = relations(encryptedBids, ({ one }) => ({
+    bid: one(bids, {
+        fields: [encryptedBids.bidId],
+        references: [bids.id],
+    }),
+}));
+
+export const bidRevealsRelations = relations(bidReveals, ({ one }) => ({
+    bid: one(bids, {
+        fields: [bidReveals.bidId],
+        references: [bids.id],
+    }),
+}));
+

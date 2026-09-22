@@ -107,6 +107,28 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
         },
     )
 
+    .patch(
+        "/:id/verify",
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+            await OrganizationService.verify(params.id, body, user.id);
+            return { message: `Organization ${body.status.toLowerCase()} successfully` };
+        },
+        {
+            auth: true,
+            params: t.Object({ id: t.String() }),
+            body: OrganizationModel.verifyBody,
+            detail: {
+                summary: "Verify/Approve organization",
+                description: "Menyetujui (Approve) atau Menolak (Reject) verifikasi organisasi oleh Admin TenderSeal.",
+            },
+        },
+    )
+
+
     .post(
         "/:id/members",
         async ({ params, body, set }) => {
