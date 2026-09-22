@@ -93,73 +93,101 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
 
     .patch(
         "/:id",
-        async ({ params, body }) => {
-            await OrganizationService.update(params.id, body);
-            return { message: "Organization updated successfully" };
-        },
-        {
-            params: t.Object({ id: t.String() }),
-            body: OrganizationModel.updateBody,
-            detail: {
-                summary: "Update organization details",
-                description: "Memperbarui informasi profil atau status aktif organisasi.",
-            },
-        },
-    )
-
-    .patch(
-        "/:id/verify",
         async ({ params, body, user, set }) => {
             if (!user) {
                 set.status = 401;
                 return { message: "Unauthorized" };
             }
-            await OrganizationService.verify(params.id, body, user.id);
-            return { message: `Organization ${body.status.toLowerCase()} successfully` };
+
+            // Check if user is ORGANIZATION_ADMIN of this organization
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, params.id), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || member.role !== "ORGANIZATION_ADMIN") {
+                set.status = 403;
+                return { message: "Forbidden: Only Organization Admins can update organization profile" };
+            }
+
+            await OrganizationService.update(params.id, body);
+            return { message: "Organization updated successfully" };
         },
         {
             auth: true,
             params: t.Object({ id: t.String() }),
-            body: OrganizationModel.verifyBody,
+            body: OrganizationModel.updateBody,
             detail: {
-                summary: "Verify/Approve organization",
-                description: "Menyetujui (Approve) atau Menolak (Reject) verifikasi organisasi oleh Admin TenderSeal.",
+                summary: "Update organization details",
+                description: "Memperbarui informasi profil organisasi (Hanya Admin Organisasi).",
             },
         },
     )
 
-
     .post(
         "/:id/members",
-        async ({ params, body, set }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, params.id), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || member.role !== "ORGANIZATION_ADMIN") {
+                set.status = 403;
+                return { message: "Forbidden: Only Organization Admins can add members" };
+            }
+
             const result = await OrganizationService.addMember(params.id, body);
             set.status = 201;
             return { message: "Member added successfully", data: result };
         },
         {
+            auth: true,
             params: t.Object({ id: t.String() }),
             body: OrganizationModel.addMemberBody,
             detail: {
                 summary: "Add member to organization",
-                description: "Menambahkan anggota baru ke organisasi dengan role tertentu.",
+                description: "Menambahkan anggota baru ke organisasi dengan role tertentu (Hanya Admin Organisasi).",
             },
         },
     )
 
     .patch(
         "/:id/members/:memberId",
-        async ({ params, body }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const admin = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, params.id), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!admin || admin.role !== "ORGANIZATION_ADMIN") {
+                set.status = 403;
+                return { message: "Forbidden: Only Organization Admins can update member role/status" };
+            }
+
             await OrganizationService.updateMember(params.memberId, body);
             return { message: "Organization member updated successfully" };
         },
         {
+            auth: true,
             params: t.Object({ id: t.String(), memberId: t.String() }),
             body: OrganizationModel.updateMemberBody,
             detail: {
                 summary: "Update organization member",
-                description: "Memperbarui role atau status keanggotaan seseorang dalam organisasi.",
+                description: "Memperbarui role atau status keanggotaan seseorang dalam organisasi (Hanya Admin Organisasi).",
             },
         },
     );
+
 
 export default organizationsModule;

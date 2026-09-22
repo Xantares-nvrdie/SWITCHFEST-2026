@@ -10,8 +10,10 @@
         "format": "biome format --write",
         "db:generate": "drizzle-kit generate",
         "db:push": "drizzle-kit push",
-        "db:studio": "drizzle-kit studio"
+        "db:studio": "drizzle-kit studio",
+        "db:seed": "bun run src/db/seed.ts"
     },
+
     "dependencies": {
         "@elysiajs/openapi": "^1.4.11",
         "better-auth": "^1.4.7",

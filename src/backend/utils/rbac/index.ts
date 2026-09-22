@@ -18,6 +18,24 @@ export const requireAuth = async ({ request, set }: Context) => {
     }
 };
 
+/**
+ * Requires a valid session with system role = 'admin'.
+ * Returns 401 if unauthenticated, 403 if user is not system admin.
+ */
+export const requireSystemAdmin = async ({ request, set }: Context) => {
+    const session = await auth.api.getSession({ headers: request.headers });
+    if (!session) {
+        set.status = 401;
+        return { message: "Unauthorized: Please login to continue" };
+    }
+    if (session.user.role !== "admin") {
+        set.status = 403;
+        return { message: "Forbidden: TenderSeal System Admin access required" };
+    }
+};
+
+
+
 // ─── Org-scoped Role Guards ──────────────────────────────────────────────────
 
 /**
