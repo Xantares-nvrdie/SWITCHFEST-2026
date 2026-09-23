@@ -98,6 +98,11 @@ export default function TenderDetailPage() {
     const [submittingBid, setSubmittingBid] = useState(false);
     const [submittedSealed, setSubmittedSealed] = useState(false);
 
+    // View Bid State
+    const [viewSecret, setViewSecret] = useState("");
+    const [viewingBid, setViewingBid] = useState(false);
+    const [viewResult, setViewResult] = useState<{ isValid: boolean; decryptedPayload: any; message: string } | null>(null);
+
     // Reveal Workbench State
     const [revealSecret, setRevealSecret] = useState("");
     const [revealing, setRevealing] = useState(false);
@@ -437,6 +442,39 @@ export default function TenderDetailPage() {
         }
     };
 
+    const handleViewBid = async () => {
+        setViewingBid(true);
+        setViewResult(null);
+        try {
+            if (!myBid || !myBid.crypto || !myBid.encryptedPayload) {
+                setViewResult({ isValid: false, decryptedPayload: null, message: "Tidak ada data enkripsi bid ditemukan."});
+                return;
+            }
+            
+            const decryptedPayload = await decryptBidPayload(
+                myBid.encryptedPayload.encryptedPayload,
+                myBid.crypto.encryptionIv,
+                viewSecret,
+                myBid.crypto.kdfSalt,
+                myBid.crypto.bidSalt
+            );
+
+            setViewResult({
+                isValid: true,
+                message: "Dekripsi berhasil! Berikut isi penawaran Anda:",
+                decryptedPayload
+            });
+        } catch (e: any) {
+            setViewResult({
+                isValid: false,
+                message: "Gagal mendekripsi: " + e.message + " (Mungkin PIN salah)",
+                decryptedPayload: null
+            });
+        } finally {
+            setViewingBid(false);
+        }
+    };
+
     const handleFinalizeWinner = async () => {
         if (!scoredBids || scoredBids.length === 0) {
             alert("Belum ada bid yang valid untuk dinilai.");
@@ -719,6 +757,65 @@ export default function TenderDetailPage() {
                                     </Link>
                                 </div>
                             </div>
+                        ) : submittedSealed ? (
+                            <div className="space-y-6">
+                                <div className="p-5 rounded-2xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] flex flex-col items-center justify-center text-center gap-3">
+                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                        <CheckCircle2 className="w-6 h-6 text-[var(--accent)]" />
+                                    </div>
+                                    <div>
+                                        <h3 className="font-bold text-base">Sealed Bid Berhasil Disubmit!</h3>
+                                        <p className="text-xs mt-1">Penawaran Anda telah dienkripsi dan terkunci di Blockchain.</p>
+                                    </div>
+                                </div>
+                                
+                                <div className="card p-5 rounded-2xl border-[var(--border)] space-y-4">
+                                    <h4 className="font-bold text-sm text-[var(--text-primary)] flex items-center gap-2">
+                                        <Eye className="w-4 h-4 text-[var(--accent)]" /> Lihat Isi Penawaran Anda
+                                    </h4>
+                                    <p className="text-xs text-[var(--text-tertiary)]">Masukkan Secret PIN yang Anda gunakan saat submit untuk mendekripsi dan melihat kembali isi penawaran Anda secara lokal.</p>
+                                    
+                                    <input
+                                        type="password"
+                                        value={viewSecret}
+                                        onChange={(e) => setViewSecret(e.target.value)}
+                                        placeholder="Secret PIN"
+                                        className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
+                                    />
+                                    <button
+                                        onClick={handleViewBid}
+                                        disabled={viewingBid || !viewSecret}
+                                        className="w-full py-2.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border)] hover:bg-[var(--surface)] text-[var(--text-primary)] font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                                    >
+                                        {viewingBid ? "Mendekripsi..." : <><Lock className="w-4 h-4" /> Buka Kriptografi</>}
+                                    </button>
+                                    
+                                    {viewResult && (
+                                        <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${viewResult.isValid ? 'bg-slate-50 text-slate-800 border border-slate-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
+                                            <div className="flex items-center gap-2">
+                                                {viewResult.isValid ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5" />}
+                                                {viewResult.message}
+                                            </div>
+                                            {viewResult.isValid && !!viewResult.decryptedPayload && (
+                                                <div className="space-y-2 mt-2">
+                                                    {tender.fields?.map((f: any) => (
+                                                        <div key={f.key} className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col gap-1 shadow-sm">
+                                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.name}</span>
+                                                            {f.type.toLowerCase() === 'file' && viewResult.decryptedPayload[f.key]?.includes("_isEncryptedFile") ? (
+                                                                <button onClick={() => handleDownloadEncryptedFile(viewResult.decryptedPayload[f.key])} className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1 self-start mt-1">
+                                                                    <Lock className="w-3.5 h-3.5" /> Unduh Dokumen Terenkripsi
+                                                                </button>
+                                                            ) : (
+                                                                <span className="text-xs font-mono text-slate-700 whitespace-pre-wrap">{String(viewResult.decryptedPayload[f.key] || '-')}</span>
+                                                            )}
+                                                        </div>
+                                                    ))}
+                                                </div>
+                                            )}
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
                         ) : (
                         <div className="space-y-4">
                             {/* Vendor Org Selector */}
@@ -805,10 +902,7 @@ export default function TenderDetailPage() {
                                     className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-cyan-900/50 text-sm text-[var(--accent)] focus:outline-none focus:border-cyan-400 transition-colors"
                                 />
                             </div>
-                        </div>
-                        )}
-                        
-                        {userWallet && !submittedSealed ? (
+                            
                             <button
                                 onClick={handleSubmitBid}
                                 disabled={submittingBid || userOrgs.length === 0}
@@ -826,10 +920,7 @@ export default function TenderDetailPage() {
                                     </>
                                 )}
                             </button>
-                        ) : (
-                            <div className="mt-6 w-full py-3.5 rounded-xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] font-bold text-sm flex items-center justify-center gap-2">
-                                <CheckCircle2 className="w-5 h-5" /> Sealed Bid Berhasil Disubmit ke Blockchain!
-                            </div>
+                        </div>
                         )}
                     </div>
                 </div>
