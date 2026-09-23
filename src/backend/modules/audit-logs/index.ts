@@ -2,6 +2,7 @@ import { Elysia, t } from "elysia";
 import { AuditLogModel } from "./model";
 import { AuditLogService } from "./service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
+import { requireSystemAdmin } from "@/backend/utils/rbac";
 
 const auditLogsModule = new Elysia({ prefix: "/audit-logs", tags: ["Audit Logs"] })
     .use(betterAuthMiddleware)
@@ -12,6 +13,7 @@ const auditLogsModule = new Elysia({ prefix: "/audit-logs", tags: ["Audit Logs"]
         },
         {
             auth: true,
+            beforeHandle: [requireSystemAdmin],
             detail: {
                 summary: "Get all audit logs",
                 description: "Mengambil seluruh riwayat log audit aktivitas sistem.",
@@ -26,6 +28,7 @@ const auditLogsModule = new Elysia({ prefix: "/audit-logs", tags: ["Audit Logs"]
         },
         {
             auth: true,
+            beforeHandle: [requireSystemAdmin],
             params: t.Object({ tenderId: t.String() }),
             detail: {
                 summary: "Get audit logs by tender ID",

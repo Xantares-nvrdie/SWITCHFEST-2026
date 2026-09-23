@@ -3,6 +3,7 @@ import { TenderModel } from "./model";
 import { TenderService } from "./service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 import { db } from "@/db";
+import { requireSystemAdmin } from "@/backend/utils/rbac";
 
 const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
     .use(betterAuthMiddleware)
@@ -281,6 +282,8 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             }
         },
         {
+            auth: true,
+            beforeHandle: [requireSystemAdmin],
             params: t.Object({ id: t.String() }),
             detail: {
                 summary: "Get Audit Log",
