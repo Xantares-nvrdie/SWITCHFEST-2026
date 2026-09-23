@@ -32,7 +32,14 @@ export abstract class TenderService {
     }
 
     static async getAll() {
-        return db.select().from(tenders);
+        return db.query.tenders.findMany({
+            with: {
+                organization: true,
+                participants: true,
+                bids: true,
+            },
+            orderBy: (tenders, { desc }) => [desc(tenders.createdAt)],
+        });
     }
 
     static async getById(id: string) {

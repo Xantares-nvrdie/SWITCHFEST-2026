@@ -1,6 +1,6 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useDemo } from "@/context/demo-context";
 import {
@@ -32,70 +32,37 @@ interface TenderItem {
     sealedBidsCount: number;
 }
 
-const mockTenders: TenderItem[] = [
-    {
-        id: "tnd-demo-001",
-        code: "TND-2026-001",
-        title: "Pengadaan 100 Laptop High Performance Workstation",
-        description:
-            "Pengadaan laptop workstation spesifikasi tinggi untuk tim software engineering & AI graphics design.",
-        category: "Hardware",
-        organizationName: "PT Global Tech Indonesia",
-        status: "OPEN",
-        commitDeadline: "2026-09-20T15:00:00Z",
-        revealWindowHours: 48,
-        participantCount: 5,
-        sealedBidsCount: 3,
-    },
-    {
-        id: "tnd-demo-002",
-        code: "TND-2026-002",
-        title: "Jasa Pembuatan & Development Platform E-Procurement Blockchain",
-        description:
-            "Pengadaan jasa konsultan dan software house untuk pembangunan platform tender digital terenkripsi.",
-        category: "Software Development",
-        organizationName: "Dinas Komunikasi & Informatika",
-        status: "REVEAL",
-        commitDeadline: "2026-09-15T12:00:00Z",
-        revealWindowHours: 24,
-        participantCount: 4,
-        sealedBidsCount: 4,
-    },
-    {
-        id: "tnd-demo-003",
-        code: "TND-2026-003",
-        title: "Pengadaan Lisensi Software Antivirus & Cyber Security Enterprise",
-        description:
-            "Pembelian 500 lisensi software perlindungan endpoints & cloud firewalls untuk infrastruktur instansi.",
-        category: "Cybersecurity",
-        organizationName: "PT Bank Nusa Mandiri",
-        status: "SCORING",
-        commitDeadline: "2026-09-10T17:00:00Z",
-        revealWindowHours: 48,
-        participantCount: 3,
-        sealedBidsCount: 3,
-    },
-    {
-        id: "tnd-demo-004",
-        code: "TND-2026-004",
-        title: "Pemeliharaan & Audit Rutin Cloud Infrastructure AWS/GCP",
-        description: "Jasa audit keamanan, pemeliharaan server Kubernetes, dan optimasi biaya cloud infrastruktur.",
-        category: "Cloud Infrastructure",
-        organizationName: "PT Logistik Nusantara",
-        status: "COMPLETED",
-        commitDeadline: "2026-08-30T10:00:00Z",
-        revealWindowHours: 48,
-        participantCount: 6,
-        sealedBidsCount: 6,
-    },
-];
-
 export default function TendersPage() {
     const { activeRole } = useDemo();
+    const [tenders, setTenders] = useState<TenderItem[]>([]);
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [searchQuery, setSearchQuery] = useState<string>("");
+    const [loading, setLoading] = useState(true);
 
-    const filteredTenders = mockTenders.filter((t) => {
+    useEffect(() => {
+        fetch("/api/tenders")
+            .then((res) => res.json())
+            .then((data) => {
+                const mapped: TenderItem[] = data.map((t: any) => ({
+                    id: t.id,
+                    code: t.code,
+                    title: t.title,
+                    description: t.description || "",
+                    category: t.category || "Uncategorized",
+                    organizationName: t.organization?.name || "Unknown Organization",
+                    status: t.status,
+                    commitDeadline: t.commitDeadline,
+                    revealWindowHours: t.revealWindowHours,
+                    participantCount: t.participants?.length || 0,
+                    sealedBidsCount: t.bids?.length || 0,
+                }));
+                setTenders(mapped);
+            })
+            .catch(console.error)
+            .finally(() => setLoading(false));
+    }, []);
+
+    const filteredTenders = tenders.filter((t) => {
         const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
         const matchesSearch =
             t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||

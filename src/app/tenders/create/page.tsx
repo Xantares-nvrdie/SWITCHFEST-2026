@@ -1,466 +1,1193 @@
 "use client";
 
-import { useState } from "react";
+import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 import {
-    PlusCircle,
-    Trash2,
-    Save,
     ArrowLeft,
-    Layers,
-    FileSpreadsheet,
-    HelpCircle,
+    ArrowRight,
+    Check,
     CheckCircle2,
     AlertCircle,
-    Clock,
+    Save,
+    Layers,
+    FileSpreadsheet,
+    Eye,
+    Wand2,
+    GripVertical,
+    Trash2,
+    PlusCircle,
+    ChevronRight,
+    Monitor,
+    Laptop,
+    Code2,
+    ShieldCheck,
+    Cloud,
+    Building2,
     Percent,
+    Clock,
+    Hash,
+    Type,
+    DollarSign,
+    ListChecks,
+    FileUp,
+    ToggleLeft,
+    Star,
+    Info,
+    Sparkles,
+    Copy,
+    TrendingDown,
+    TrendingUp,
+    ClipboardList,
 } from "lucide-react";
 
-interface Requirement {
+
+// ─── Types ───────────────────────────────────────────────────────────────────
+
+type FieldType = "text" | "number" | "currency" | "file" | "select" | "multi-select";
+type ScoringType = "MANUAL" | "LOWEST_PRICE" | "HIGHEST_VALUE";
+
+interface BidField {
     id: string;
     name: string;
-    key: string;
-    type: "text" | "number" | "currency" | "file" | "select" | "multi-select";
+    key: string; // auto-generated, never shown to user
+    type: FieldType;
     required: boolean;
+    helpText: string;
+    options?: string[];
+    // Scoring (merged — 1 field : 1 criterion)
+    scored: boolean;       // false = informatif saja, tidak dinilai
+    weight: number;        // 0–100, total semua harus 100
+    scoringType: ScoringType;
+    evaluatorGuide: string;
+}
+
+interface TenderFormData {
+    title: string;
+    code: string;
+    category: string;
     description: string;
-    weight: number;
-    maxScore: number;
+    commitDeadline: string;
+    revealWindowHours: number;
+    fields: BidField[];
+}
+
+// ─── Helpers ─────────────────────────────────────────────────────────────────
+
+function slugify(str: string): string {
+    return str
+        .toLowerCase()
+        .replace(/[^a-z0-9\s_]/g, "")
+        .replace(/\s+/g, "_")
+        .replace(/_+/g, "_")
+        .slice(0, 50);
+}
+
+function generateCode(): string {
+    return `TND-2026-${Math.floor(100 + Math.random() * 900)}`;
+}
+
+function generateId(): string {
+    return `${Date.now()}-${Math.random().toString(36).slice(2, 7)}`;
+}
+
+/** Smart default scoring type based on field type */
+function defaultScoringType(type: FieldType): ScoringType {
+    if (type === "currency") return "LOWEST_PRICE";
+    if (type === "number") return "LOWEST_PRICE";
+    return "MANUAL";
+}
+
+// ─── Field Type Meta ─────────────────────────────────────────────────────────
+
+const FIELD_TYPE_META: Record<FieldType, { label: string; icon: React.ReactNode; color: string }> = {
+    currency: { label: "Mata Uang (Rp)", icon: <DollarSign className="w-3.5 h-3.5" />, color: "text-emerald-400" },
+    text:     { label: "Teks",           icon: <Type className="w-3.5 h-3.5" />,        color: "text-blue-400"    },
+    number:   { label: "Angka",          icon: <Hash className="w-3.5 h-3.5" />,        color: "text-violet-400"  },
+    file:     { label: "File / Dokumen", icon: <FileUp className="w-3.5 h-3.5" />,      color: "text-amber-400"   },
+    select:   { label: "Pilihan Tunggal",icon: <ToggleLeft className="w-3.5 h-3.5" />,  color: "text-cyan-400"    },
+    "multi-select": { label: "Pilihan Ganda", icon: <ListChecks className="w-3.5 h-3.5" />, color: "text-pink-400" },
+};
+
+const SCORING_META: Record<ScoringType, { label: string; icon: React.ReactNode; color: string; desc: string }> = {
+    LOWEST_PRICE: {
+        label: "Nilai Terendah Terbaik",
+        icon: <TrendingDown className="w-3.5 h-3.5" />,
+        color: "text-emerald-400",
+        desc: "Nilai terkecil (mis. harga, hari) mendapat skor tertinggi",
+    },
+    HIGHEST_VALUE: {
+        label: "Nilai Tertinggi Terbaik",
+        icon: <TrendingUp className="w-3.5 h-3.5" />,
+        color: "text-cyan-400",
+        desc: "Nilai terbesar (mis. garansi, uptime) mendapat skor tertinggi",
+    },
+    MANUAL: {
+        label: "Penilaian Manual",
+        icon: <ClipboardList className="w-3.5 h-3.5" />,
+        color: "text-purple-400",
+        desc: "Evaluator memberi nilai berdasarkan panduan yang ditetapkan",
+    },
+};
+
+// ─── Templates ───────────────────────────────────────────────────────────────
+
+interface TemplateField extends Omit<BidField, "id" | "key"> {}
+
+interface Template {
+    id: string;
+    icon: React.ReactNode;
+    label: string;
+    description: string;
+    category: string;
+    gradient: string;
+    fields: TemplateField[];
+}
+
+const TEMPLATES: Template[] = [
+    {
+        id: "hardware-it",
+        icon: <Laptop className="w-6 h-6" />,
+        label: "Pengadaan Hardware & IT",
+        description: "Laptop, workstation, server, perangkat jaringan",
+        category: "Hardware & IT",
+        gradient: "from-blue-500/20 to-cyan-500/10",
+        fields: [
+            { name: "Harga Penawaran Total", type: "currency", required: true, helpText: "Total harga termasuk PPN 11%", scored: true, weight: 40, scoringType: "LOWEST_PRICE", evaluatorGuide: "Harga terendah mendapat skor tertinggi" },
+            { name: "Merek & Model", type: "text", required: true, helpText: "Contoh: ASUS ExpertBook B9, Dell Latitude 7430", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Spesifikasi Prosesor", type: "text", required: true, helpText: "Contoh: Intel Core i7-1265U, AMD Ryzen 7 Pro", scored: true, weight: 25, scoringType: "MANUAL", evaluatorGuide: "Nilai kesesuaian spesifikasi dengan kebutuhan minimal yang ditetapkan" },
+            { name: "RAM (GB)", type: "number", required: true, helpText: "Kapasitas RAM dalam gigabyte", scored: false, weight: 0, scoringType: "HIGHEST_VALUE", evaluatorGuide: "" },
+            { name: "Storage (GB)", type: "number", required: true, helpText: "Total kapasitas penyimpanan dalam GB", scored: false, weight: 0, scoringType: "HIGHEST_VALUE", evaluatorGuide: "" },
+            { name: "Garansi (Bulan)", type: "number", required: true, helpText: "Durasi garansi resmi dalam bulan", scored: true, weight: 20, scoringType: "HIGHEST_VALUE", evaluatorGuide: "Garansi lebih panjang mendapat skor lebih tinggi" },
+            { name: "Waktu Pengiriman (Hari Kerja)", type: "number", required: true, helpText: "Estimasi waktu penyerahan barang", scored: true, weight: 15, scoringType: "LOWEST_PRICE", evaluatorGuide: "Pengiriman lebih cepat mendapat skor lebih tinggi" },
+            { name: "Proposal Teknis", type: "file", required: true, helpText: "Dokumen spesifikasi teknis lengkap (PDF)", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+        ],
+    },
+    {
+        id: "software-dev",
+        icon: <Code2 className="w-6 h-6" />,
+        label: "Jasa Software Development",
+        description: "Pengembangan aplikasi web, mobile, sistem informasi",
+        category: "Software Development",
+        gradient: "from-violet-500/20 to-purple-500/10",
+        fields: [
+            { name: "Harga Pengerjaan Total", type: "currency", required: true, helpText: "Total biaya pengerjaan proyek", scored: true, weight: 35, scoringType: "LOWEST_PRICE", evaluatorGuide: "Harga terendah mendapat skor tertinggi" },
+            { name: "Durasi Pengerjaan (Minggu)", type: "number", required: true, helpText: "Estimasi timeline pengerjaan", scored: true, weight: 15, scoringType: "LOWEST_PRICE", evaluatorGuide: "Timeline lebih singkat mendapat skor lebih tinggi" },
+            { name: "Jumlah Developer", type: "number", required: true, helpText: "Total SDM developer yang ditugaskan", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Teknologi yang Digunakan", type: "multi-select", required: true, options: ["React", "Next.js", "Vue.js", "Flutter", "Laravel", "Spring Boot", "Django", "Node.js", "PostgreSQL", "MySQL"], helpText: "Stack teknologi yang akan digunakan", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Masa Pemeliharaan (Bulan)", type: "number", required: true, helpText: "Durasi garansi & maintenance pasca-delivery", scored: true, weight: 15, scoringType: "HIGHEST_VALUE", evaluatorGuide: "Masa pemeliharaan lebih panjang mendapat skor lebih tinggi" },
+            { name: "Portofolio / Referensi", type: "file", required: true, helpText: "Dokumen portofolio proyek serupa (PDF)", scored: true, weight: 20, scoringType: "MANUAL", evaluatorGuide: "Nilai kualitas dan relevansi portofolio dengan kebutuhan proyek" },
+            { name: "Proposal Teknis & Metodologi", type: "file", required: true, helpText: "Rencana kerja, arsitektur sistem, dan pendekatan pengembangan", scored: true, weight: 15, scoringType: "MANUAL", evaluatorGuide: "Nilai kelengkapan, kedalaman teknis, dan realisme rencana kerja" },
+        ],
+    },
+    {
+        id: "cybersecurity",
+        icon: <ShieldCheck className="w-6 h-6" />,
+        label: "Jasa Cybersecurity",
+        description: "Audit keamanan, penetration testing, SOC, MSSP",
+        category: "Cybersecurity",
+        gradient: "from-red-500/20 to-orange-500/10",
+        fields: [
+            { name: "Harga Jasa Total", type: "currency", required: true, helpText: "Total biaya layanan keamanan", scored: true, weight: 30, scoringType: "LOWEST_PRICE", evaluatorGuide: "Harga terendah mendapat skor tertinggi" },
+            { name: "Durasi Engagement (Hari)", type: "number", required: true, helpText: "Total hari pengerjaan", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Jenis Layanan", type: "multi-select", required: true, options: ["Penetration Testing", "Vulnerability Assessment", "SOC Services", "SIEM Implementation", "Security Audit", "Incident Response", "Red Team Exercise"], helpText: "Jenis layanan keamanan yang ditawarkan", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Sertifikasi Tim", type: "text", required: true, helpText: "Sertifikasi relevan (OSCP, CEH, CISSP, CISA, dll.)", scored: true, weight: 35, scoringType: "MANUAL", evaluatorGuide: "Nilai jumlah dan relevansi sertifikasi dengan jenis engagement" },
+            { name: "Metodologi", type: "file", required: true, helpText: "Dokumen metodologi dan pendekatan teknis (PDF)", scored: true, weight: 25, scoringType: "MANUAL", evaluatorGuide: "Nilai kedalaman, standar yang digunakan, dan relevansi metodologi" },
+            { name: "Referensi Klien Sebelumnya", type: "file", required: false, helpText: "Bukti engagement serupa (opsional)", scored: true, weight: 10, scoringType: "MANUAL", evaluatorGuide: "Nilai relevansi dan prestise klien referensi di industri sejenis" },
+        ],
+    },
+    {
+        id: "cloud",
+        icon: <Cloud className="w-6 h-6" />,
+        label: "Cloud Infrastructure",
+        description: "Managed cloud, migrasi, hosting, CDN, managed Kubernetes",
+        category: "Cloud Infrastructure",
+        gradient: "from-sky-500/20 to-blue-500/10",
+        fields: [
+            { name: "Biaya Bulanan (per Bulan)", type: "currency", required: true, helpText: "Estimasi biaya operasional per bulan", scored: true, weight: 40, scoringType: "LOWEST_PRICE", evaluatorGuide: "Biaya bulanan terendah mendapat skor tertinggi" },
+            { name: "Cloud Provider", type: "select", required: true, options: ["AWS", "Google Cloud", "Microsoft Azure", "Alibaba Cloud", "Oracle Cloud", "DigitalOcean", "On-premise Hybrid"], helpText: "Platform cloud yang ditawarkan", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Layanan Utama", type: "multi-select", required: true, options: ["Compute (VM/Container)", "Managed Kubernetes", "Object Storage", "CDN", "Managed Database", "Serverless", "AI/ML Platform"], helpText: "Komponen layanan yang disertakan", scored: true, weight: 20, scoringType: "MANUAL", evaluatorGuide: "Nilai cakupan dan kelengkapan layanan yang disertakan" },
+            { name: "SLA Uptime (%)", type: "number", required: true, helpText: "Jaminan uptime dalam persen (mis. 99.9)", scored: true, weight: 30, scoringType: "HIGHEST_VALUE", evaluatorGuide: "SLA uptime lebih tinggi mendapat skor lebih tinggi" },
+            { name: "Lokasi Data Center", type: "text", required: true, helpText: "Region data center dan ketersediaan multi-zone", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Proposal Teknis", type: "file", required: true, helpText: "Arsitektur dan rencana implementasi (PDF)", scored: true, weight: 10, scoringType: "MANUAL", evaluatorGuide: "Nilai kualitas arsitektur dan rencana implementasi" },
+        ],
+    },
+    {
+        id: "construction",
+        icon: <Building2 className="w-6 h-6" />,
+        label: "Konstruksi & Fasilitas",
+        description: "Pembangunan gedung, renovasi, pengadaan furnitur kantor",
+        category: "Konstruksi & Fasilitas",
+        gradient: "from-amber-500/20 to-yellow-500/10",
+        fields: [
+            { name: "Nilai Penawaran Total", type: "currency", required: true, helpText: "Total nilai pekerjaan termasuk material dan jasa", scored: true, weight: 50, scoringType: "LOWEST_PRICE", evaluatorGuide: "Harga terendah mendapat skor tertinggi" },
+            { name: "Durasi Pengerjaan (Hari Kalender)", type: "number", required: true, helpText: "Total waktu pelaksanaan pekerjaan", scored: true, weight: 15, scoringType: "LOWEST_PRICE", evaluatorGuide: "Durasi lebih singkat mendapat skor lebih tinggi" },
+            { name: "Nilai Jaminan Penawaran (Bid Bond)", type: "currency", required: true, helpText: "Nilai jaminan keseriusan penawaran", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Surat Dukungan Material Utama", type: "file", required: true, helpText: "Surat dukungan dari produsen/distributor material", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Surat Referensi Pekerjaan Sejenis", type: "file", required: true, helpText: "Bukti pengalaman pekerjaan konstruksi serupa", scored: true, weight: 25, scoringType: "MANUAL", evaluatorGuide: "Nilai relevansi dan skala proyek referensi dengan pekerjaan yang ditenderkan" },
+            { name: "Rencana Anggaran Biaya (RAB)", type: "file", required: true, helpText: "Breakdown rencana anggaran biaya detail (PDF)", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
+            { name: "Jadwal Pelaksanaan (Kurva S)", type: "file", required: true, helpText: "Rencana jadwal pelaksanaan pekerjaan (PDF)", scored: true, weight: 10, scoringType: "MANUAL", evaluatorGuide: "Nilai kelengkapan dan realisme jadwal pelaksanaan" },
+        ],
+    },
+    {
+        id: "custom",
+        icon: <Sparkles className="w-6 h-6" />,
+        label: "Custom (Mulai Kosong)",
+        description: "Rancang sendiri semua field dan penilaian dari awal",
+        category: "Hardware & IT",
+        gradient: "from-slate-500/20 to-slate-600/10",
+        fields: [],
+    },
+];
+
+// ─── Step Indicator ───────────────────────────────────────────────────────────
+
+const STEPS = [
+    { id: 1, label: "Template",  icon: <Wand2 className="w-4 h-4" /> },
+    { id: 2, label: "Info Dasar",icon: <FileSpreadsheet className="w-4 h-4" /> },
+    { id: 3, label: "Field & Penilaian", icon: <Layers className="w-4 h-4" /> },
+    { id: 4, label: "Review",    icon: <Eye className="w-4 h-4" /> },
+];
+
+// ─── Main Page ────────────────────────────────────────────────────────────────
+
+interface OrgOption {
+    id: string;
+    name: string;
+    memberRole: string;
+    memberStatus: string;
+    verificationStatus: string;
+    isVerified: boolean;
 }
 
 export default function CreateTenderPage() {
     const router = useRouter();
+    const { data: session } = useSession();
+    const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+    const [userOrgs, setUserOrgs] = useState<OrgOption[]>([]);
+    const [orgsLoading, setOrgsLoading] = useState(true);
+
+    useEffect(() => {
+        if (!session?.user) return;
+        fetch("/api/organizations/me")
+            .then((r) => r.json())
+            .then((data: OrgOption[]) => {
+                // Only show orgs where user is officer/admin and org is approved
+                const eligible = data.filter(
+                    (o) =>
+                        o.memberStatus === "ACTIVE" &&
+                        (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
+                        (o.isVerified || o.verificationStatus === "APPROVED")
+                );
+                setUserOrgs(eligible);
+                if (eligible.length > 0) setSelectedOrgId(eligible[0].id);
+            })
+            .catch(() => {})
+            .finally(() => setOrgsLoading(false));
+    }, [session?.user]);
+
+    const [step, setStep] = useState(1);
     const [loading, setLoading] = useState(false);
     const [successMessage, setSuccessMessage] = useState<string | null>(null);
     const [errorMessage, setErrorMessage] = useState<string | null>(null);
+    const [showPreview, setShowPreview] = useState(false);
+    const [draggedIdx, setDraggedIdx] = useState<number | null>(null);
+    const [dragOverIdx, setDragOverIdx] = useState<number | null>(null);
 
-    // Form State
-    const [title, setTitle] = useState("");
-    const [code, setCode] = useState(`TND-2026-${Math.floor(100 + Math.random() * 900)}`);
-    const [category, setCategory] = useState("Hardware & IT");
-    const [description, setDescription] = useState("");
-    const [commitDeadline, setCommitDeadline] = useState("2026-09-25T15:00");
-    const [revealWindowHours, setRevealWindowHours] = useState(48);
+    const [form, setForm] = useState<TenderFormData>({
+        title: "",
+        code: generateCode(),
+        category: "Hardware & IT",
+        description: "",
+        commitDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
+        revealWindowHours: 48,
+        fields: [],
+    });
 
-    // Combined Requirements State (Bid Fields + Evaluation Criteria)
-    const [requirements, setRequirements] = useState<Requirement[]>([
-        {
-            id: "req-1",
-            name: "Harga Penawaran Total",
-            key: "harga_total",
-            type: "currency",
-            required: true,
-            description: "Penilaian aspek komersial dan efisiensi harga",
-            weight: 50,
-            maxScore: 100,
-        },
-        {
-            id: "req-2",
-            name: "Spesifikasi RAM & Storage",
-            key: "spesifikasi",
-            type: "text",
-            required: true,
-            description: "Kesesuaian dengan spesifikasi perangkat yang diminta",
-            weight: 30,
-            maxScore: 100,
-        },
-        {
-            id: "req-3",
-            name: "Garansi & Layanan Purna Jual",
-            key: "garansi",
-            type: "text",
-            required: true,
-            description: "Jaminan garansi dan ketersediaan service center",
-            weight: 20,
-            maxScore: 100,
-        },
-    ]);
+    const scoredFields = form.fields.filter((f) => f.scored);
+    const totalWeight = scoredFields.reduce((s, f) => s + (Number(f.weight) || 0), 0);
+    const weightOk = scoredFields.length === 0 || totalWeight === 100;
 
-    // Add Requirement
-    const handleAddRequirement = () => {
-        const newId = `req-${Date.now()}`;
-        setRequirements([
-            ...requirements,
-            {
-                id: newId,
-                name: "Kriteria Baru",
-                key: `field_${requirements.length + 1}`,
-                type: "text",
-                required: true,
-                description: "",
-                weight: 0,
-                maxScore: 100,
-            },
-        ]);
+    // ── Template select ──────────────────────────────────────────────────────
+
+    const applyTemplate = (tpl: Template) => {
+        const fields: BidField[] = tpl.fields.map((f) => ({
+            ...f,
+            id: generateId(),
+            key: slugify(f.name),
+        }));
+        setForm((prev) => ({ ...prev, category: tpl.category, fields }));
+        setStep(2);
     };
 
-    // Remove Requirement
-    const handleRemoveRequirement = (id: string) => {
-        setRequirements(requirements.filter((r) => r.id !== id));
+    // ── Field helpers ────────────────────────────────────────────────────────
+
+    const addField = () => {
+        setForm((prev) => ({
+            ...prev,
+            fields: [
+                ...prev.fields,
+                {
+                    id: generateId(),
+                    name: "",
+                    key: "",
+                    type: "text",
+                    required: true,
+                    helpText: "",
+                    scored: false,
+                    weight: 0,
+                    scoringType: "MANUAL",
+                    evaluatorGuide: "",
+                },
+            ],
+        }));
     };
 
-    // Calculate Total Weight
-    const totalWeight = requirements.reduce((sum, r) => sum + (Number(r.weight) || 0), 0);
+    const updateField = useCallback(<K extends keyof BidField>(idx: number, key: K, value: BidField[K]) => {
+        setForm((prev) => {
+            const fields = [...prev.fields];
+            const field = { ...fields[idx], [key]: value };
+            if (key === "name") field.key = slugify(value as string);
+            // Smart default scoring type when type changes
+            if (key === "type") field.scoringType = defaultScoringType(value as FieldType);
+            fields[idx] = field;
+            return { ...prev, fields };
+        });
+    }, []);
 
-    const handleSubmit = async (e: React.FormEvent) => {
-        e.preventDefault();
-        
-        if (totalWeight !== 100) {
-            setErrorMessage("Total bobot penilaian kriteria harus bernilai tepat 100%. Silakan sesuaikan bobot.");
+    const removeField = (id: string) => {
+        setForm((prev) => ({ ...prev, fields: prev.fields.filter((f) => f.id !== id) }));
+    };
+
+    // ── Drag & drop ──────────────────────────────────────────────────────────
+
+    const onDragStart = (idx: number) => setDraggedIdx(idx);
+    const onDragOver = (e: React.DragEvent, idx: number) => { e.preventDefault(); setDragOverIdx(idx); };
+    const onDrop = (dropIdx: number) => {
+        if (draggedIdx === null || draggedIdx === dropIdx) return;
+        setForm((prev) => {
+            const fields = [...prev.fields];
+            const [moved] = fields.splice(draggedIdx, 1);
+            fields.splice(dropIdx, 0, moved);
+            return { ...prev, fields };
+        });
+        setDraggedIdx(null);
+        setDragOverIdx(null);
+    };
+    const onDragEnd = () => { setDraggedIdx(null); setDragOverIdx(null); };
+
+    // ── Submit ───────────────────────────────────────────────────────────────
+
+    const handleSubmit = async () => {
+        if (!selectedOrgId) {
+            setErrorMessage("Pilih organisasi penyelenggara tender terlebih dahulu.");
             return;
         }
-
+        if (scoredFields.length > 0 && !weightOk) {
+            setErrorMessage("Total bobot field yang dinilai harus tepat 100%.");
+            return;
+        }
         setErrorMessage(null);
         setLoading(true);
-
         try {
-            // Note: organizationId and createdBy should be dynamically fetched from user context/auth.
-            // Using a static organizationId for demo purposes assuming they are seeded.
             const res = await fetch("/api/tenders", {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    organizationId: "org-buyer-001",
-                    code,
-                    title,
-                    description,
-                    category,
-                    commitDeadline: new Date(commitDeadline).toISOString(),
-                    revealWindowHours,
+                    organizationId: selectedOrgId,
+                    code: form.code,
+                    title: form.title,
+                    description: form.description,
+                    category: form.category,
+                    commitDeadline: new Date(form.commitDeadline).toISOString(),
+                    revealWindowHours: form.revealWindowHours,
                 }),
             });
 
-            if (res.ok) {
-                const { data } = await res.json();
-                const tenderId = data?.id;
+            if (!res.ok) {
+                const err = await res.json();
+                setErrorMessage(err.message || "Gagal membuat tender.");
+                return;
+            }
 
-                // Create the fields and criteria
-                if (tenderId) {
-                    for (const req of requirements) {
-                        await fetch(`/api/tenders/${tenderId}/fields`, {
-                            method: "POST",
-                            headers: { "Content-Type": "application/json" },
-                            body: JSON.stringify({
-                                name: req.name,
-                                key: req.key,
-                                type: req.type,
-                                required: req.required,
-                            }),
-                        });
-                        
+            const { data } = await res.json();
+            const tenderId = data?.id;
+
+            if (tenderId) {
+                for (let i = 0; i < form.fields.length; i++) {
+                    const f = form.fields[i];
+                    await fetch(`/api/tenders/${tenderId}/fields`, {
+                        method: "POST",
+                        headers: { "Content-Type": "application/json" },
+                        body: JSON.stringify({
+                            name: f.name,
+                            key: f.key || slugify(f.name),
+                            type: f.type,
+                            required: f.required,
+                            options: f.options || undefined,
+                            sortOrder: i,
+                        }),
+                    });
+                    // 1 field → 1 criterion (only if scored)
+                    if (f.scored && f.weight > 0) {
                         await fetch(`/api/tenders/${tenderId}/criteria`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
-                                name: req.name,
-                                description: req.description,
-                                weight: req.weight,
-                                maxScore: req.maxScore,
+                                name: f.name,
+                                description: f.evaluatorGuide,
+                                weight: f.weight,
+                                maxScore: 100,
+                                scoringType: f.scoringType,
+                                sortOrder: i,
                             }),
                         });
                     }
                 }
-
-                setSuccessMessage("Tender dan kriteria berhasil dibuat dan dipublikasikan!");
-                setTimeout(() => {
-                    router.push("/tenders");
-                }, 1500);
-            } else {
-                const errorData = await res.json();
-                setErrorMessage(errorData.message || "Terjadi kesalahan saat membuat tender.");
             }
-        } catch (_err) {
+
+            setSuccessMessage("Tender berhasil dibuat!");
+            setTimeout(() => router.push("/tenders"), 1800);
+        } catch {
             setErrorMessage("Gagal terhubung ke server.");
         } finally {
             setLoading(false);
         }
     };
 
+    // ─────────────────────────────────────────────────────────────────────────
+
     return (
-        <div className="max-w-4xl mx-auto space-y-8 pb-10">
-            {/* Page Header */}
-            <div className="flex items-center justify-between">
-                <div className="space-y-1">
+        <div className="max-w-5xl mx-auto space-y-6 pb-16">
+            {/* Header */}
+            <div className="flex items-start justify-between gap-4">
+                <div>
                     <Link
                         href="/tenders"
-                        className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-2"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-3"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog Tender
                     </Link>
                     <h1 className="text-3xl font-extrabold text-white tracking-tight">Buat Tender Baru</h1>
-                    <p className="text-sm text-slate-400">
-                        Atur detail tender, batas waktu commit & reveal, dan kriteria penilaian vendor.
+                    <p className="text-sm text-slate-400 mt-1">
+                        Setiap field bid memiliki penilaiannya sendiri — sederhana, langsung, dan bisa diotomasi.
                     </p>
                 </div>
+                {step === 3 && (
+                    <button
+                        type="button"
+                        onClick={() => setShowPreview(!showPreview)}
+                        className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
+                            showPreview
+                                ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
+                                : "bg-slate-800 border-slate-700 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40"
+                        }`}
+                    >
+                        <Monitor className="w-4 h-4" />
+                        {showPreview ? "Sembunyikan Preview" : "Preview Form Vendor"}
+                    </button>
+                )}
             </div>
 
+            {/* Step Indicator */}
+            <StepIndicator current={step} />
+
+            {/* Notifications */}
             {successMessage && (
                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400" />
-                    <span>{successMessage}</span>
+                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> {successMessage}
                 </div>
             )}
-
             {errorMessage && (
                 <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-500" />
-                    <span>{errorMessage}</span>
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
+                    {errorMessage}
+                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-500 hover:text-red-300">✕</button>
                 </div>
             )}
 
-            <form onSubmit={handleSubmit} className="space-y-8">
-                {/* 1. Basic Tender Information */}
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center gap-2 text-base font-bold text-white border-b border-slate-800 pb-3">
-                        <FileSpreadsheet className="w-5 h-5 text-emerald-400" />
-                        <span>1. Informasi Dasar Tender</span>
-                    </div>
-
-                    <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-xs font-semibold text-slate-300">Judul Tender</label>
-                            <input
-                                type="text"
-                                required
-                                value={title}
-                                onChange={(e) => setTitle(e.target.value)}
-                                placeholder="Contoh: Pengadaan 100 Workstation Laptop..."
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Kode Unik Tender</label>
-                            <input
-                                type="text"
-                                required
-                                value={code}
-                                onChange={(e) => setCode(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-emerald-400 focus:outline-none"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Kategori Pengadaan</label>
-                            <select
-                                value={category}
-                                onChange={(e) => setCategory(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none"
-                            >
-                                <option value="Hardware & IT">Hardware & IT</option>
-                                <option value="Software Development">Software Development</option>
-                                <option value="Cybersecurity">Cybersecurity</option>
-                                <option value="Cloud Infrastructure">Cloud Infrastructure</option>
-                                <option value="Konstruksi & Fasilitas">Konstruksi & Fasilitas</option>
-                            </select>
-                        </div>
-
-                        <div className="space-y-2 md:col-span-2">
-                            <label className="text-xs font-semibold text-slate-300">Deskripsi Ringkas Tender</label>
-                            <textarea
-                                rows={3}
-                                value={description}
-                                onChange={(e) => setDescription(e.target.value)}
-                                placeholder="Jelaskan kebutuhan, ruang lingkup, dan ketentuan tender..."
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300 flex items-center gap-1">
-                                <Clock className="w-3.5 h-3.5 text-emerald-400" /> Batas Akhir Submit (Commit Deadline)
-                            </label>
-                            <input
-                                type="datetime-local"
-                                required
-                                value={commitDeadline}
-                                onChange={(e) => setCommitDeadline(e.target.value)}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                        </div>
-
-                        <div className="space-y-2">
-                            <label className="text-xs font-semibold text-slate-300">Durasi Reveal Window (Jam)</label>
-                            <input
-                                type="number"
-                                required
-                                value={revealWindowHours}
-                                onChange={(e) => setRevealWindowHours(Number(e.target.value))}
-                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
-                            />
-                            <p className="text-[11px] text-slate-500">
-                                Waktu yang diberikan bagi vendor untuk melakukan dekripsi penawaran
-                            </p>
-                        </div>
-                    </div>
+            {/* Content */}
+            <div className={`grid gap-6 transition-all duration-300 ${showPreview && step === 3 ? "lg:grid-cols-2" : "grid-cols-1"}`}>
+                <div className="space-y-6 min-w-0">
+                    {step === 1 && <StepTemplate onSelect={applyTemplate} />}
+                    {step === 2 && (
+                    <StepBasicInfo
+                        form={form}
+                        setForm={setForm}
+                        userOrgs={userOrgs}
+                        orgsLoading={orgsLoading}
+                        selectedOrgId={selectedOrgId}
+                        setSelectedOrgId={setSelectedOrgId}
+                        onNext={() => setStep(3)}
+                        onBack={() => setStep(1)}
+                    />
+                )}
+                    {step === 3 && (
+                        <StepFieldsAndScoring
+                            fields={form.fields}
+                            totalWeight={totalWeight}
+                            weightOk={weightOk}
+                            scoredCount={scoredFields.length}
+                            draggedIdx={draggedIdx}
+                            dragOverIdx={dragOverIdx}
+                            onAdd={addField}
+                            onUpdate={updateField}
+                            onRemove={removeField}
+                            onDragStart={onDragStart}
+                            onDragOver={onDragOver}
+                            onDrop={onDrop}
+                            onDragEnd={onDragEnd}
+                            onNext={() => setStep(4)}
+                            onBack={() => setStep(2)}
+                        />
+                    )}
+                    {step === 4 && (
+                        <StepReview
+                            form={form}
+                            totalWeight={totalWeight}
+                            weightOk={weightOk}
+                            loading={loading}
+                            onBack={() => setStep(3)}
+                            onSubmit={handleSubmit}
+                            onGoToStep={setStep}
+                        />
+                    )}
                 </div>
 
-                {/* 2. Combined Bid Fields & Criteria Builder */}
-                <div className="glass-panel p-6 rounded-2xl border-slate-800 space-y-6">
-                    <div className="flex items-center justify-between border-b border-slate-800 pb-3">
-                        <div className="flex items-center gap-2 text-base font-bold text-white">
-                            <Layers className="w-5 h-5 text-cyan-400" />
-                            <span>2. Persyaratan & Kriteria Penilaian (Bid Fields & Scoring)</span>
-                        </div>
-                        <button
-                            type="button"
-                            onClick={handleAddRequirement}
-                            className="px-3 py-1.5 rounded-lg bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 flex items-center gap-1.5 transition-colors"
-                        >
-                            <PlusCircle className="w-3.5 h-3.5" /> Tambah Kriteria
-                        </button>
+                {showPreview && step === 3 && (
+                    <div className="hidden lg:block">
+                        <LivePreviewPanel fields={form.fields} title={form.title} />
                     </div>
+                )}
+            </div>
+        </div>
+    );
+}
 
-                    <p className="text-xs text-slate-400">
-                        Atur kolom input yang wajib diisi oleh vendor, beserta bobot nilainya. Total seluruh bobot kriteria harus tepat 100%.
-                    </p>
+// ─── Step Indicator ───────────────────────────────────────────────────────────
 
-                    <div className="flex items-center justify-between p-3 rounded-xl bg-slate-900 border border-slate-800">
-                        <span className="text-xs font-semibold text-slate-300">Total Bobot Penilaian Saat Ini:</span>
-                        <span
-                            className={`text-sm font-bold ${
-                                totalWeight === 100 ? "text-emerald-400" : "text-red-400"
+function StepIndicator({ current }: { current: number }) {
+    return (
+        <div className="flex items-center gap-0">
+            {STEPS.map((s, i) => (
+                <div key={s.id} className="flex items-center flex-1">
+                    <div className="flex flex-col items-center gap-1.5 flex-1">
+                        <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
+                            current > s.id ? "bg-emerald-500 border-emerald-500 text-slate-950"
+                            : current === s.id ? "bg-slate-900 border-emerald-400 text-emerald-400 shadow-lg shadow-emerald-500/20"
+                            : "bg-slate-900 border-slate-700 text-slate-600"
+                        }`}>
+                            {current > s.id ? <Check className="w-4 h-4" /> : s.icon}
+                        </div>
+                        <span className={`text-[10px] font-bold tracking-wide uppercase transition-colors ${
+                            current === s.id ? "text-emerald-400" : current > s.id ? "text-emerald-600" : "text-slate-600"
+                        }`}>{s.label}</span>
+                    </div>
+                    {i < STEPS.length - 1 && (
+                        <div className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-emerald-500" : "bg-slate-800"}`} />
+                    )}
+                </div>
+            ))}
+        </div>
+    );
+}
+
+// ─── Step 1: Template ─────────────────────────────────────────────────────────
+
+function StepTemplate({ onSelect }: { onSelect: (t: Template) => void }) {
+    const [hovered, setHovered] = useState<string | null>(null);
+    return (
+        <div className="space-y-5">
+            <div className="glass-panel p-5 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-base font-bold text-white">
+                    <Wand2 className="w-5 h-5 text-emerald-400" /> Pilih Template Tender
+                </div>
+                <p className="text-xs text-slate-400">
+                    Template sudah dilengkapi field dan bobot penilaian yang bisa diubah sepenuhnya.
+                </p>
+            </div>
+            <div className="grid grid-cols-1 sm:grid-cols-2 xl:grid-cols-3 gap-4">
+                {TEMPLATES.map((tpl) => {
+                    const scoredCount = tpl.fields.filter((f) => f.scored).length;
+                    return (
+                        <button
+                            key={tpl.id}
+                            type="button"
+                            onClick={() => onSelect(tpl)}
+                            onMouseEnter={() => setHovered(tpl.id)}
+                            onMouseLeave={() => setHovered(null)}
+                            className={`relative text-left p-5 rounded-2xl border transition-all duration-200 bg-gradient-to-br ${tpl.gradient} ${
+                                hovered === tpl.id ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 scale-[1.02]" : "border-slate-800 hover:border-slate-600"
                             }`}
                         >
-                            {totalWeight}% / 100% {totalWeight !== 100 && "(Harus Tepat 100%)"}
-                        </span>
+                            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${hovered === tpl.id ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800/80 text-slate-400"} transition-colors`}>
+                                {tpl.icon}
+                            </div>
+                            <div className="font-bold text-sm text-white mb-1">{tpl.label}</div>
+                            <div className="text-xs text-slate-400 leading-relaxed mb-3">{tpl.description}</div>
+                            {tpl.fields.length > 0 && (
+                                <div className="flex flex-wrap gap-1">
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">{tpl.fields.length} fields</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">{scoredCount} dinilai</span>
+                                </div>
+                            )}
+                            <ChevronRight className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-all ${hovered === tpl.id ? "text-emerald-400 translate-x-0.5" : "text-slate-700"}`} />
+                        </button>
+                    );
+                })}
+            </div>
+        </div>
+    );
+}
+
+// ─── Step 2: Basic Info ───────────────────────────────────────────────────────
+
+function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, setSelectedOrgId, onNext, onBack }: {
+    form: TenderFormData;
+    setForm: React.Dispatch<React.SetStateAction<TenderFormData>>;
+    userOrgs: OrgOption[];
+    orgsLoading: boolean;
+    selectedOrgId: string;
+    setSelectedOrgId: (id: string) => void;
+    onNext: () => void;
+    onBack: () => void;
+}) {
+    const CATEGORIES = ["Hardware & IT", "Software Development", "Cybersecurity", "Cloud Infrastructure", "Konstruksi & Fasilitas", "Konsultasi & Jasa Profesional", "Pengadaan Umum"];
+    const canNext = form.title.trim().length >= 3 && !!selectedOrgId;
+    return (
+        <div className="space-y-5">
+            <div className="glass-panel p-6 rounded-2xl space-y-5">
+                <div className="flex items-center gap-2 text-base font-bold text-white border-b border-slate-800 pb-3">
+                    <FileSpreadsheet className="w-5 h-5 text-emerald-400" /> Informasi Dasar Tender
+                </div>
+
+                {/* Org Selector */}
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300">Organisasi Penyelenggara <span className="text-red-400">*</span></label>
+                    {orgsLoading ? (
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-500">
+                            <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
+                            Memuat organisasi...
+                        </div>
+                    ) : userOrgs.length === 0 ? (
+                        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                            <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
+                            <div>
+                                <p className="font-semibold">Tidak ada organisasi yang memenuhi syarat.</p>
+                                <p className="text-amber-400/70 mt-0.5">Anda harus menjadi <strong>Procurement Officer</strong> atau <strong>Organization Admin</strong> di organisasi yang sudah diverifikasi untuk membuat tender.</p>
+                            </div>
+                        </div>
+                    ) : (
+                        <select
+                            value={selectedOrgId}
+                            onChange={(e) => setSelectedOrgId(e.target.value)}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
+                        >
+                            {userOrgs.map((o) => (
+                                <option key={o.id} value={o.id}>
+                                    {o.name} — {o.memberRole === "ORGANIZATION_ADMIN" ? "Admin" : "Procurement Officer"}
+                                </option>
+                            ))}
+                        </select>
+                    )}
+                </div>
+
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300">Judul Tender <span className="text-red-400">*</span></label>
+                    <input type="text" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Contoh: Pengadaan 100 Laptop untuk Kantor Pusat Tahun 2026"
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
+                </div>
+
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">Kode Tender <span className="text-[10px] text-slate-500 font-normal">(auto)</span></label>
+                        <div className="relative">
+                            <input type="text" value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-emerald-400 focus:outline-none pr-10" />
+                            <button type="button" onClick={() => setForm((p) => ({ ...p, code: generateCode() }))} title="Generate ulang" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-emerald-400 transition-colors">
+                                <Copy className="w-4 h-4" />
+                            </button>
+                        </div>
                     </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Kategori Pengadaan</label>
+                        <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60">
+                            {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
+                        </select>
+                    </div>
+                </div>
+                <div className="space-y-2">
+                    <label className="text-xs font-semibold text-slate-300">Deskripsi Tender</label>
+                    <textarea rows={4} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Jelaskan latar belakang kebutuhan, ruang lingkup, dan ketentuan tender..."
+                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 resize-none" />
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-emerald-400" /> Batas Akhir Submit Penawaran</label>
+                        <input type="datetime-local" value={form.commitDeadline} onChange={(e) => setForm((p) => ({ ...p, commitDeadline: e.target.value }))}
+                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60" />
+                        <p className="text-[11px] text-slate-500">Penawaran terenkripsi dikunci setelah waktu ini</p>
+                    </div>
+                    <div className="space-y-2">
+                        <label className="text-xs font-semibold text-slate-300">Durasi Reveal Window</label>
+                        <div className="relative">
+                            <input type="number" min={1} max={720} value={form.revealWindowHours} onChange={(e) => setForm((p) => ({ ...p, revealWindowHours: Number(e.target.value) }))}
+                                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60 pr-16" />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">jam</span>
+                        </div>
+                        <p className="text-[11px] text-slate-500">Waktu vendor untuk decrypt dan ungkap penawaran</p>
+                    </div>
+                </div>
+            </div>
+            <StepNav onBack={onBack} onNext={onNext} nextDisabled={!canNext} nextLabel="Desain Field & Penilaian" />
+        </div>
+    );
+}
 
-                    <div className="space-y-4">
-                        {requirements.map((req, idx) => (
+// ─── Step 3: Fields + Scoring (Merged) ───────────────────────────────────────
+
+function StepFieldsAndScoring({
+    fields, totalWeight, weightOk, scoredCount,
+    draggedIdx, dragOverIdx,
+    onAdd, onUpdate, onRemove,
+    onDragStart, onDragOver, onDrop, onDragEnd,
+    onNext, onBack,
+}: {
+    fields: BidField[];
+    totalWeight: number;
+    weightOk: boolean;
+    scoredCount: number;
+    draggedIdx: number | null;
+    dragOverIdx: number | null;
+    onAdd: () => void;
+    onUpdate: <K extends keyof BidField>(idx: number, key: K, val: BidField[K]) => void;
+    onRemove: (id: string) => void;
+    onDragStart: (idx: number) => void;
+    onDragOver: (e: React.DragEvent, idx: number) => void;
+    onDrop: (idx: number) => void;
+    onDragEnd: () => void;
+    onNext: () => void;
+    onBack: () => void;
+}) {
+    const weightRemaining = 100 - totalWeight;
+
+    return (
+        <div className="space-y-5">
+            {/* Header Card */}
+            <div className="glass-panel p-5 rounded-2xl space-y-4">
+                <div className="flex items-center justify-between">
+                    <div>
+                        <div className="flex items-center gap-2 text-base font-bold text-white">
+                            <Layers className="w-5 h-5 text-cyan-400" /> Field Bid & Penilaian
+                        </div>
+                        <p className="text-xs text-slate-400 mt-0.5">
+                            Setiap field bisa punya penilaiannya sendiri. Drag <GripVertical className="inline w-3 h-3" /> untuk ubah urutan.
+                        </p>
+                    </div>
+                    <button type="button" onClick={onAdd}
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 transition-colors">
+                        <PlusCircle className="w-3.5 h-3.5" /> Tambah Field
+                    </button>
+                </div>
+
+                {/* Weight bar — only show if there are scored fields */}
+                {scoredCount > 0 && (
+                    <div className="space-y-1.5">
+                        <div className="flex justify-between text-xs font-semibold">
+                            <span className="text-slate-400">Total Bobot ({scoredCount} field dinilai)</span>
+                            <span className={weightOk ? "text-emerald-400" : totalWeight > 100 ? "text-red-400" : "text-amber-400"}>
+                                {totalWeight}% / 100%
+                                {weightOk && " ✓"}
+                                {!weightOk && totalWeight > 0 && ` (${weightRemaining > 0 ? "+" : ""}${weightRemaining}% lagi)`}
+                            </span>
+                        </div>
+                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
                             <div
-                                key={req.id}
-                                className={`p-5 rounded-xl bg-slate-900/80 border flex flex-col gap-4 transition-colors ${
-                                    totalWeight !== 100 ? "border-red-500/20" : "border-slate-800"
+                                className={`h-full rounded-full transition-all duration-300 ${
+                                    weightOk ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                    : totalWeight > 100 ? "bg-red-500"
+                                    : "bg-gradient-to-r from-purple-500 to-cyan-500"
                                 }`}
-                            >
-                                <div className="grid grid-cols-1 md:grid-cols-12 gap-3 items-start">
-                                    <div className="md:col-span-11 grid grid-cols-1 sm:grid-cols-4 gap-3">
-                                        
-                                        {/* Field Label / Criteria Name */}
-                                        <div className="sm:col-span-2 space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Kriteria / Field</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Label Field (mis. Harga Total)"
-                                                value={req.name}
-                                                onChange={(e) => {
-                                                    const updated = [...requirements];
-                                                    updated[idx].name = e.target.value;
-                                                    setRequirements(updated);
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50"
-                                            />
-                                        </div>
+                                style={{ width: `${Math.min(totalWeight, 100)}%` }}
+                            />
+                        </div>
+                    </div>
+                )}
+            </div>
 
-                                        {/* JSON Key */}
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Field Key (JSON)</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Key JSON (mis. harga)"
-                                                value={req.key}
-                                                onChange={(e) => {
-                                                    const updated = [...requirements];
-                                                    updated[idx].key = e.target.value;
-                                                    setRequirements(updated);
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm font-mono text-cyan-400 focus:outline-none focus:border-cyan-500/50"
-                                            />
-                                        </div>
+            {/* Empty state */}
+            {fields.length === 0 && (
+                <div onClick={onAdd} className="glass-panel rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-cyan-500/30 transition-colors border-dashed">
+                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-400"><PlusCircle className="w-6 h-6" /></div>
+                    <p className="text-sm font-semibold text-slate-300">Belum ada field</p>
+                    <p className="text-xs text-slate-500 text-center">Klik untuk menambah field pertama, atau kembali untuk memilih template</p>
+                </div>
+            )}
 
-                                        {/* Field Type */}
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Input</label>
-                                            <select
-                                                value={req.type}
-                                                onChange={(e) => {
-                                                    const updated = [...requirements];
-                                                    updated[idx].type = e.target.value as Requirement["type"];
-                                                    setRequirements(updated);
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50"
-                                            >
-                                                <option value="currency">Currency</option>
-                                                <option value="text">Text String</option>
-                                                <option value="number">Number</option>
-                                                <option value="file">File (PDF)</option>
-                                                <option value="select">Select</option>
-                                            </select>
-                                        </div>
-
-                                        {/* Description */}
-                                        <div className="sm:col-span-3 space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Deskripsi Panduan Penilaian</label>
-                                            <input
-                                                type="text"
-                                                placeholder="Penjelasan/panduan penilaian untuk evaluator..."
-                                                value={req.description}
-                                                onChange={(e) => {
-                                                    const updated = [...requirements];
-                                                    updated[idx].description = e.target.value;
-                                                    setRequirements(updated);
-                                                }}
-                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 focus:outline-none focus:border-cyan-500/50"
-                                            />
-                                        </div>
-
-                                        {/* Weight */}
-                                        <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Bobot Kriteria (%)</label>
-                                            <div className="relative">
-                                                <input
-                                                    type="number"
-                                                    value={req.weight}
-                                                    onChange={(e) => {
-                                                        const updated = [...requirements];
-                                                        updated[idx].weight = Number(e.target.value);
-                                                        setRequirements(updated);
-                                                    }}
-                                                    className="w-full px-3 py-2 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm font-bold text-purple-300 focus:outline-none focus:border-purple-500/60"
-                                                />
-                                                <span className="absolute right-3 top-2 text-sm text-purple-500/50 font-bold">%</span>
+            {/* Field cards */}
+            <div className="space-y-3">
+                {fields.map((field, idx) => {
+                    const meta = FIELD_TYPE_META[field.type];
+                    const isDragging = draggedIdx === idx;
+                    const isDragOver = dragOverIdx === idx;
+                    return (
+                        <div
+                            key={field.id}
+                            draggable
+                            onDragStart={() => onDragStart(idx)}
+                            onDragOver={(e) => onDragOver(e, idx)}
+                            onDrop={() => onDrop(idx)}
+                            onDragEnd={onDragEnd}
+                            className={`glass-panel rounded-2xl overflow-hidden transition-all duration-150 ${isDragging ? "opacity-40 scale-95" : isDragOver ? "border-cyan-500/40 shadow-lg shadow-cyan-500/5" : ""}`}
+                        >
+                            {/* ── Vendor Input Section ── */}
+                            <div className="p-4">
+                                <div className="flex items-start gap-3">
+                                    <div className="pt-2.5 cursor-grab active:cursor-grabbing text-slate-700 hover:text-slate-500 transition-colors">
+                                        <GripVertical className="w-4 h-4" />
+                                    </div>
+                                    <div className="flex-1 space-y-3">
+                                        {/* Row 1: Name + Type + Required */}
+                                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                            <div className="sm:col-span-5 space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Field</label>
+                                                <input type="text" value={field.name} onChange={(e) => onUpdate(idx, "name", e.target.value)} placeholder="Contoh: Harga Penawaran Total"
+                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white placeholder:text-slate-700 focus:outline-none focus:border-cyan-500/50" />
+                                            </div>
+                                            <div className="sm:col-span-4 space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Input</label>
+                                                <select value={field.type} onChange={(e) => onUpdate(idx, "type", e.target.value as FieldType)}
+                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50">
+                                                    {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
+                                                        <option key={t} value={t}>{FIELD_TYPE_META[t].label}</option>
+                                                    ))}
+                                                </select>
+                                            </div>
+                                            <div className="sm:col-span-3 space-y-1">
+                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Wajib Diisi</label>
+                                                <div className="flex items-center gap-2 h-[38px]">
+                                                    <button type="button" onClick={() => onUpdate(idx, "required", !field.required)}
+                                                        className={`relative w-10 h-5 rounded-full transition-colors ${field.required ? "bg-emerald-500" : "bg-slate-700"}`}>
+                                                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${field.required ? "left-5" : "left-0.5"}`} />
+                                                    </button>
+                                                    <span className={`text-xs font-semibold ${field.required ? "text-emerald-400" : "text-slate-500"}`}>
+                                                        {field.required ? "Wajib" : "Opsional"}
+                                                    </span>
+                                                </div>
                                             </div>
                                         </div>
-
+                                        {/* Row 2: Help text */}
+                                        <div className="space-y-1">
+                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Petunjuk untuk Vendor</label>
+                                            <input type="text" value={field.helpText} onChange={(e) => onUpdate(idx, "helpText", e.target.value)} placeholder="Contoh: Masukkan total harga termasuk PPN 11%"
+                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 placeholder:text-slate-700 focus:outline-none focus:border-cyan-500/50" />
+                                        </div>
+                                        {/* Row 3: Options for select */}
+                                        {(field.type === "select" || field.type === "multi-select") && (
+                                            <OptionsChipInput options={field.options || []} onChange={(opts) => onUpdate(idx, "options", opts)} />
+                                        )}
                                     </div>
-
-                                    {/* Delete Button */}
-                                    <div className="md:col-span-1 flex items-center justify-end h-full pt-5">
-                                        <button
-                                            type="button"
-                                            onClick={() => handleRemoveRequirement(req.id)}
-                                            className="p-2 text-slate-500 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors"
-                                            title="Hapus Kriteria"
-                                        >
-                                            <Trash2 className="w-5 h-5" />
+                                    {/* Type badge + delete */}
+                                    <div className="flex flex-col items-end gap-2 shrink-0">
+                                        <button type="button" onClick={() => onRemove(field.id)} className="p-1.5 text-slate-700 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                            <Trash2 className="w-4 h-4" />
                                         </button>
+                                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-medium ${meta.color}`}>
+                                            {meta.icon}
+                                        </div>
                                     </div>
                                 </div>
                             </div>
-                        ))}
+
+                            {/* ── Scoring Section ── */}
+                            <div className={`border-t transition-colors ${field.scored ? "border-purple-500/20 bg-purple-500/5" : "border-slate-800 bg-slate-900/30"}`}>
+                                <div className="px-4 py-3">
+                                    <div className="flex items-center justify-between mb-3">
+                                        <div className="flex items-center gap-2">
+                                            <Star className={`w-3.5 h-3.5 ${field.scored ? "text-purple-400" : "text-slate-600"}`} />
+                                            <span className={`text-xs font-bold ${field.scored ? "text-purple-300" : "text-slate-600"}`}>
+                                                Kriteria Penilaian
+                                            </span>
+                                            {!field.scored && <span className="text-[10px] text-slate-600">(opsional — aktifkan untuk menilai field ini)</span>}
+                                        </div>
+                                        {/* Toggle scored */}
+                                        <button type="button" onClick={() => onUpdate(idx, "scored", !field.scored)}
+                                            className={`relative w-10 h-5 rounded-full transition-colors ${field.scored ? "bg-purple-500" : "bg-slate-700"}`}>
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${field.scored ? "left-5" : "left-0.5"}`} />
+                                        </button>
+                                    </div>
+
+                                    {field.scored && (
+                                        <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
+                                            {/* Weight */}
+                                            <div className="sm:col-span-3 space-y-1">
+                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Bobot (%)</label>
+                                                <div className="relative">
+                                                    <input type="number" min={0} max={100} value={field.weight}
+                                                        onChange={(e) => onUpdate(idx, "weight", Number(e.target.value))}
+                                                        className="w-full px-3 py-2 pr-7 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm font-bold text-purple-300 focus:outline-none focus:border-purple-500/60" />
+                                                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-purple-500/50" />
+                                                </div>
+                                            </div>
+                                            {/* Scoring Type */}
+                                            <div className="sm:col-span-4 space-y-1">
+                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Metode Scoring</label>
+                                                <select value={field.scoringType} onChange={(e) => onUpdate(idx, "scoringType", e.target.value as ScoringType)}
+                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-purple-500/20 text-xs text-white focus:outline-none focus:border-purple-500/40">
+                                                    {(Object.keys(SCORING_META) as ScoringType[]).map((t) => (
+                                                        <option key={t} value={t}>{SCORING_META[t].label}</option>
+                                                    ))}
+                                                </select>
+                                                <p className={`text-[10px] ${SCORING_META[field.scoringType].color}`}>
+                                                    {SCORING_META[field.scoringType].desc}
+                                                </p>
+                                            </div>
+                                            {/* Evaluator guide */}
+                                            <div className="sm:col-span-5 space-y-1">
+                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Panduan Evaluator</label>
+                                                <input type="text" value={field.evaluatorGuide} onChange={(e) => onUpdate(idx, "evaluatorGuide", e.target.value)} placeholder="Panduan singkat untuk evaluator..."
+                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-purple-500/20 text-xs text-slate-300 placeholder:text-slate-700 focus:outline-none focus:border-purple-500/40" />
+                                            </div>
+                                        </div>
+                                    )}
+                                </div>
+                            </div>
+                        </div>
+                    );
+                })}
+            </div>
+
+            <StepNav onBack={onBack} onNext={onNext} nextDisabled={fields.length === 0 || !weightOk}
+                nextLabel={!weightOk ? `Total bobot: ${totalWeight}% (harus 100%)` : "Review & Publikasikan"} />
+        </div>
+    );
+}
+
+// ─── Step 4: Review ───────────────────────────────────────────────────────────
+
+function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, onGoToStep }: {
+    form: TenderFormData;
+    totalWeight: number;
+    weightOk: boolean;
+    loading: boolean;
+    onBack: () => void;
+    onSubmit: () => void;
+    onGoToStep: (s: number) => void;
+}) {
+    const deadline = form.commitDeadline ? new Date(form.commitDeadline) : null;
+    const scoredFields = form.fields.filter((f) => f.scored);
+
+    return (
+        <div className="space-y-5">
+            <div className="glass-panel p-5 rounded-2xl space-y-1">
+                <div className="flex items-center gap-2 text-base font-bold text-white"><Eye className="w-5 h-5 text-emerald-400" /> Review & Konfirmasi</div>
+                <p className="text-xs text-slate-400">Periksa kembali semua detail sebelum tender dipublikasikan.</p>
+            </div>
+
+            {/* Info */}
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white">Informasi Tender</h3>
+                    <button type="button" onClick={() => onGoToStep(2)} className="text-xs text-emerald-400 hover:text-emerald-300">Edit</button>
+                </div>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                    <ReviewRow label="Judul" value={form.title || "—"} />
+                    <ReviewRow label="Kode" value={form.code} mono />
+                    <ReviewRow label="Kategori" value={form.category} />
+                    <ReviewRow label="Commit Deadline" value={deadline ? deadline.toLocaleString("id-ID") : "—"} />
+                    <ReviewRow label="Reveal Window" value={`${form.revealWindowHours} jam`} />
+                    <ReviewRow label="Deskripsi" value={form.description || "—"} full />
+                </div>
+            </div>
+
+            {/* Fields + Scoring summary */}
+            <div className="glass-panel p-5 rounded-2xl space-y-3">
+                <div className="flex items-center justify-between">
+                    <h3 className="text-sm font-bold text-white">
+                        Field Bid — {form.fields.length} field, {scoredFields.length} dinilai
+                    </h3>
+                    <button type="button" onClick={() => onGoToStep(3)} className="text-xs text-emerald-400 hover:text-emerald-300">Edit</button>
+                </div>
+                <div className="space-y-2">
+                    {form.fields.map((f, i) => {
+                        const meta = FIELD_TYPE_META[f.type];
+                        const sMeta = f.scored ? SCORING_META[f.scoringType] : null;
+                        return (
+                            <div key={f.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${f.scored ? "bg-purple-500/5 border-purple-500/15" : "bg-slate-900/60 border-slate-800"}`}>
+                                <span className="text-[10px] text-slate-600 font-mono w-4">{i + 1}</span>
+                                <span className={meta.color}>{meta.icon}</span>
+                                <span className="text-sm text-white font-medium flex-1 truncate">{f.name || <span className="text-slate-600 italic">Tanpa nama</span>}</span>
+                                {f.scored && sMeta ? (
+                                    <div className="flex items-center gap-2 shrink-0">
+                                        <span className={`flex items-center gap-1 text-[10px] font-medium ${sMeta.color}`}>
+                                            {sMeta.icon}
+                                        </span>
+                                        <span className="text-sm font-bold text-purple-400">{f.weight}%</span>
+                                    </div>
+                                ) : (
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 shrink-0">Informatif</span>
+                                )}
+                            </div>
+                        );
+                    })}
+                </div>
+                {scoredFields.length > 0 && (
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border border-red-500/20 text-red-400"}`}>
+                        {weightOk ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
+                        Total Bobot: {totalWeight}% {weightOk ? "— Valid ✓" : "— Harus tepat 100%"}
                     </div>
-                </div>
+                )}
+            </div>
 
-                {/* Submit Action */}
-                <div className="flex items-center justify-end gap-4 pt-4">
-                    <Link
-                        href="/tenders"
-                        className="px-5 py-2.5 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors"
-                    >
-                        Batal
-                    </Link>
+            <div className="flex gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-blue-300 text-xs">
+                <Info className="w-4 h-4 shrink-0 mt-0.5" />
+                <p>Setelah dibuat, tender berstatus <strong>DRAFT</strong> dan perlu diaktifkan ke <strong>OPEN</strong> untuk menerima penawaran vendor.</p>
+            </div>
 
-                    <button
-                        type="submit"
-                        disabled={loading || totalWeight !== 100}
-                        className="px-6 py-2.5 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-600 text-slate-950 font-bold text-xs hover:opacity-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                    >
-                        <Save className="w-4 h-4" />
-                        {loading ? "Menyimpan..." : "Publikasikan Tender"}
-                    </button>
+            <div className="flex items-center justify-between gap-4 pt-2">
+                <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                    <ArrowLeft className="w-3.5 h-3.5" /> Kembali
+                </button>
+                <button type="button" onClick={onSubmit} disabled={loading || !weightOk}
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold text-sm hover:from-emerald-400 hover:to-cyan-400 transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                    {loading ? (
+                        <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Membuat Tender...</>
+                    ) : (
+                        <><Save className="w-4 h-4" />Publikasikan Tender</>
+                    )}
+                </button>
+            </div>
+        </div>
+    );
+}
+
+// ─── Live Preview Panel ───────────────────────────────────────────────────────
+
+function LivePreviewPanel({ fields, title }: { fields: BidField[]; title: string }) {
+    return (
+        <div className="sticky top-4 space-y-4">
+            <div className="flex items-center gap-2 px-1">
+                <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
+                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Live Preview</span>
+                <span className="text-xs text-slate-600">— Tampilan form vendor</span>
+            </div>
+            <div className="glass-panel rounded-2xl overflow-hidden border-cyan-500/20">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-950/80 border-b border-slate-800">
+                    <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /></div>
+                    <div className="flex-1 h-5 rounded bg-slate-800/80 text-[10px] text-slate-600 flex items-center px-2">tenderseal.app/tenders/submit</div>
                 </div>
-            </form>
+                <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
+                    <div>
+                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Form Penawaran</div>
+                        <h3 className="text-sm font-bold text-white leading-snug">{title || <span className="text-slate-600 italic">Judul tender belum diisi</span>}</h3>
+                    </div>
+                    {fields.length === 0 ? (
+                        <div className="text-center py-6 text-slate-600 text-xs">Tambah field untuk melihat preview</div>
+                    ) : (
+                        <div className="space-y-3.5">
+                            {fields.map((f) => {
+                                const meta = FIELD_TYPE_META[f.type];
+                                return (
+                                    <div key={f.id} className="space-y-1.5">
+                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                                            <span className={meta.color}>{meta.icon}</span>
+                                            {f.name || <span className="text-slate-600 italic">Nama field</span>}
+                                            {f.required && <span className="text-red-400">*</span>}
+                                            {f.scored && <span className="ml-auto text-[10px] font-bold text-purple-400">{f.weight}%</span>}
+                                        </label>
+                                        {f.type === "currency" && (
+                                            <div className="flex items-center px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 gap-2">
+                                                <span className="text-xs font-bold text-emerald-600">Rp</span>
+                                                <span className="text-xs text-slate-600 italic">{f.helpText || "0"}</span>
+                                            </div>
+                                        )}
+                                        {(f.type === "text" || f.type === "number") && (
+                                            <div className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-600 italic">{f.helpText || "Masukkan nilai..."}</div>
+                                        )}
+                                        {f.type === "file" && (
+                                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-dashed border-slate-700 text-xs text-slate-600">
+                                                <FileUp className="w-3 h-3" />{f.helpText || "Upload file..."}
+                                            </div>
+                                        )}
+                                        {(f.type === "select" || f.type === "multi-select") && (
+                                            <div className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-600 italic">
+                                                {f.options?.length ? `Pilih: ${f.options.slice(0, 3).join(", ")}${f.options.length > 3 ? "..." : ""}` : "Pilih opsi..."}
+                                            </div>
+                                        )}
+                                    </div>
+                                );
+                            })}
+                        </div>
+                    )}
+                </div>
+            </div>
+        </div>
+    );
+}
+
+// ─── Options Chip Input ───────────────────────────────────────────────────────
+
+function OptionsChipInput({ options, onChange }: { options: string[]; onChange: (opts: string[]) => void }) {
+    const [inputVal, setInputVal] = useState("");
+    const inputRef = useRef<HTMLInputElement>(null);
+
+    const commit = () => {
+        const trimmed = inputVal.trim();
+        if (trimmed && !options.includes(trimmed)) onChange([...options, trimmed]);
+        setInputVal("");
+    };
+
+    const handleKeyDown = (e: React.KeyboardEvent<HTMLInputElement>) => {
+        if (e.key === "Enter" || e.key === "Tab") { e.preventDefault(); commit(); }
+        else if (e.key === "Backspace" && inputVal === "" && options.length > 0) onChange(options.slice(0, -1));
+    };
+
+    return (
+        <div className="space-y-1.5">
+            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+                Pilihan Opsi{" "}
+                <span className="text-slate-600 normal-case font-normal">
+                    — ketik lalu tekan <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px] font-mono">Enter</kbd> untuk menambah
+                </span>
+            </label>
+            <div className="flex flex-wrap gap-1.5 px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 focus-within:border-cyan-500/50 transition-colors min-h-[38px] cursor-text" onClick={() => inputRef.current?.focus()}>
+                {options.map((opt) => (
+                    <span key={opt} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-medium">
+                        {opt}
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onChange(options.filter((o) => o !== opt)); }} className="text-cyan-500/60 hover:text-red-400 transition-colors leading-none">✕</button>
+                    </span>
+                ))}
+                <input ref={inputRef} type="text" value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={handleKeyDown} onBlur={commit}
+                    placeholder={options.length === 0 ? "Ketik opsi, tekan Enter..." : "Tambah opsi..."}
+                    className="flex-1 min-w-[120px] bg-transparent text-xs text-slate-300 placeholder:text-slate-700 outline-none" />
+            </div>
+        </div>
+    );
+}
+
+// ─── Shared Components ────────────────────────────────────────────────────────
+
+function ReviewRow({ label, value, mono, full }: { label: string; value: string; mono?: boolean; full?: boolean }) {
+    return (
+        <div className={full ? "col-span-full" : ""}>
+            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{label}</div>
+            <div className={`text-sm text-white ${mono ? "font-mono text-emerald-400" : ""}`}>{value}</div>
+        </div>
+    );
+}
+
+function StepNav({ onBack, onNext, nextDisabled, nextLabel }: { onBack: () => void; onNext: () => void; nextDisabled?: boolean; nextLabel?: string }) {
+    return (
+        <div className="flex items-center justify-between gap-4 pt-2">
+            <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                <ArrowLeft className="w-3.5 h-3.5" /> Kembali
+            </button>
+            <button type="button" onClick={onNext} disabled={nextDisabled}
+                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold text-xs hover:from-emerald-400 hover:to-cyan-400 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+                {nextLabel || "Lanjut"} <ArrowRight className="w-3.5 h-3.5" />
+            </button>
         </div>
     );
 }
