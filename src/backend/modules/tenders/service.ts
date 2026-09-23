@@ -90,10 +90,13 @@ export abstract class TenderService {
             const tender = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
             if (tender && tender.commitDeadline) {
                 try {
-                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000));
+                    const { provider, relayerWallet } = await import("@/lib/web3");
+                    const nonce = await provider.getTransactionCount(relayerWallet.address, "latest");
+                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000), { nonce });
                     await tx.wait();
                 } catch (err) {
                     console.error("Failed to create tender on smart contract:", err);
+                    throw new Error("Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik.");
                 }
             }
         } else if (status === "CLOSED") {

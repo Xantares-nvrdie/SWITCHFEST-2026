@@ -201,8 +201,8 @@ export default function TenderDetailPage() {
     // Check if current user is the tender creator
     const isCreator = session?.user?.id === tender?.creator?.id;
 
-    // Execute Client-Side Encryption
-    const handleRunEncryption = async () => {
+    // Execute Encryption and Submit Bid
+    const handleSubmitBid = async () => {
         if (!vendorSecret || vendorSecret.length < 6) {
             alert("Secret Key / PIN harus minimal 6 karakter.");
             return;
@@ -212,42 +212,16 @@ export default function TenderDetailPage() {
             return;
         }
 
-        setEncrypting(true);
-        try {
-            const kdfSalt = generateSalt(16);
-            const bidSalt = generateSalt(16);
-
-            // 1. Derive KDF Key from Secret
-            const { key } = await deriveKdfKey(vendorSecret, kdfSalt);
-
-            // 2. Encrypt Payload using AES-GCM 256-bit
-            const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(formData, key);
-
-            // 3. Compute Commitment Hash
-            const commitmentHash = await calculateCommitmentHash(tenderId, selectedOrgId, formData, bidSalt);
-
-            setEncryptionResult({
-                kdfSalt,
-                bidSalt,
-                ivHex,
-                ciphertextHex,
-                commitmentHash,
-                payloadHash,
-            });
-        } catch (err) {
-            console.error(err);
-            alert("Gagal melakukan enkripsi");
-        } finally {
-            setEncrypting(false);
-        }
-    };
-    
-    // Submit Bid to Backend
-    const handleSubmitBid = async () => {
-        if (!encryptionResult || !selectedOrgId) return;
         setSubmittingBid(true);
         try {
-            // 1. Web3 Smart Contract Commit
+            // A. Run Client-Side Encryption
+            const kdfSalt = generateSalt(16);
+            const bidSalt = generateSalt(16);
+            const { key } = await deriveKdfKey(vendorSecret, kdfSalt);
+            const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(formData, key);
+            const commitmentHash = await calculateCommitmentHash(tenderId, selectedOrgId, formData, bidSalt);
+
+            // B. Web3 Smart Contract Commit
             // @ts-ignore
             if (!window.ethereum) {
                 alert("Please install MetaMask to submit a bid.");
@@ -262,20 +236,20 @@ export default function TenderDetailPage() {
             const signer = await provider.getSigner();
             const contract = new ethers.Contract("0x5FbDB2315678afecb367f032d93F642f64180aa3", TenderSealABI, signer);
             
-            const scTx = await contract.commitBid(tenderId, selectedOrgId, encryptionResult.commitmentHash);
+            const scTx = await contract.commitBid(tenderId, selectedOrgId, commitmentHash);
             await scTx.wait();
 
-            // 2. Submit to Backend
+            // C. Submit to Backend
             const res = await fetch(`/api/bids/tender/${tenderId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
                     organizationId: selectedOrgId,
-                    commitmentHash: encryptionResult.commitmentHash,
-                    encryptedPayload: encryptionResult.ciphertextHex,
-                    kdfSalt: encryptionResult.kdfSalt,
-                    encryptionIv: encryptionResult.ivHex,
-                    bidSalt: encryptionResult.bidSalt,
+                    commitmentHash: commitmentHash,
+                    encryptedPayload: ciphertextHex,
+                    kdfSalt: kdfSalt,
+                    encryptionIv: ivHex,
+                    bidSalt: bidSalt,
                 }),
             });
             let data;
@@ -447,7 +421,14 @@ export default function TenderDetailPage() {
             
             const criteriaScores = tender.criteria!.map((c: any) => {
                 let score = 0;
-                const valStr = String(payload[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                
+                // Match criteria to the correct field key
+                const relatedField = tender.fields?.find((f: any) => f.name === c.name);
+                // Simple slugify just in case it doesn't match
+                const slugify = (str: string) => str.toLowerCase().replace(/[^a-z0-9]+/g, '_').replace(/(^_|_$)/g, '');
+                const fieldKey = relatedField?.key || slugify(c.name);
+                
+                const valStr = String(payload[fieldKey] || "0").replace(/[^0-9.-]+/g, "");
                 const val = Number(valStr);
 
                 if (c.scoringType === "MANUAL") {
@@ -455,7 +436,8 @@ export default function TenderDetailPage() {
                     score = Math.min(Math.max(score, 0), Number(c.maxScore));
                 } else if (c.scoringType === "LOWEST_PRICE") {
                     const allVals = validBids.map(b => {
-                        const vStr = String((b.reveal?.revealedPayload || {})[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                        const bPayload = b.reveal?.revealedPayload || {};
+                        const vStr = String(bPayload[fieldKey] || "0").replace(/[^0-9.-]+/g, "");
                         return Number(vStr);
                     }).filter(v => v > 0);
                     const minVal = allVals.length ? Math.min(...allVals) : 0;
@@ -464,7 +446,8 @@ export default function TenderDetailPage() {
                     }
                 } else if (c.scoringType === "HIGHEST_VALUE") {
                     const allVals = validBids.map(b => {
-                        const vStr = String((b.reveal?.revealedPayload || {})[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                        const bPayload = b.reveal?.revealedPayload || {};
+                        const vStr = String(bPayload[fieldKey] || "0").replace(/[^0-9.-]+/g, "");
                         return Number(vStr);
                     }).filter(v => v > 0);
                     const maxVal = allVals.length ? Math.max(...allVals) : 0;
@@ -524,6 +507,36 @@ export default function TenderDetailPage() {
                         <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
                             <Building2 className="w-3.5 h-3.5" /> {tender.organization?.name} • {tender.category}
                         </p>
+                        
+                        {isCreator && tender.status === 'DRAFT' && (
+                            <div className="mt-4 flex items-center gap-3">
+                                <button
+                                    onClick={async () => {
+                                        if (!confirm("Anda yakin ingin mempublikasikan Tender ini ke Blockchain? Aksi ini tidak dapat dibatalkan!")) return;
+                                        try {
+                                            const res = await fetch(`/api/tenders/${tender.id}/status`, {
+                                                method: "PATCH",
+                                                headers: { "Content-Type": "application/json" },
+                                                body: JSON.stringify({ status: "OPEN" })
+                                            });
+                                            if (res.ok) {
+                                                alert("Tender berhasil dibuka dan didaftarkan ke Blockchain!");
+                                                window.location.reload();
+                                            } else {
+                                                const err = await res.json();
+                                                alert(err.message || "Gagal mengubah status tender");
+                                            }
+                                        } catch (e: any) {
+                                            alert("Error jaringan: " + e.message);
+                                        }
+                                    }}
+                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2"
+                                >
+                                    <ShieldCheck className="w-4 h-4" /> Publikasikan ke Blockchain (Set OPEN)
+                                </button>
+                                <span className="text-[10px] text-slate-500 max-w-xs">Setelah dipublikasikan, tender tidak dapat diubah dan vendor dapat mulai mengirim Sealed Bid.</span>
+                            </div>
+                        )}
                     </div>
 
                     <div className="flex items-center gap-2">
@@ -601,166 +614,132 @@ export default function TenderDetailPage() {
 
             {/* TAB 2: ENCRYPT (Submit Bid) */}
             {activeTab === "encrypt" && (
-                <div className="grid grid-cols-1 lg:grid-cols-2 gap-8">
-                    {/* Left: Input Form */}
-                    <div className="space-y-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                            <div className="flex items-center gap-3 mb-6">
-                                <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                    <Lock className="w-5 h-5 text-emerald-400" />
-                                </div>
-                                <div>
-                                    <h3 className="text-base font-bold text-white leading-tight">Data Penawaran (Bid)</h3>
-                                    <p className="text-xs text-slate-400 mt-0.5">Isi data sesuai kriteria tender. Data akan dienkripsi di browser.</p>
-                                </div>
+                <div className="max-w-3xl mx-auto space-y-6">
+                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                        <div className="flex items-center gap-3 mb-6">
+                            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
+                                <Lock className="w-5 h-5 text-emerald-400" />
+                            </div>
+                            <div>
+                                <h3 className="text-base font-bold text-white leading-tight">Data Penawaran (Bid)</h3>
+                                <p className="text-xs text-slate-400 mt-0.5">Isi data sesuai kriteria tender. Data akan otomatis dienkripsi sebelum dikirim.</p>
+                            </div>
+                        </div>
+                        
+                        <div className="space-y-4">
+                            {/* Vendor Org Selector */}
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-slate-300">Pilih Organisasi Vendor Anda</label>
+                                {userOrgs.length === 0 ? (
+                                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 text-xs flex items-center gap-2">
+                                        <AlertCircle className="w-4 h-4" /> Anda tidak tergabung di organisasi VENDOR yang diverifikasi.
+                                    </div>
+                                ) : (
+                                    <select
+                                        value={selectedOrgId}
+                                        onChange={(e) => setSelectedOrgId(e.target.value)}
+                                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50"
+                                    >
+                                        {userOrgs.map(o => (
+                                            <option key={o.id} value={o.id}>{o.name}</option>
+                                        ))}
+                                    </select>
+                                )}
                             </div>
                             
-                            <div className="space-y-4">
-                                {/* Vendor Org Selector */}
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300">Pilih Organisasi Vendor Anda</label>
-                                    {userOrgs.length === 0 ? (
-                                        <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 text-xs flex items-center gap-2">
-                                            <AlertCircle className="w-4 h-4" /> Anda tidak tergabung di organisasi VENDOR yang diverifikasi.
-                                        </div>
-                                    ) : (
-                                        <select
-                                            value={selectedOrgId}
-                                            onChange={(e) => setSelectedOrgId(e.target.value)}
-                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50"
-                                        >
-                                            {userOrgs.map(o => (
-                                                <option key={o.id} value={o.id}>{o.name}</option>
-                                            ))}
-                                        </select>
-                                    )}
-                                </div>
-                                
-                                <hr className="border-slate-800" />
+                            <hr className="border-slate-800" />
 
-                                {tender.fields?.map((f: any) => (
-                                    <div key={f.key} className="space-y-1.5">
-                                        <label className="text-xs font-semibold text-slate-300">{f.name} {f.required && <span className="text-red-400">*</span>}</label>
-                                        {f.type.toLowerCase() === 'textarea' ? (
-                                            <textarea
-                                                value={formData[f.key] || ""}
-                                                onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
-                                                rows={3}
-                                            />
-                                        ) : f.type.toLowerCase() === 'file' ? (
-                                            <div>
-                                                <input
-                                                    type="file"
-                                                    accept=".pdf,.doc,.docx,.jpg,.png"
-                                                    onChange={(e) => {
-                                                        const file = e.target.files?.[0];
-                                                        if (file) {
-                                                            if (file.size > 2 * 1024 * 1024) {
-                                                                alert("Maaf, ukuran file maksimal 2MB untuk menjaga performa enkripsi browser.");
-                                                                e.target.value = '';
-                                                                return;
-                                                            }
-                                                            const reader = new FileReader();
-                                                            reader.onload = (ev) => {
-                                                                setFormData(p => ({ ...p, [f.key]: ev.target?.result as string }));
-                                                            };
-                                                            reader.readAsDataURL(file);
-                                                        } else {
-                                                            setFormData(p => ({ ...p, [f.key]: "" }));
-                                                        }
-                                                    }}
-                                                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer"
-                                                />
-                                                {formData[f.key] && formData[f.key].startsWith("data:") && (
-                                                    <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                                                        <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi
-                                                    </p>
-                                                )}
-                                            </div>
-                                        ) : (
+                            {tender.fields?.map((f: any) => (
+                                <div key={f.key} className="space-y-1.5">
+                                    <label className="text-xs font-semibold text-slate-300">{f.name} {f.required && <span className="text-red-400">*</span>}</label>
+                                    {f.type.toLowerCase() === 'textarea' ? (
+                                        <textarea
+                                            value={formData[f.key] || ""}
+                                            onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
+                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                            rows={3}
+                                        />
+                                    ) : f.type.toLowerCase() === 'file' ? (
+                                        <div>
                                             <input
-                                                type={f.type.toLowerCase() === 'number' || f.type.toLowerCase() === 'currency' ? 'number' : 'text'}
-                                                value={formData[f.key] || ""}
-                                                onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                                type="file"
+                                                accept=".pdf,.doc,.docx,.jpg,.png"
+                                                onChange={(e) => {
+                                                    const file = e.target.files?.[0];
+                                                    if (file) {
+                                                        if (file.size > 2 * 1024 * 1024) {
+                                                            alert("Maaf, ukuran file maksimal 2MB untuk menjaga performa enkripsi browser.");
+                                                            e.target.value = '';
+                                                            return;
+                                                        }
+                                                        const reader = new FileReader();
+                                                        reader.onload = (ev) => {
+                                                            setFormData(p => ({ ...p, [f.key]: ev.target?.result as string }));
+                                                        };
+                                                        reader.readAsDataURL(file);
+                                                    } else {
+                                                        setFormData(p => ({ ...p, [f.key]: "" }));
+                                                    }
+                                                }}
+                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer"
                                             />
-                                        )}
-                                    </div>
-                                ))}
-
-                                <hr className="border-slate-800" />
-                                
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-cyan-400">Secret Key / PIN Enkripsi <span className="text-red-400">*</span></label>
-                                    <p className="text-[11px] text-slate-500">Kunci ini tidak akan dikirim ke server. Gunakan kunci yang kuat dan INGAT kunci ini untuk fase Reveal.</p>
-                                    <input
-                                        type="password"
-                                        value={vendorSecret}
-                                        onChange={(e) => setVendorSecret(e.target.value)}
-                                        placeholder="Masukkan Secret PIN (min. 6 karakter)"
-                                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-cyan-900/50 text-sm text-cyan-300 focus:outline-none focus:border-cyan-400 transition-colors"
-                                    />
-                                </div>
-                            </div>
-                            
-                            <button
-                                onClick={handleRunEncryption}
-                                disabled={encrypting || userOrgs.length === 0}
-                                className="mt-6 w-full py-3 rounded-xl bg-gradient-to-r from-cyan-600 to-blue-600 hover:from-cyan-500 hover:to-blue-500 text-white font-bold text-sm shadow-lg shadow-cyan-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
-                            >
-                                {encrypting ? <span className="animate-pulse">Menghitung KDF & Enkripsi AES-GCM...</span> : <><Lock className="w-4 h-4" /> Enkripsi & Generate Commitment</>}
-                            </button>
-                        </div>
-                    </div>
-
-                    {/* Right: Ciphertext & Submit */}
-                    <div className="space-y-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                            <h3 className="text-base font-bold text-white mb-4">Hasil Enkripsi (Siap Dikirim)</h3>
-                            
-                            {!encryptionResult ? (
-                                <div className="flex flex-col items-center justify-center py-12 text-slate-500 border-2 border-dashed border-slate-800 rounded-xl">
-                                    <Cpu className="w-12 h-12 mb-3 opacity-20" />
-                                    <p className="text-sm">Klik "Enkripsi & Generate Commitment" terlebih dahulu</p>
-                                </div>
-                            ) : (
-                                <div className="space-y-4">
-                                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-semibold text-slate-400">Ciphertext (Encrypted Payload)</span>
-                                            <span className="text-[10px] bg-slate-800 text-slate-300 px-2 py-0.5 rounded">AES-GCM 256</span>
+                                            {formData[f.key] && formData[f.key].startsWith("data:") && (
+                                                <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                                    <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi
+                                                </p>
+                                            )}
                                         </div>
-                                        <p className="text-xs font-mono text-slate-300 break-all bg-slate-900 p-3 rounded-lg border border-slate-800/50 max-h-32 overflow-y-auto">
-                                            {encryptionResult.ciphertextHex}
-                                        </p>
-                                    </div>
-                                    <div className="p-4 rounded-xl bg-slate-950 border border-slate-800">
-                                        <div className="flex justify-between items-center mb-2">
-                                            <span className="text-xs font-semibold text-slate-400">Commitment Hash</span>
-                                            <span className="text-[10px] bg-emerald-900/30 text-emerald-400 px-2 py-0.5 rounded border border-emerald-900/50">SHA-256</span>
-                                        </div>
-                                        <p className="text-xs font-mono text-emerald-400 break-all bg-emerald-950/20 p-3 rounded-lg border border-emerald-900/30">
-                                            {encryptionResult.commitmentHash}
-                                        </p>
-                                    </div>
-                                    
-                                    {!submittedSealed ? (
-                                        <button
-                                            onClick={handleSubmitBid}
-                                            disabled={submittingBid}
-                                            className="w-full py-3.5 rounded-xl bg-emerald-600 hover:bg-emerald-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/50 transition-all flex items-center justify-center gap-2"
-                                        >
-                                            {submittingBid ? "Mengirim ke Blockchain/DB..." : <><UploadCloud className="w-5 h-5" /> Submit Sealed Bid</>}
-                                        </button>
                                     ) : (
-                                        <div className="w-full py-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm flex items-center justify-center gap-2">
-                                            <CheckCircle2 className="w-5 h-5" /> Sealed Bid Berhasil Disubmit!
-                                        </div>
+                                        <input
+                                            type={f.type.toLowerCase() === 'number' || f.type.toLowerCase() === 'currency' ? 'text' : 'text'}
+                                            inputMode={f.type.toLowerCase() === 'number' || f.type.toLowerCase() === 'currency' ? 'numeric' : 'text'}
+                                            value={formData[f.key] || ""}
+                                            onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
+                                            placeholder={f.type.toLowerCase() === 'currency' ? 'Hanya masukkan angka (contoh: 15000000)' : ''}
+                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                        />
                                     )}
                                 </div>
-                            )}
+                            ))}
+
+                            <hr className="border-slate-800" />
+                            
+                            <div className="space-y-1.5">
+                                <label className="text-xs font-semibold text-cyan-400">Secret Key / PIN Enkripsi <span className="text-red-400">*</span></label>
+                                <p className="text-[11px] text-slate-500">Kunci ini tidak akan dikirim ke server. Gunakan kunci yang kuat dan INGAT kunci ini untuk fase Reveal.</p>
+                                <input
+                                    type="password"
+                                    value={vendorSecret}
+                                    onChange={(e) => setVendorSecret(e.target.value)}
+                                    placeholder="Masukkan Secret PIN (min. 6 karakter)"
+                                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-cyan-900/50 text-sm text-cyan-300 focus:outline-none focus:border-cyan-400 transition-colors"
+                                />
+                            </div>
                         </div>
+                        
+                        {!submittedSealed ? (
+                            <button
+                                onClick={handleSubmitBid}
+                                disabled={submittingBid || userOrgs.length === 0}
+                                className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                            >
+                                {submittingBid ? (
+                                    <>
+                                        <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
+                                        Mengenkripsi & Mengirim ke Blockchain...
+                                    </>
+                                ) : (
+                                    <>
+                                        <UploadCloud className="w-5 h-5" /> 
+                                        Enkripsi Otomatis & Submit Sealed Bid
+                                    </>
+                                )}
+                            </button>
+                        ) : (
+                            <div className="mt-6 w-full py-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm flex items-center justify-center gap-2">
+                                <CheckCircle2 className="w-5 h-5" /> Sealed Bid Berhasil Disubmit ke Blockchain!
+                            </div>
+                        )}
                     </div>
                 </div>
             )}
