@@ -16,6 +16,7 @@
     },
     "dependencies": {
         "@elysiajs/openapi": "^1.4.11",
+        "@supabase/supabase-js": "^2.117.1",
         "better-auth": "^1.4.7",
         "dotenv": "^17.2.3",
         "drizzle-orm": "^0.45.1",

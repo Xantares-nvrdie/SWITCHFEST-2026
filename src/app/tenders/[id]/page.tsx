@@ -4,6 +4,7 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
+import { supabase } from "@/lib/supabase";
 import { ethers } from "ethers";
 import TenderSealABI from "@/lib/TenderSealABI.json";
 import {
@@ -79,7 +80,7 @@ export default function TenderDetailPage() {
     const [activeTab, setActiveTab] = useState<"overview" | "encrypt" | "reveal" | "scoring" | "audit">("overview");
 
     // Dynamic Form Input Values State
-    const [formData, setFormData] = useState<Record<string, string>>({});
+    const [formData, setFormData] = useState<Record<string, any>>({});
     
     // Secret Key for Encryption/Decryption
     const [vendorSecret, setVendorSecret] = useState<string>("");
@@ -172,7 +173,7 @@ export default function TenderDetailPage() {
                 }
 
                 // Initialize form data with empty strings based on required criteria/fields
-                const initialForm: Record<string, string> = {};
+                const initialForm: Record<string, any> = {};
                 tenderData.fields?.forEach((f: any) => {
                     initialForm[f.key] = "";
                 });
@@ -201,6 +202,45 @@ export default function TenderDetailPage() {
     // Check if current user is the tender creator
     const isCreator = session?.user?.id === tender?.creator?.id;
 
+    const handleDownloadEncryptedFile = async (payloadStr: string) => {
+        try {
+            const data = JSON.parse(payloadStr);
+            if (!data._isEncryptedFile) return;
+
+            const res = await fetch(data.url);
+            const encryptedBuffer = await res.arrayBuffer();
+
+            // Import key
+            const keyBuffer = new Uint8Array(data.key.match(/.{1,2}/g)!.map((byte: any) => parseInt(byte, 16)));
+            const cryptoKey = await crypto.subtle.importKey(
+                "raw",
+                keyBuffer,
+                { name: "AES-GCM" },
+                false,
+                ["decrypt"]
+            );
+
+            const ivBuffer = new Uint8Array(data.iv.match(/.{1,2}/g)!.map((byte: any) => parseInt(byte, 16)));
+            const decryptedBuffer = await crypto.subtle.decrypt(
+                { name: "AES-GCM", iv: ivBuffer },
+                cryptoKey,
+                encryptedBuffer
+            );
+
+            const blob = new Blob([decryptedBuffer], { type: data.mimeType || "application/octet-stream" });
+            const url = URL.createObjectURL(blob);
+            
+            const a = document.createElement("a");
+            a.href = url;
+            a.download = data.fileName || "document";
+            a.click();
+            URL.revokeObjectURL(url);
+        } catch (e) {
+            console.error(e);
+            alert("Gagal mendekripsi file! File mungkin korup.");
+        }
+    };
+
     // Execute Encryption and Submit Bid
     const handleSubmitBid = async () => {
         if (!vendorSecret || vendorSecret.length < 6) {
@@ -215,11 +255,45 @@ export default function TenderDetailPage() {
         setSubmittingBid(true);
         try {
             // A. Run Client-Side Encryption
+            const processedFormData = { ...formData };
+            
+            // 1. Process files: Encrypt & Upload to Supabase
+            for (const [key, value] of Object.entries(processedFormData)) {
+                if (value instanceof File) {
+                    const fileKey = await crypto.subtle.generateKey({ name: "AES-GCM", length: 256 }, true, ["encrypt", "decrypt"]);
+                    const exportedFileKey = await crypto.subtle.exportKey("raw", fileKey);
+                    const fileKeyHex = Array.from(new Uint8Array(exportedFileKey)).map(b => b.toString(16).padStart(2, '0')).join('');
+                    
+                    const fileIv = crypto.getRandomValues(new Uint8Array(12));
+                    const fileIvHex = Array.from(fileIv).map(b => b.toString(16).padStart(2, '0')).join('');
+                    
+                    const arrayBuffer = await value.arrayBuffer();
+                    const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: fileIv }, fileKey, arrayBuffer);
+                    
+                    const path = `bids/${tenderId}/${crypto.randomUUID()}_${value.name}.enc`;
+                    const { data, error } = await supabase.storage.from('tender-documents').upload(path, ciphertext, {
+                        contentType: 'application/octet-stream'
+                    });
+                    if (error) throw error;
+                    
+                    const { data: publicUrlData } = supabase.storage.from('tender-documents').getPublicUrl(path);
+                    
+                    processedFormData[key] = JSON.stringify({
+                        _isEncryptedFile: true,
+                        url: publicUrlData.publicUrl,
+                        key: fileKeyHex,
+                        iv: fileIvHex,
+                        fileName: value.name,
+                        mimeType: value.type
+                    });
+                }
+            }
+
             const kdfSalt = generateSalt(16);
             const bidSalt = generateSalt(16);
-            const { key } = await deriveKdfKey(vendorSecret, kdfSalt);
-            const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(formData, key);
-            const commitmentHash = await calculateCommitmentHash(tenderId, selectedOrgId, formData, bidSalt);
+            const { key: vendorKey } = await deriveKdfKey(vendorSecret, kdfSalt);
+            const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(processedFormData, vendorKey);
+            const commitmentHash = await calculateCommitmentHash(tenderId, selectedOrgId, processedFormData, bidSalt);
 
             // B. Web3 Smart Contract Commit
             // @ts-ignore
@@ -667,25 +741,21 @@ export default function TenderDetailPage() {
                                                 onChange={(e) => {
                                                     const file = e.target.files?.[0];
                                                     if (file) {
-                                                        if (file.size > 2 * 1024 * 1024) {
-                                                            alert("Maaf, ukuran file maksimal 2MB untuk menjaga performa enkripsi browser.");
+                                                        if (file.size > 20 * 1024 * 1024) {
+                                                            alert("Maaf, ukuran file maksimal 20MB.");
                                                             e.target.value = '';
                                                             return;
                                                         }
-                                                        const reader = new FileReader();
-                                                        reader.onload = (ev) => {
-                                                            setFormData(p => ({ ...p, [f.key]: ev.target?.result as string }));
-                                                        };
-                                                        reader.readAsDataURL(file);
+                                                        setFormData(p => ({ ...p, [f.key]: file }));
                                                     } else {
                                                         setFormData(p => ({ ...p, [f.key]: "" }));
                                                     }
                                                 }}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer"
                                             />
-                                            {formData[f.key] && formData[f.key].startsWith("data:") && (
+                                            {formData[f.key] && formData[f.key] instanceof File && (
                                                 <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
-                                                    <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi
+                                                    <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi & diunggah secara Zero-Knowledge
                                                 </p>
                                             )}
                                         </div>
@@ -827,9 +897,15 @@ export default function TenderDetailPage() {
                                                     {f.type.toLowerCase() === 'file' ? (
                                                         <div>
                                                             {payload[f.key] ? (
-                                                                <a href={payload[f.key]} download={`${f.name}-${bid.organization?.name}`} className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
-                                                                    <UploadCloud className="w-3.5 h-3.5" /> Unduh Lampiran
-                                                                </a>
+                                                                payload[f.key].includes("_isEncryptedFile") ? (
+                                                                    <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                                                                        <Lock className="w-3.5 h-3.5" /> Buka Kriptografi & Unduh
+                                                                    </button>
+                                                                ) : (
+                                                                    <a href={payload[f.key]} download={`${f.name}-${bid.organization?.name}`} className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                        <UploadCloud className="w-3.5 h-3.5" /> Unduh Lampiran
+                                                                    </a>
+                                                                )
                                                             ) : (
                                                                 <span className="text-xs text-slate-500">Tidak ada file</span>
                                                             )}
@@ -970,9 +1046,15 @@ export default function TenderDetailPage() {
                                                                 <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">{f.name}</span>
                                                                 {f.type.toLowerCase() === 'file' ? (
                                                                     payload[f.key] ? (
-                                                                        <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
-                                                                            <FileCode2 className="w-4 h-4" /> Lihat Dokumen
-                                                                        </a>
+                                                                        payload[f.key].includes("_isEncryptedFile") ? (
+                                                                            <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-sm font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                                                                                <Lock className="w-4 h-4" /> Buka Kriptografi & Unduh
+                                                                            </button>
+                                                                        ) : (
+                                                                            <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                                <FileCode2 className="w-4 h-4" /> Lihat Dokumen
+                                                                            </a>
+                                                                        )
                                                                     ) : <span className="text-sm text-slate-500">-</span>
                                                                 ) : f.type.toLowerCase() === 'currency' ? (
                                                                     <span className="text-sm font-bold text-white">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>

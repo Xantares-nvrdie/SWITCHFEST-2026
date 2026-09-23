@@ -32,8 +32,27 @@ export abstract class TenderService {
         return { id: tenderId };
     }
 
+    private static async evaluateAndUpdateStatus<T extends { id: string, status: string, commitDeadline: Date, revealDeadline: Date | null }>(tender: T): Promise<T> {
+        if (!tender) return tender;
+        const now = new Date();
+        let updatePayload: any = null;
+
+        if (tender.status === "OPEN" && tender.commitDeadline < now) {
+            updatePayload = { status: "REVEAL", closedAt: now, updatedAt: now };
+        } else if (tender.status === "REVEAL" && tender.revealDeadline && tender.revealDeadline < now) {
+            updatePayload = { status: "SCORING", updatedAt: now };
+        }
+
+        if (updatePayload) {
+            // Fire and forget db update
+            db.update(tenders).set(updatePayload).where(eq(tenders.id, tender.id)).catch(err => console.error("Lazy update failed:", err));
+            return { ...tender, ...updatePayload };
+        }
+        return tender;
+    }
+
     static async getAll() {
-        return db.query.tenders.findMany({
+        const results = await db.query.tenders.findMany({
             with: {
                 organization: true,
                 participants: true,
@@ -41,10 +60,12 @@ export abstract class TenderService {
             },
             orderBy: (tenders, { desc }) => [desc(tenders.createdAt)],
         });
+        
+        return Promise.all(results.map(t => TenderService.evaluateAndUpdateStatus(t)));
     }
 
     static async getById(id: string) {
-        const tender = await db.query.tenders.findFirst({
+        let tender = await db.query.tenders.findFirst({
             where: (t, { eq }) => eq(t.id, id),
             with: {
                 organization: true,
@@ -53,6 +74,7 @@ export abstract class TenderService {
         });
 
         if (!tender) return null;
+        tender = await TenderService.evaluateAndUpdateStatus(tender);
 
         const fields = await db.query.tenderFields.findMany({
             where: (f, { eq }) => eq(f.tenderId, id),
