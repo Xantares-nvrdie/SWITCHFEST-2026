@@ -44,7 +44,7 @@ export default function OrganizationsPage() {
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingId, setVerifyingId] = useState<string | null>(null);
     const { data: session } = useSession();
-    const isSysAdmin = session?.user?.role === "admin";
+    const isSysAdmin = (session?.user as any)?.role === "admin";
 
     const loadData = async () => {
         setIsLoading(true);
