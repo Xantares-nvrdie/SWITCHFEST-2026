@@ -2,6 +2,7 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
+import { useState, useEffect } from "react";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
     FileText,
@@ -26,6 +27,25 @@ export default function Navbar() {
         router.push("/login");
     };
 
+    const [canCreateTender, setCanCreateTender] = useState(false);
+
+    useEffect(() => {
+        if (session?.user) {
+            fetch("/api/organizations/me")
+                .then((r) => r.json())
+                .then((data) => {
+                    const eligible = data.some(
+                        (o: any) =>
+                            o.memberStatus === "ACTIVE" &&
+                            (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
+                            (o.isVerified || o.verificationStatus === "APPROVED")
+                    );
+                    setCanCreateTender(eligible);
+                })
+                .catch(() => {});
+        }
+    }, [session?.user]);
+
     const navItems = [
         { href: "/tenders", label: "Tender", icon: FileText },
         { href: "/organizations", label: "Organisasi", icon: Building2 },
@@ -48,8 +68,8 @@ export default function Navbar() {
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-1">
-                        {/* Show Buat Tender if logged in (simplification) */}
-                        {session?.user && (
+                        {/* Show Buat Tender if logged in and has role */}
+                        {canCreateTender && (
                             <Link
                                 href="/tenders/create"
                                 className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-1.5 ${

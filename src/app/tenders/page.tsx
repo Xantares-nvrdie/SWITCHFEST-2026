@@ -32,8 +32,24 @@ export default function TendersPage() {
     const [statusFilter, setStatusFilter] = useState<string>("ALL");
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [loading, setLoading] = useState(true);
+    const [canCreateTender, setCanCreateTender] = useState(false);
 
     useEffect(() => {
+        if (session?.user) {
+            fetch("/api/organizations/me")
+                .then((r) => r.json())
+                .then((data) => {
+                    const eligible = data.some(
+                        (o: any) =>
+                            o.memberStatus === "ACTIVE" &&
+                            (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
+                            (o.isVerified || o.verificationStatus === "APPROVED")
+                    );
+                    setCanCreateTender(eligible);
+                })
+                .catch(() => {});
+        }
+
         fetch("/api/tenders")
             .then((res) => res.json())
             .then((data) => {
@@ -93,7 +109,7 @@ export default function TendersPage() {
                     </p>
                 </div>
 
-                {session?.user && (
+                {canCreateTender && (
                     <Link
                         href="/tenders/create"
                         className="px-4 py-2 rounded-lg bg-[var(--accent)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
