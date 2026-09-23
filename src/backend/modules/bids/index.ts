@@ -8,6 +8,24 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
     .use(betterAuthMiddleware)
 
     .get(
+        "/me",
+        async ({ user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+            return await BidService.getBidsForUser(user.id);
+        },
+        {
+            auth: true,
+            detail: {
+                summary: "Get user bids",
+                description: "Mengambil daftar seluruh bid yang pernah disubmit oleh organisasi tempat user bernaung.",
+            },
+        },
+    )
+
+    .get(
         "/tender/:tenderId",
         async ({ params }) => {
             return await BidService.getByTenderId(params.tenderId);

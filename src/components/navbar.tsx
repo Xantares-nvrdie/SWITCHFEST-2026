@@ -15,6 +15,7 @@ import {
     User,
     Loader2,
     ShieldCheck,
+    ClipboardList,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -46,12 +47,21 @@ export default function Navbar() {
         }
     }, [session?.user]);
 
+    const isSysAdmin = (session?.user as any)?.role === "admin";
+
     const navItems = [
         { href: "/tenders", label: "Tender", icon: FileText },
         { href: "/organizations", label: "Organisasi", icon: Building2 },
-        { href: "/audit", label: "Audit", icon: History },
-        // { href: "/admin", label: "Admin", icon: ShieldCheck }, // Hidden for now since there's no real admin role check yet
     ];
+
+    if (session?.user) {
+        navItems.push({ href: "/bids", label: "Riwayat Bid", icon: ClipboardList });
+    }
+
+    if (isSysAdmin) {
+        navItems.push({ href: "/audit", label: "Audit", icon: History });
+        navItems.push({ href: "/admin", label: "Admin", icon: ShieldCheck });
+    }
 
     return (
         <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/80 backdrop-blur-lg">

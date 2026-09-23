@@ -6,6 +6,25 @@ import type { BidModel } from "./model";
 import { contract } from "@/lib/web3";
 
 export abstract class BidService {
+    static async getBidsForUser(userId: string) {
+        const userOrgs = await db.query.organizationMembers.findMany({
+            where: (m, { eq, and }) => and(eq(m.userId, userId), eq(m.status, "ACTIVE")),
+            columns: { organizationId: true }
+        });
+        
+        const orgIds = userOrgs.map(o => o.organizationId);
+        if (orgIds.length === 0) return [];
+        
+        return db.query.bids.findMany({
+            where: (b, { inArray }) => inArray(b.organizationId, orgIds),
+            with: {
+                tender: true,
+                organization: true,
+            },
+            orderBy: (b, { desc }) => [desc(b.createdAt)]
+        });
+    }
+
     static async getByTenderId(tenderId: string) {
         return db.query.bids.findMany({
             where: (b, { eq }) => eq(b.tenderId, tenderId),
