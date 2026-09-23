@@ -4,7 +4,7 @@ import { useState, useEffect } from "react";
 import { useSession } from "@/lib/auth-client";
 import { authClient } from "@/lib/auth-client";
 import { useRouter } from "next/navigation";
-import { Save, User, Link as LinkIcon, Trash2, Loader2, AlertTriangle } from "lucide-react";
+import { Save, User, Link as LinkIcon, Trash2, Loader2, AlertTriangle, Upload } from "lucide-react";
 
 export default function ProfilePage() {
     const { data: session } = useSession();
@@ -93,6 +93,46 @@ export default function ProfilePage() {
         }
     };
 
+    const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+        const file = e.target.files?.[0];
+        if (!file) return;
+
+        if (file.size > 2 * 1024 * 1024) {
+            alert("Ukuran gambar maksimal 2MB.");
+            return;
+        }
+
+        const img = new window.Image();
+        img.src = URL.createObjectURL(file);
+        img.onload = () => {
+            const canvas = document.createElement("canvas");
+            const MAX_SIZE = 400; // Resize to 400x400 max
+            let width = img.width;
+            let height = img.height;
+
+            if (width > height) {
+                if (width > MAX_SIZE) {
+                    height *= MAX_SIZE / width;
+                    width = MAX_SIZE;
+                }
+            } else {
+                if (height > MAX_SIZE) {
+                    width *= MAX_SIZE / height;
+                    height = MAX_SIZE;
+                }
+            }
+
+            canvas.width = width;
+            canvas.height = height;
+            const ctx = canvas.getContext("2d");
+            ctx?.drawImage(img, 0, 0, width, height);
+
+            // Compress as JPEG to keep Base64 string very small and save to DB successfully
+            const dataUrl = canvas.toDataURL("image/jpeg", 0.8);
+            setImage(dataUrl);
+        };
+    };
+
     return (
         <div className="max-w-3xl mx-auto py-12 space-y-8 animate-fade-in">
             <div className="space-y-1">
@@ -105,61 +145,62 @@ export default function ProfilePage() {
             </div>
 
             <div className="card p-6 md:p-8 space-y-8">
-                {/* Avatar Preview Section */}
-                <div className="flex items-center gap-6">
-                    <div className="relative w-20 h-20 rounded-full overflow-hidden bg-[var(--surface-secondary)] border-2 border-[var(--border)] flex items-center justify-center shrink-0">
-                        {image ? (
-                            <img src={image} alt="Avatar" className="w-full h-full object-cover" />
-                        ) : (
-                            <span className="text-2xl font-bold text-[var(--text-tertiary)] uppercase">
-                                {name.substring(0, 2) || "U"}
-                            </span>
-                        )}
-                    </div>
-                    <div>
-                        <h3 className="font-semibold text-[17px] text-[var(--text-primary)]">Avatar</h3>
-                        <p className="text-[13px] text-[var(--text-secondary)] mt-1">
-                            Foto akan muncul di log audit dan diskusi.
+                {/* Avatar & Profile Info */}
+                <div className="flex flex-col sm:flex-row gap-8">
+                    {/* Avatar Upload (Clickable Circle) */}
+                    <div className="flex flex-col items-center gap-3">
+                        <div 
+                            className="relative w-28 h-28 rounded-full overflow-hidden bg-[var(--surface-secondary)] border-4 border-white shadow-md flex items-center justify-center shrink-0 group cursor-pointer transition-transform hover:scale-105"
+                            onClick={() => document.getElementById("avatar-upload")?.click()}
+                        >
+                            {image ? (
+                                <img src={image} alt="Avatar" className="w-full h-full object-cover" />
+                            ) : (
+                                <span className="text-4xl font-bold text-[var(--text-tertiary)] uppercase">
+                                    {name.substring(0, 2) || "U"}
+                                </span>
+                            )}
+                            
+                            <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
+                                <Upload className="w-6 h-6 mb-1" />
+                                <span className="text-[10px] font-bold tracking-wider">UBAH</span>
+                            </div>
+                        </div>
+                        <p className="text-[11px] text-[var(--text-tertiary)] text-center max-w-[120px]">
+                            Klik untuk upload foto (Max 2MB)
                         </p>
-                    </div>
-                </div>
-
-                <div className="grid gap-6">
-                    <div className="space-y-2">
-                        <label className="text-[13px] font-medium text-[var(--text-primary)]">Email (Tidak bisa diubah)</label>
                         <input
-                            type="text"
-                            value={session.user.email}
-                            disabled
-                            className="w-full px-3 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border)] rounded-lg text-[14px] text-[var(--text-secondary)] cursor-not-allowed"
+                            type="file"
+                            accept="image/*"
+                            id="avatar-upload"
+                            className="hidden"
+                            onChange={handleImageUpload}
                         />
                     </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[13px] font-medium text-[var(--text-primary)]">Nama Tampilan</label>
-                        <div className="relative">
-                            <User className="absolute left-3 top-2.5 w-4 h-4 text-[var(--text-tertiary)]" />
+                    <div className="flex-1 space-y-6">
+                        <div className="space-y-2">
+                            <label className="text-[13px] font-medium text-[var(--text-primary)]">Email (Tidak bisa diubah)</label>
                             <input
                                 type="text"
-                                value={name}
-                                onChange={(e) => setName(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[14px] focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] transition-all outline-none"
-                                placeholder="Nama Anda"
+                                value={session.user.email}
+                                disabled
+                                className="w-full px-3 py-2.5 bg-[var(--surface-secondary)] border border-[var(--border)] rounded-lg text-[14px] text-[var(--text-secondary)] cursor-not-allowed"
                             />
                         </div>
-                    </div>
 
-                    <div className="space-y-2">
-                        <label className="text-[13px] font-medium text-[var(--text-primary)]">URL Gambar Profil (Opsional)</label>
-                        <div className="relative">
-                            <LinkIcon className="absolute left-3 top-2.5 w-4 h-4 text-[var(--text-tertiary)]" />
-                            <input
-                                type="text"
-                                value={image}
-                                onChange={(e) => setImage(e.target.value)}
-                                className="w-full pl-9 pr-3 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[14px] focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] transition-all outline-none"
-                                placeholder="https://..."
-                            />
+                        <div className="space-y-2">
+                            <label className="text-[13px] font-medium text-[var(--text-primary)]">Nama Tampilan</label>
+                            <div className="relative">
+                                <User className="absolute left-3 top-2.5 w-4 h-4 text-[var(--text-tertiary)]" />
+                                <input
+                                    type="text"
+                                    value={name}
+                                    onChange={(e) => setName(e.target.value)}
+                                    className="w-full pl-9 pr-3 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[14px] focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] transition-all outline-none"
+                                    placeholder="Nama Anda"
+                                />
+                            </div>
                         </div>
                     </div>
                 </div>
