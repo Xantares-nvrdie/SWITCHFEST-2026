@@ -9,9 +9,9 @@ import {
     Loader2,
     AlertCircle,
     CheckCircle2,
-    ShieldCheck,
     Building2,
 } from "lucide-react";
+import Link from "next/link";
 
 export default function JoinOrganizationPage() {
     const router = useRouter();
@@ -37,7 +37,7 @@ export default function JoinOrganizationPage() {
             const data = await res.json();
 
             if (!res.ok) {
-                setError(data.message ?? "Failed to join organization.");
+                setError(data.message ?? "Gagal bergabung dengan organisasi.");
                 setIsLoading(false);
                 return;
             }
@@ -48,82 +48,60 @@ export default function JoinOrganizationPage() {
                 router.refresh();
             }, 2000);
         } catch {
-            setError("Network error. Please check your connection.");
+            setError("Kesalahan jaringan. Periksa koneksi Anda.");
             setIsLoading(false);
         }
     };
 
-    const inputBase = {
-        background: "rgba(30, 41, 59, 0.6)",
-        border: "1px solid rgba(51, 65, 85, 0.7)",
-    };
+    const inputClass = "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
 
     return (
-        <div className="min-h-screen bg-[#090d16] flex items-center justify-center p-4 relative overflow-hidden">
-            {/* Ambient glows */}
-            <div className="pointer-events-none absolute inset-0">
-                <div className="absolute top-[-10%] left-[20%] w-[600px] h-[600px] rounded-full opacity-[0.06]"
-                    style={{ background: "radial-gradient(circle, #06b6d4 0%, transparent 70%)" }} />
-                <div className="absolute bottom-[-10%] right-[10%] w-[500px] h-[500px] rounded-full opacity-[0.04]"
-                    style={{ background: "radial-gradient(circle, #6366f1 0%, transparent 70%)" }} />
-            </div>
-            <div className="pointer-events-none absolute inset-0 opacity-[0.015]"
-                style={{
-                    backgroundImage: "linear-gradient(rgba(255,255,255,0.1) 1px, transparent 1px), linear-gradient(90deg, rgba(255,255,255,0.1) 1px, transparent 1px)",
-                    backgroundSize: "40px 40px",
-                }} />
-
-            <div className="w-full max-w-md relative z-10">
-                <div className="rounded-2xl p-8"
-                    style={{
-                        background: "rgba(15, 23, 42, 0.80)",
-                        backdropFilter: "blur(24px)",
-                        border: "1px solid rgba(51, 65, 85, 0.6)",
-                        boxShadow: "0 25px 50px -12px rgba(0,0,0,0.5)",
-                    }}>
-
+        <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
+            <div className="w-full max-w-sm">
+                <div className="card p-8 space-y-6">
                     {/* Header */}
-                    <div className="flex flex-col items-center mb-8">
-                        <div className="w-14 h-14 rounded-2xl bg-gradient-to-br from-cyan-400 via-indigo-500 to-purple-600 p-[1.5px] shadow-lg shadow-cyan-500/20 mb-4">
-                            <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                                <Key className="w-7 h-7 text-cyan-400" />
-                            </div>
+                    <div className="flex flex-col items-center space-y-3">
+                        <div className="w-10 h-10 rounded-xl bg-blue-600 flex items-center justify-center">
+                            <Key className="w-5 h-5 text-white" />
                         </div>
-                        <h1 className="text-2xl font-bold text-white tracking-tight">Join Organization</h1>
-                        <p className="text-sm text-slate-400 mt-1 text-center">
-                            Masukkan kode undangan yang kamu terima dari Admin organisasi
-                        </p>
+                        <div className="text-center">
+                            <h1 className="text-[20px] font-bold text-[var(--text-primary)] tracking-tight">Gabung Organisasi</h1>
+                            <p className="text-[13px] text-[var(--text-tertiary)] mt-1">
+                                Masukkan kode undangan dari Admin organisasi Anda
+                            </p>
+                        </div>
                     </div>
 
                     {/* Success state */}
                     {success ? (
-                        <div className="text-center space-y-4">
-                            <CheckCircle2 className="w-12 h-12 text-emerald-400 mx-auto" />
+                        <div className="text-center space-y-4 py-4">
+                            <div className="w-16 h-16 rounded-full bg-teal-50 border border-teal-100 flex items-center justify-center mx-auto">
+                                <CheckCircle2 className="w-8 h-8 text-teal-600" />
+                            </div>
                             <div>
-                                <p className="text-white font-semibold text-lg">{success.orgName}</p>
-                                <p className="text-slate-400 text-sm mt-1">
-                                    Bergabung sebagai <span className="text-emerald-400 font-medium">{success.role.replace("_", " ")}</span>
+                                <p className="text-[var(--text-primary)] font-semibold text-[16px]">{success.orgName}</p>
+                                <p className="text-[var(--text-secondary)] text-[13px] mt-1">
+                                    Bergabung sebagai <span className="font-semibold text-[var(--accent)]">{success.role.replace("_", " ")}</span>
                                 </p>
                             </div>
-                            <p className="text-xs text-slate-500">Redirecting to organizations…</p>
+                            <p className="text-[12px] text-[var(--text-tertiary)]">Mengarahkan...</p>
                         </div>
                     ) : (
                         <>
                             {error && (
-                                <div className="flex items-start gap-3 rounded-xl px-4 py-3 mb-5 text-sm"
-                                    style={{ background: "rgba(239,68,68,0.08)", border: "1px solid rgba(239,68,68,0.25)" }}>
-                                    <AlertCircle className="w-4 h-4 text-red-400 mt-0.5 shrink-0" />
-                                    <span className="text-red-300">{error}</span>
+                                <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px] bg-red-50 border border-red-100 text-red-700">
+                                    <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
+                                    <span>{error}</span>
                                 </div>
                             )}
 
-                            <form onSubmit={handleJoin} className="space-y-5">
-                                <div className="space-y-2">
-                                    <label htmlFor="invite-code" className="block text-sm font-medium text-slate-300">
+                            <form onSubmit={handleJoin} className="space-y-4">
+                                <div className="space-y-1.5">
+                                    <label htmlFor="invite-code" className="block text-[13px] font-medium text-[var(--text-secondary)]">
                                         Kode Undangan
                                     </label>
                                     <div className="relative">
-                                        <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
+                                        <Key className="absolute left-3.5 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
                                         <input
                                             id="invite-code"
                                             type="text"
@@ -131,16 +109,7 @@ export default function JoinOrganizationPage() {
                                             value={code}
                                             onChange={(e) => setCode(e.target.value.toUpperCase())}
                                             placeholder="TS-XXXXXX"
-                                            className="w-full pl-10 pr-4 py-3 rounded-xl text-sm font-mono font-bold tracking-widest text-emerald-300 placeholder:text-slate-600 placeholder:font-normal placeholder:tracking-normal outline-none transition-all uppercase"
-                                            style={inputBase}
-                                            onFocus={(e) => {
-                                                e.currentTarget.style.borderColor = "rgba(6,182,212,0.5)";
-                                                e.currentTarget.style.boxShadow = "0 0 0 3px rgba(6,182,212,0.08)";
-                                            }}
-                                            onBlur={(e) => {
-                                                e.currentTarget.style.borderColor = "rgba(51,65,85,0.7)";
-                                                e.currentTarget.style.boxShadow = "none";
-                                            }}
+                                            className={`${inputClass} font-mono font-bold tracking-widest text-blue-700 uppercase`}
                                         />
                                     </div>
                                 </div>
@@ -149,39 +118,37 @@ export default function JoinOrganizationPage() {
                                     id="join-org-submit"
                                     type="submit"
                                     disabled={isLoading || !code.trim()}
-                                    className="w-full flex items-center justify-center gap-2 py-3 rounded-xl text-sm font-semibold text-white transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed"
-                                    style={{
-                                        background: "linear-gradient(135deg, #06b6d4 0%, #6366f1 100%)",
-                                        boxShadow: "0 4px 20px -4px rgba(6,182,212,0.35)",
-                                    }}>
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                >
                                     {isLoading ? (
-                                        <><Loader2 className="w-4 h-4 animate-spin" />Joining…</>
+                                        <>
+                                            <Loader2 className="w-4 h-4 animate-spin" />
+                                            Memproses...
+                                        </>
                                     ) : (
-                                        <>Join Organization<ArrowRight className="w-4 h-4" /></>
+                                        <>
+                                            Gabung Organisasi
+                                        </>
                                     )}
                                 </button>
                             </form>
 
-                            <div className="flex items-center gap-3 my-6">
-                                <div className="flex-1 h-px bg-slate-800" />
-                                <span className="text-xs text-slate-600 font-medium">OR</span>
-                                <div className="flex-1 h-px bg-slate-800" />
+                            <div className="flex items-center gap-3">
+                                <div className="flex-1 h-px bg-[var(--border)]" />
+                                <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">atau</span>
+                                <div className="flex-1 h-px bg-[var(--border)]" />
                             </div>
 
-                            <p className="text-center text-sm text-slate-400">
+                            <p className="text-center text-[13px] text-[var(--text-secondary)]">
                                 Tidak punya kode undangan?{" "}
-                                <a href="/setup-organization"
-                                    className="font-semibold text-emerald-400 hover:text-emerald-300 transition-colors">
+                                <Link href="/setup-organization"
+                                    className="font-semibold text-blue-600 hover:underline">
                                     Buat organisasi baru
-                                </a>
+                                </Link>
                             </p>
                         </>
                     )}
                 </div>
-
-                <p className="text-center text-xs text-slate-600 mt-6">
-                    Secure Sealed Tendering Platform · SDG 16 &amp; SDG 9
-                </p>
             </div>
         </div>
     );

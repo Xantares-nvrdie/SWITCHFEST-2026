@@ -11,17 +11,13 @@ import {
     AlertCircle,
     Loader2,
     Search,
-    Filter,
+    FileText,
+    Hash,
     Mail,
     Phone,
     MapPin,
-    Hash,
-    FileText,
-    ExternalLink,
-    RefreshCw,
-    UserCheck,
-    Crown,
     ArrowUpRight,
+    RefreshCw,
 } from "lucide-react";
 
 interface Organization {
@@ -112,38 +108,30 @@ export default function AdminDashboardPage() {
         return matchesStatus && matchesQuery;
     });
 
-    const cardStyle = {
-        background: "rgba(15, 23, 42, 0.75)",
-        backdropFilter: "blur(16px)",
-        border: "1px solid rgba(51, 65, 85, 0.5)",
-    };
-
     return (
-        <div className="space-y-8 max-w-7xl mx-auto pb-16">
+        <div className="space-y-8 pb-16">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
-                <div className="flex items-center gap-3.5">
-                    <div className="w-12 h-12 rounded-2xl bg-gradient-to-br from-amber-400 via-emerald-500 to-cyan-500 p-[1.5px] shadow-lg shadow-emerald-500/10">
-                        <div className="w-full h-full bg-slate-950 rounded-[14px] flex items-center justify-center">
-                            <ShieldCheck className="w-6 h-6 text-emerald-400" />
-                        </div>
+                <div className="flex items-center gap-3">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--text-primary)] flex items-center justify-center">
+                        <ShieldCheck className="w-5 h-5 text-white" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-2xl font-bold text-white tracking-tight">Admin Approval Dashboard</h1>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/20">
-                                System Admin
+                            <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">Admin Approval</h1>
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--text-primary)] text-white">
+                                Sistem
                             </span>
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">
-                            TenderSeal Platform Control · Peninjauan Dokumen Legal & Approvals Organisasi
+                        <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
+                            Tinjau dan setujui pendaftaran organisasi baru.
                         </p>
                     </div>
                 </div>
 
                 <button
                     onClick={fetchOrgs}
-                    className="self-start md:self-auto px-3.5 py-2 rounded-xl text-xs font-semibold text-slate-300 hover:text-white bg-slate-900 border border-slate-800 hover:bg-slate-800 transition-all flex items-center gap-2"
+                    className="self-start md:self-auto px-4 py-2 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
                 >
                     <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
                     Refresh Data
@@ -152,55 +140,62 @@ export default function AdminDashboardPage() {
 
             {/* Metrics Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                {/* Total */}
-                <div className="rounded-2xl p-5" style={cardStyle}>
+                <div className="card p-5">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-slate-400">Total Organisasi</span>
-                        <Building2 className="w-4 h-4 text-slate-500" />
+                        <span className="text-[12px] font-medium text-[var(--text-tertiary)]">Total Organisasi</span>
+                        <Building2 className="w-4 h-4 text-[var(--text-tertiary)]" />
                     </div>
-                    <p className="text-2xl font-extrabold text-white mt-2">{totalCount}</p>
-                    <p className="text-[11px] text-slate-500 mt-1">Terdaftar di sistem</p>
+                    <p className="text-[28px] font-bold text-[var(--text-primary)] mt-2">{totalCount}</p>
+                    <p className="text-[11px] text-[var(--text-tertiary)] mt-1">Terdaftar di sistem</p>
                 </div>
 
-                {/* Pending */}
-                <div className="rounded-2xl p-5 relative overflow-hidden" style={{ ...cardStyle, border: "1px solid rgba(251, 191, 36, 0.3)" }}>
-                    <div className="absolute top-0 right-0 w-24 h-24 bg-amber-500/5 rounded-full blur-xl pointer-events-none" />
+                <div className="card p-5 border-amber-200 bg-amber-50/30">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-amber-400 flex items-center gap-1.5">
+                        <span className="text-[12px] font-medium text-amber-600 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                             Pending Approval
                         </span>
-                        <Clock className="w-4 h-4 text-amber-400" />
+                        <Clock className="w-4 h-4 text-amber-600" />
                     </div>
-                    <p className="text-2xl font-extrabold text-amber-300 mt-2">{pendingCount}</p>
-                    <p className="text-[11px] text-amber-400/80 mt-1">Butuh verifikasi admin</p>
+                    <p className="text-[28px] font-bold text-amber-600 mt-2">{pendingCount}</p>
+                    <p className="text-[11px] text-amber-600/80 mt-1">Butuh verifikasi admin</p>
                 </div>
 
-                {/* Approved */}
-                <div className="rounded-2xl p-5" style={cardStyle}>
+                <div className="card p-5 border-teal-200 bg-teal-50/30">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-emerald-400">Terverifikasi (Approved)</span>
-                        <CheckCircle2 className="w-4 h-4 text-emerald-400" />
+                        <span className="text-[12px] font-medium text-[var(--accent)]">Terverifikasi (Approved)</span>
+                        <CheckCircle2 className="w-4 h-4 text-[var(--accent)]" />
                     </div>
-                    <p className="text-2xl font-extrabold text-emerald-300 mt-2">{approvedCount}</p>
-                    <p className="text-[11px] text-emerald-400/80 mt-1">Aktif & terverifikasi</p>
+                    <p className="text-[28px] font-bold text-[var(--accent)] mt-2">{approvedCount}</p>
+                    <p className="text-[11px] text-[var(--accent)] mt-1">Aktif & terverifikasi</p>
                 </div>
 
-                {/* Rejected */}
-                <div className="rounded-2xl p-5" style={cardStyle}>
+                <div className="card p-5 border-red-200 bg-red-50/30">
                     <div className="flex items-center justify-between">
-                        <span className="text-xs font-medium text-red-400">Ditolak (Rejected)</span>
-                        <XCircle className="w-4 h-4 text-red-400" />
+                        <span className="text-[12px] font-medium text-red-600">Ditolak (Rejected)</span>
+                        <XCircle className="w-4 h-4 text-red-600" />
                     </div>
-                    <p className="text-2xl font-extrabold text-red-300 mt-2">{rejectedCount}</p>
-                    <p className="text-[11px] text-slate-500 mt-1">Ditolak verifikasinya</p>
+                    <p className="text-[28px] font-bold text-red-600 mt-2">{rejectedCount}</p>
+                    <p className="text-[11px] text-red-600 mt-1">Ditolak verifikasinya</p>
                 </div>
             </div>
 
             {/* Controls & Search */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                {/* Search Box */}
+                <div className="relative w-full md:w-80">
+                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)] pointer-events-none" />
+                    <input
+                        type="text"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                        placeholder="Cari nama, NPWP/NIB, email..."
+                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
+                    />
+                </div>
+
                 {/* Filter Tabs */}
-                <div className="flex items-center gap-1.5 p-1 rounded-xl w-fit" style={{ background: "rgba(15,23,42,0.6)", border: "1px solid rgba(51,65,85,0.5)" }}>
+                <div className="flex items-center gap-1 bg-[var(--surface-secondary)] p-0.5 rounded-lg border border-[var(--border-light)] w-full md:w-auto overflow-x-auto">
                     {(
                         [
                             ["PENDING", `Pending (${pendingCount})`],
@@ -214,43 +209,29 @@ export default function AdminDashboardPage() {
                             <button
                                 key={status}
                                 onClick={() => setFilterStatus(status)}
-                                className="px-3.5 py-1.5 rounded-lg text-xs font-semibold transition-all"
-                                style={{
-                                    background: isActive ? "rgba(52,211,153,0.12)" : "transparent",
-                                    color: isActive ? "#34d399" : "#64748b",
-                                    border: isActive ? "1px solid rgba(52,211,153,0.3)" : "1px solid transparent",
-                                }}
+                                className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all whitespace-nowrap ${
+                                    isActive
+                                        ? "bg-white text-[var(--text-primary)] shadow-sm"
+                                        : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
+                                }`}
                             >
                                 {label}
                             </button>
                         );
                     })}
                 </div>
-
-                {/* Search Box */}
-                <div className="relative w-full md:w-72">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-500 pointer-events-none" />
-                    <input
-                        type="text"
-                        value={searchQuery}
-                        onChange={(e) => setSearchQuery(e.target.value)}
-                        placeholder="Cari nama, NPWP/NIB, email..."
-                        className="w-full pl-9 pr-4 py-2 rounded-xl text-xs text-white placeholder:text-slate-500 outline-none transition-all"
-                        style={{ background: "rgba(30,41,59,0.6)", border: "1px solid rgba(51,65,85,0.6)" }}
-                    />
-                </div>
             </div>
 
             {/* Organizations Approval Cards */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-20">
-                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin" />
                 </div>
             ) : filteredOrgs.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl glass-panel border-slate-800 space-y-3">
-                    <ShieldCheck className="w-10 h-10 text-slate-600 mx-auto opacity-40" />
-                    <h3 className="text-sm font-semibold text-slate-300">Tidak ada organisasi ditemukan</h3>
-                    <p className="text-xs text-slate-500 max-w-sm mx-auto">
+                <div className="text-center py-16 card space-y-3">
+                    <ShieldCheck className="w-10 h-10 text-[var(--border)] mx-auto" />
+                    <h3 className="text-[15px] font-semibold text-[var(--text-secondary)]">Tidak ada organisasi ditemukan</h3>
+                    <p className="text-[13px] text-[var(--text-tertiary)] max-w-sm mx-auto">
                         Tidak ada pengajuan organisasi dengan kriteria filter yang dipilih.
                     </p>
                 </div>
@@ -266,94 +247,90 @@ export default function AdminDashboardPage() {
                         return (
                             <div
                                 key={org.id}
-                                className="rounded-2xl p-6 transition-all space-y-4"
-                                style={{
-                                    ...cardStyle,
-                                    border: isPending
-                                        ? "1px solid rgba(251, 191, 36, 0.4)"
-                                        : "1px solid rgba(51, 65, 85, 0.5)",
-                                }}
+                                className={`card p-6 transition-all space-y-4 ${
+                                    isPending ? "border-amber-200" : ""
+                                }`}
                             >
                                 <div className="flex flex-col md:flex-row md:items-start justify-between gap-4">
                                     {/* Left: Info */}
-                                    <div className="space-y-2 flex-1 min-w-0">
+                                    <div className="space-y-3 flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="text-lg font-bold text-white tracking-tight">{org.name}</h3>
+                                            <h3 className="text-[16px] font-bold text-[var(--text-primary)] tracking-tight">{org.name}</h3>
 
                                             <span
                                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                                                     org.type === "BUYER"
-                                                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                                        ? "bg-[var(--accent-light)] text-[var(--accent)] border-teal-200"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                                                        : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                                                        ? "bg-blue-50 text-blue-600 border-blue-200"
+                                                        : "bg-purple-50 text-purple-600 border-purple-200"
                                                 }`}
                                             >
-                                                {org.type}
+                                                {org.type === "BUYER" ? "Panitia" : org.type === "VENDOR" ? "Vendor" : "Both"}
                                             </span>
 
                                             {/* Status Badge */}
                                             {isPending && (
-                                                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex items-center gap-1">
                                                     <Clock className="w-3 h-3" /> Pending Admin Review
                                                 </span>
                                             )}
                                             {isApproved && (
-                                                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Approved &amp; Verified
                                                 </span>
                                             )}
                                             {isRejected && (
-                                                <span className="text-[11px] font-semibold px-2.5 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-200 flex items-center gap-1">
                                                     <XCircle className="w-3 h-3" /> Ditolak (Rejected)
                                                 </span>
                                             )}
                                         </div>
 
                                         {/* Legal & Registration Info */}
-                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2 text-xs">
+                                        <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-3 pt-2 text-[12px]">
                                             {org.legalName && (
-                                                <div className="flex items-center gap-1.5 text-slate-300">
-                                                    <FileText className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                                    <span className="text-slate-500">Legal:</span>
-                                                    <span className="font-medium text-slate-200">{org.legalName}</span>
+                                                <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                                                    <FileText className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
+                                                    <span className="text-[var(--text-tertiary)]">Legal:</span>
+                                                    <span className="font-medium text-[var(--text-primary)]">{org.legalName}</span>
                                                 </div>
                                             )}
 
                                             {org.registrationNumber && (
-                                                <div className="flex items-center gap-1.5 text-slate-300">
-                                                    <Hash className="w-3.5 h-3.5 text-emerald-400 shrink-0" />
-                                                    <span className="text-slate-500">NPWP / NIB:</span>
-                                                    <span className="font-mono font-semibold text-emerald-300">{org.registrationNumber}</span>
+                                                <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                                                    <Hash className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
+                                                    <span className="text-[var(--text-tertiary)]">NPWP/NIB:</span>
+                                                    <span className="font-mono font-medium text-[var(--text-primary)]">{org.registrationNumber}</span>
                                                 </div>
                                             )}
 
                                             {org.email && (
-                                                <div className="flex items-center gap-1.5 text-slate-300">
-                                                    <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                                    <span className="text-slate-400">{org.email}</span>
+                                                <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                                                    <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
+                                                    <span className="text-[var(--text-primary)]">{org.email}</span>
                                                 </div>
                                             )}
 
                                             {org.phone && (
-                                                <div className="flex items-center gap-1.5 text-slate-300">
-                                                    <Phone className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                                    <span className="text-slate-400">{org.phone}</span>
+                                                <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
+                                                    <Phone className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
+                                                    <span className="text-[var(--text-primary)]">{org.phone}</span>
                                                 </div>
                                             )}
 
                                             {org.address && (
-                                                <div className="flex items-center gap-1.5 text-slate-300 col-span-1 sm:col-span-2">
-                                                    <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" />
-                                                    <span className="text-slate-400 truncate">{org.address}</span>
+                                                <div className="flex items-center gap-1.5 text-[var(--text-secondary)] col-span-1 sm:col-span-2">
+                                                    <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
+                                                    <span className="text-[var(--text-primary)] truncate">{org.address}</span>
                                                 </div>
                                             )}
                                         </div>
 
                                         {/* Rejection Note if any */}
                                         {isRejected && org.rejectionReason && (
-                                            <div className="mt-3 p-3 rounded-xl bg-red-500/10 border border-red-500/20 text-xs text-red-300 flex items-start gap-2">
-                                                <AlertCircle className="w-4 h-4 text-red-400 shrink-0 mt-0.5" />
+                                            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-100 text-[12px] text-red-700 flex items-start gap-2">
+                                                <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                                 <div>
                                                     <span className="font-semibold block">Alasan Penolakan:</span>
                                                     <span>{org.rejectionReason}</span>
@@ -369,23 +346,23 @@ export default function AdminDashboardPage() {
                                                 <button
                                                     onClick={() => handleVerify(org.id, "APPROVED")}
                                                     disabled={isProcessing}
-                                                    className="px-4 py-2 rounded-xl bg-gradient-to-r from-emerald-500 to-emerald-400 text-slate-950 font-bold text-xs hover:opacity-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50"
                                                 >
                                                     {isProcessing ? (
                                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
                                                     ) : (
                                                         <CheckCircle2 className="w-3.5 h-3.5" />
                                                     )}
-                                                    Approve Organisasi
+                                                    Setujui
                                                 </button>
 
                                                 <button
                                                     onClick={() => setRejectingOrg(org)}
                                                     disabled={isProcessing}
-                                                    className="px-4 py-2 rounded-xl bg-slate-900 border border-red-500/40 text-red-400 font-semibold text-xs hover:bg-red-500/10 transition-all flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
                                                 >
                                                     <XCircle className="w-3.5 h-3.5" />
-                                                    Tolak (Reject)
+                                                    Tolak
                                                 </button>
                                             </>
                                         )}
@@ -394,9 +371,9 @@ export default function AdminDashboardPage() {
                                             <button
                                                 onClick={() => setRejectingOrg(org)}
                                                 disabled={isProcessing}
-                                                className="px-3 py-1.5 rounded-lg bg-slate-900 border border-slate-700 text-slate-400 hover:text-red-400 hover:border-red-500/40 text-xs transition-all flex items-center gap-1"
+                                                className="px-3 py-1.5 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-red-600 hover:border-red-200 text-[12px] font-medium transition-all flex items-center gap-1"
                                             >
-                                                Revoke Approval
+                                                Batalkan Persetujuan
                                             </button>
                                         )}
 
@@ -404,16 +381,16 @@ export default function AdminDashboardPage() {
                                             <button
                                                 onClick={() => handleVerify(org.id, "APPROVED")}
                                                 disabled={isProcessing}
-                                                className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1 transition-all"
+                                                className="px-3 py-1.5 rounded-md bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 text-[12px] font-semibold flex items-center gap-1 transition-all"
                                             >
-                                                Re-Approve
+                                                Setujui Ulang
                                             </button>
                                         )}
 
                                         <Link
                                             href={`/organizations/${org.id}/manage`}
-                                            className="p-2 rounded-xl bg-slate-900 border border-slate-800 text-slate-400 hover:text-white transition-colors"
-                                            title="View Manage Page"
+                                            className="p-2 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                            title="Buka Halaman Manajemen"
                                         >
                                             <ArrowUpRight className="w-4 h-4" />
                                         </Link>
@@ -427,26 +404,25 @@ export default function AdminDashboardPage() {
 
             {/* Rejection Reason Modal */}
             {rejectingOrg && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-slate-950/80 backdrop-blur-md">
-                    <div className="glass-panel max-w-md w-full p-6 rounded-2xl border-slate-800 space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+                    <div className="card max-w-md w-full p-6 space-y-4">
                         <div className="flex items-center gap-2">
-                            <XCircle className="w-5 h-5 text-red-400" />
-                            <h3 className="text-base font-bold text-white">Tolak Pendaftaran Organisasi</h3>
+                            <XCircle className="w-5 h-5 text-red-600" />
+                            <h3 className="text-[16px] font-bold text-[var(--text-primary)]">Tolak Organisasi</h3>
                         </div>
 
-                        <p className="text-xs text-slate-400">
-                            Anda akan menolak pengajuan untuk <span className="text-white font-semibold">{rejectingOrg.name}</span>. Berikan alasan penolakan untuk dicatat di audit log.
+                        <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+                            Anda akan menolak pengajuan <span className="font-semibold text-[var(--text-primary)]">{rejectingOrg.name}</span>. Berikan alasan penolakan untuk dicatat di log audit.
                         </p>
 
                         <div className="space-y-1.5">
-                            <label className="text-xs font-medium text-slate-300">Alasan Penolakan</label>
+                            <label className="text-[13px] font-medium text-[var(--text-secondary)]">Alasan Penolakan</label>
                             <textarea
                                 rows={3}
                                 value={rejectionReason}
                                 onChange={(e) => setRejectionReason(e.target.value)}
-                                placeholder="Contoh: Nomor NPWP/NIB tidak valid atau dokumen legalitas tidak lengkap..."
-                                className="w-full p-3 rounded-xl text-xs text-white placeholder:text-slate-600 outline-none resize-none"
-                                style={{ background: "rgba(30,41,59,0.7)", border: "1px solid rgba(51,65,85,0.7)" }}
+                                placeholder="Contoh: Dokumen legalitas tidak lengkap..."
+                                className="w-full p-3 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none transition-all"
                             />
                         </div>
 
@@ -457,14 +433,14 @@ export default function AdminDashboardPage() {
                                     setRejectingOrg(null);
                                     setRejectionReason("");
                                 }}
-                                className="px-4 py-2 rounded-xl bg-slate-900 border border-slate-800 text-xs text-slate-300 hover:bg-slate-800"
+                                className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                             >
                                 Batal
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleVerify(rejectingOrg.id, "REJECTED", rejectionReason)}
-                                className="px-5 py-2 rounded-xl bg-red-500 hover:bg-red-400 text-white font-bold text-xs shadow-lg shadow-red-500/20"
+                                className="px-4 py-2 rounded-lg bg-red-600 hover:bg-red-700 text-white font-semibold text-[13px] transition-colors"
                             >
                                 Konfirmasi Penolakan
                             </button>

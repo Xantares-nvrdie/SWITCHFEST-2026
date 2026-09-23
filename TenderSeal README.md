@@ -1721,21 +1721,21 @@ tenderseal/
 
 Target MVP:
 
-- [ ] Authentication & RBAC
-- [ ] Create Tender
-- [ ] Dynamic Bid Fields
-- [ ] Vendor Bid Submission
-- [ ] Client-side Encryption
-- [ ] Commitment Generation
-- [ ] Smart Contract
-- [ ] Deadline Enforcement
-- [ ] Encrypted Backup
-- [ ] Reveal & Verification
-- [ ] Scoring
-- [ ] Winner Selection
-- [ ] Audit Trail
-- [ ] Responsive UI
-- [ ] Deployment
+- [x] Authentication & RBAC
+- [x] Create Tender
+- [x] Dynamic Bid Fields
+- [x] Vendor Bid Submission
+- [x] Client-side Encryption
+- [x] Commitment Generation
+- [x] Smart Contract (Sepolia Testnet)
+- [x] Deadline Enforcement
+- [x] Encrypted Backup (Supabase Zero-Knowledge)
+- [x] Reveal & Verification
+- [x] Scoring
+- [x] Winner Selection
+- [x] Audit Trail
+- [x] Responsive UI
+- [ ] Deployment (Web App)
 - [ ] Documentation
 
 ---

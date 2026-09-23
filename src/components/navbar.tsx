@@ -2,242 +2,130 @@
 
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
-import { useDemo, type DemoRole } from "@/context/demo-context";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
-    ShieldCheck,
     FileText,
     Building2,
     History,
     PlusCircle,
-    BookOpen,
-    Lock,
-    Sparkles,
-    Briefcase,
-    Eye,
     LogIn,
     UserPlus,
     LogOut,
     User,
     Loader2,
+    ShieldCheck,
 } from "lucide-react";
 
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
-    const { activeRole, setActiveRole } = useDemo();
     const { data: session, isPending } = useSession();
-
-    const roleBadges: Record<DemoRole, { label: string; icon: React.ElementType; color: string }> = {
-        PROCUREMENT_OFFICER: {
-            label: "Procurement Officer",
-            icon: Briefcase,
-            color: "bg-emerald-500/10 text-emerald-400 border-emerald-500/30",
-        },
-        VENDOR: {
-            label: "Vendor Organization",
-            icon: Lock,
-            color: "bg-cyan-500/10 text-cyan-400 border-cyan-500/30",
-        },
-        AUDITOR: {
-            label: "Auditor",
-            icon: Eye,
-            color: "bg-indigo-500/10 text-indigo-400 border-indigo-500/30",
-        },
-    };
 
     const handleLogout = async () => {
         await signOut();
         router.push("/login");
-        router.refresh();
     };
 
+    const navItems = [
+        { href: "/tenders", label: "Tender", icon: FileText },
+        { href: "/organizations", label: "Organisasi", icon: Building2 },
+        { href: "/audit", label: "Audit", icon: History },
+        // { href: "/admin", label: "Admin", icon: ShieldCheck }, // Hidden for now since there's no real admin role check yet
+    ];
+
     return (
-        <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
-            <div className="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8">
-                <div className="flex items-center justify-between h-16">
-                    {/* Brand Logo */}
-                    <Link href="/" className="flex items-center gap-3 group">
-                        <div className="w-10 h-10 rounded-xl bg-gradient-to-br from-emerald-400 via-cyan-500 to-indigo-600 p-[1px] shadow-lg shadow-emerald-500/20 group-hover:shadow-emerald-500/40 transition-all duration-300">
-                            <div className="w-full h-full bg-slate-950 rounded-[11px] flex items-center justify-center">
-                                <ShieldCheck className="w-5 h-5 text-emerald-400 group-hover:scale-110 transition-transform duration-300" />
-                            </div>
+        <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/80 backdrop-blur-lg">
+            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+                {/* Kiri: Logo + Navigasi */}
+                <div className="flex items-center gap-8">
+                    <Link href="/" className="flex items-center gap-2 group">
+                        <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center">
+                            <ShieldCheck className="w-4 h-4 text-white" />
                         </div>
-                        <div>
-                            <div className="flex items-center gap-2">
-                                <span className="font-bold text-lg tracking-tight text-white">
-                                    Tender<span className="gradient-text">Seal</span>
-                                </span>
-                                <span className="text-[10px] font-medium uppercase tracking-widest px-1.5 py-0.5 rounded bg-emerald-500/10 text-emerald-400 border border-emerald-500/20">
-                                    MVP
-                                </span>
-                            </div>
-                            <p className="text-[11px] text-slate-400 font-normal">Secure Sealed Procurement</p>
-                        </div>
+                        <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">
+                            TenderSeal
+                        </span>
                     </Link>
 
-                    {/* Navigation Links */}
                     <nav className="hidden md:flex items-center gap-1">
-                        <Link
-                            href="/"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <Sparkles className="w-4 h-4 text-emerald-400" />
-                            Overview
-                        </Link>
-
-                        <Link
-                            href="/tenders"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname.startsWith("/tenders") && pathname !== "/tenders/create"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <FileText className="w-4 h-4 text-cyan-400" />
-                            Tenders
-                        </Link>
-
-                        {activeRole === "PROCUREMENT_OFFICER" && (
+                        {/* Show Buat Tender if logged in (simplification) */}
+                        {session?.user && (
                             <Link
                                 href="/tenders/create"
-                                className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
                                     pathname === "/tenders/create"
-                                        ? "bg-emerald-500/20 text-emerald-300 border border-emerald-500/40"
-                                        : "text-emerald-400 hover:bg-emerald-500/10"
+                                        ? "bg-[var(--accent)] text-white"
+                                        : "text-[var(--accent)] hover:bg-[var(--accent-light)]"
                                 }`}
                             >
-                                <PlusCircle className="w-4 h-4" />
-                                Create Tender
+                                <PlusCircle className="w-3.5 h-3.5" />
+                                Buat Tender
                             </Link>
                         )}
 
-                        <Link
-                            href="/organizations"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/organizations"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <Building2 className="w-4 h-4 text-indigo-400" />
-                            Organizations
-                        </Link>
-
-                        <Link
-                            href="/audit"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname === "/audit"
-                                    ? "bg-slate-800 text-white border border-slate-700"
-                                    : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
-                            }`}
-                        >
-                            <History className="w-4 h-4 text-emerald-400" />
-                            Audit Trail
-                        </Link>
-
-                        <Link
-                            href="/admin"
-                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
-                                pathname.startsWith("/admin")
-                                    ? "bg-slate-800 text-amber-300 border border-amber-500/30"
-                                    : "text-amber-400/90 hover:text-amber-300 hover:bg-slate-900"
-                            }`}
-                        >
-                            <ShieldCheck className="w-4 h-4 text-amber-400" />
-                            Admin Control
-                        </Link>
-
-
-                        <a
-                            href="/api/labs"
-                            target="_blank"
-                            rel="noreferrer"
-                            className="px-3 py-1.5 rounded-lg text-sm font-medium text-slate-400 hover:text-slate-200 hover:bg-slate-900 transition-colors flex items-center gap-2"
-                        >
-                            <BookOpen className="w-4 h-4 text-purple-400" />
-                            API Docs
-                        </a>
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
+                                        isActive
+                                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)]"
+                                            : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                                    }`}
+                                >
+                                    <item.icon className="w-3.5 h-3.5" />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
                     </nav>
+                </div>
 
-                    {/* Right side — Auth + Demo Role */}
-                    <div className="flex items-center gap-3">
-                        {/* Demo Role Switcher */}
-                        <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
-                            <span className="text-xs text-slate-500 font-medium px-2 hidden lg:inline">Demo Role:</span>
-                            {(["PROCUREMENT_OFFICER", "VENDOR", "AUDITOR"] as DemoRole[]).map((r) => {
-                                const isSelected = activeRole === r;
-                                return (
-                                    <button
-                                        key={r}
-                                        onClick={() => setActiveRole(r)}
-                                        className={`px-2.5 py-1 text-xs font-semibold rounded-lg transition-all duration-200 flex items-center gap-1.5 ${
-                                            isSelected
-                                                ? roleBadges[r].color + " border shadow-sm"
-                                                : "text-slate-400 hover:text-slate-200 hover:bg-slate-800/60"
-                                        }`}
-                                    >
-                                        {r === "PROCUREMENT_OFFICER" && "Officer"}
-                                        {r === "VENDOR" && "Vendor"}
-                                        {r === "AUDITOR" && "Auditor"}
-                                    </button>
-                                );
-                            })}
-                        </div>
+                {/* Kanan: Peran Demo + Autentikasi */}
+                <div className="flex items-center gap-3">
+                    {/* Pemilih Peran Demo Removed */}
 
-                        {/* Auth State */}
-                        {isPending ? (
-                            <div className="w-8 h-8 flex items-center justify-center">
-                                <Loader2 className="w-4 h-4 text-slate-500 animate-spin" />
-                            </div>
-                        ) : session?.user ? (
-                            /* Logged in — user info + logout */
-                            <div className="flex items-center gap-2">
-                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800">
-                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shrink-0">
-                                        <User className="w-3 h-3 text-slate-950" />
-                                    </div>
-                                    <span className="text-sm text-slate-300 font-medium max-w-[120px] truncate hidden sm:inline">
-                                        {session.user.name}
-                                    </span>
+                    {/* Status Autentikasi */}
+                    {isPending ? (
+                        <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
+                    ) : session?.user ? (
+                        <div className="flex items-center gap-2">
+                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-light)]">
+                                <div className="w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                                    <User className="w-3 h-3 text-white" />
                                 </div>
-                                <button
-                                    onClick={handleLogout}
-                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
-                                    title="Sign out"
-                                >
-                                    <LogOut className="w-3.5 h-3.5" />
-                                    <span className="hidden sm:inline">Logout</span>
-                                </button>
+                                <span className="text-[12px] text-[var(--text-primary)] font-medium max-w-[100px] truncate hidden sm:inline">
+                                    {session.user.name}
+                                </span>
                             </div>
-                        ) : (
-                            /* Not logged in — Login / Register */
-                            <div className="flex items-center gap-2">
-                                <Link
-                                    href="/login"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-all duration-200"
-                                >
-                                    <LogIn className="w-3.5 h-3.5" />
-                                    Login
-                                </Link>
-                                <Link
-                                    href="/register"
-                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
-                                    style={{
-                                        background: "linear-gradient(135deg, #34d399 0%, #06b6d4 60%, #6366f1 100%)",
-                                        boxShadow: "0 2px 12px -3px rgba(52,211,153,0.35)",
-                                    }}
-                                >
-                                    <UserPlus className="w-3.5 h-3.5" />
-                                    Register
-                                </Link>
-                            </div>
-                        )}
-                    </div>
+                            <button
+                                onClick={handleLogout}
+                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] hover:text-red-600 hover:bg-red-50 transition-colors"
+                                title="Keluar"
+                            >
+                                <LogOut className="w-3.5 h-3.5" />
+                            </button>
+                        </div>
+                    ) : (
+                        <div className="flex items-center gap-2">
+                            <Link
+                                href="/login"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors"
+                            >
+                                <LogIn className="w-3.5 h-3.5" />
+                                Masuk
+                            </Link>
+                            <Link
+                                href="/register"
+                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity"
+                            >
+                                <UserPlus className="w-3.5 h-3.5" />
+                                Daftar
+                            </Link>
+                        </div>
+                    )}
                 </div>
             </div>
         </header>

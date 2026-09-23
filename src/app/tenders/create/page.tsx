@@ -102,11 +102,11 @@ function defaultScoringType(type: FieldType): ScoringType {
 // ─── Field Type Meta ─────────────────────────────────────────────────────────
 
 const FIELD_TYPE_META: Record<FieldType, { label: string; icon: React.ReactNode; color: string }> = {
-    currency: { label: "Mata Uang (Rp)", icon: <DollarSign className="w-3.5 h-3.5" />, color: "text-emerald-400" },
+    currency: { label: "Mata Uang (Rp)", icon: <DollarSign className="w-3.5 h-3.5" />, color: "text-[var(--accent)]" },
     text:     { label: "Teks",           icon: <Type className="w-3.5 h-3.5" />,        color: "text-blue-400"    },
     number:   { label: "Angka",          icon: <Hash className="w-3.5 h-3.5" />,        color: "text-violet-400"  },
-    file:     { label: "File / Dokumen", icon: <FileUp className="w-3.5 h-3.5" />,      color: "text-amber-400"   },
-    select:   { label: "Pilihan Tunggal",icon: <ToggleLeft className="w-3.5 h-3.5" />,  color: "text-cyan-400"    },
+    file:     { label: "File / Dokumen", icon: <FileUp className="w-3.5 h-3.5" />,      color: "text-amber-600"   },
+    select:   { label: "Pilihan Tunggal",icon: <ToggleLeft className="w-3.5 h-3.5" />,  color: "text-[var(--accent)]"    },
     "multi-select": { label: "Pilihan Ganda", icon: <ListChecks className="w-3.5 h-3.5" />, color: "text-pink-400" },
 };
 
@@ -114,19 +114,19 @@ const SCORING_META: Record<ScoringType, { label: string; icon: React.ReactNode; 
     LOWEST_PRICE: {
         label: "Nilai Terendah Terbaik",
         icon: <TrendingDown className="w-3.5 h-3.5" />,
-        color: "text-emerald-400",
+        color: "text-[var(--accent)]",
         desc: "Nilai terkecil (mis. harga, hari) mendapat skor tertinggi",
     },
     HIGHEST_VALUE: {
         label: "Nilai Tertinggi Terbaik",
         icon: <TrendingUp className="w-3.5 h-3.5" />,
-        color: "text-cyan-400",
+        color: "text-[var(--accent)]",
         desc: "Nilai terbesar (mis. garansi, uptime) mendapat skor tertinggi",
     },
     MANUAL: {
         label: "Penilaian Manual",
         icon: <ClipboardList className="w-3.5 h-3.5" />,
-        color: "text-purple-400",
+        color: "text-[var(--text-secondary)]",
         desc: "Evaluator memberi nilai berdasarkan panduan yang ditetapkan",
     },
 };
@@ -152,7 +152,7 @@ const TEMPLATES: Template[] = [
         label: "Pengadaan Hardware & IT",
         description: "Laptop, workstation, server, perangkat jaringan",
         category: "Hardware & IT",
-        gradient: "from-blue-500/20 to-cyan-500/10",
+        gradient: "from-blue-500/20 to-teal-600/10",
         fields: [
             { name: "Harga Penawaran Total", type: "currency", required: true, helpText: "Total harga termasuk PPN 11%", scored: true, weight: 40, scoringType: "LOWEST_PRICE", evaluatorGuide: "Harga terendah mendapat skor tertinggi" },
             { name: "Merek & Model", type: "text", required: true, helpText: "Contoh: ASUS ExpertBook B9, Dell Latitude 7430", scored: false, weight: 0, scoringType: "MANUAL", evaluatorGuide: "" },
@@ -465,12 +465,12 @@ export default function CreateTenderPage() {
                 <div>
                     <Link
                         href="/tenders"
-                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors mb-3"
+                        className="inline-flex items-center gap-1.5 text-xs font-semibold text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors mb-3"
                     >
                         <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog Tender
                     </Link>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Buat Tender Baru</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">Buat Tender Baru</h1>
+                    <p className="text-sm text-[var(--text-tertiary)] mt-1">
                         Setiap field bid memiliki penilaiannya sendiri — sederhana, langsung, dan bisa diotomasi.
                     </p>
                 </div>
@@ -480,8 +480,8 @@ export default function CreateTenderPage() {
                         onClick={() => setShowPreview(!showPreview)}
                         className={`flex items-center gap-2 px-4 py-2 rounded-xl text-xs font-semibold border transition-all ${
                             showPreview
-                                ? "bg-cyan-500/20 border-cyan-500/50 text-cyan-300"
-                                : "bg-slate-800 border-slate-700 text-slate-400 hover:text-cyan-400 hover:border-cyan-500/40"
+                                ? "bg-blue-50 border-cyan-500/50 text-[var(--accent)]"
+                                : "bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--accent)] hover:border-blue-200"
                         }`}
                     >
                         <Monitor className="w-4 h-4" />
@@ -495,15 +495,15 @@ export default function CreateTenderPage() {
 
             {/* Notifications */}
             {successMessage && (
-                <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-300 text-sm flex items-center gap-3">
-                    <CheckCircle2 className="w-5 h-5 text-emerald-400 shrink-0" /> {successMessage}
+                <div className="p-4 rounded-xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] text-sm flex items-center gap-3">
+                    <CheckCircle2 className="w-5 h-5 text-[var(--accent)] shrink-0" /> {successMessage}
                 </div>
             )}
             {errorMessage && (
-                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-400 text-sm flex items-center gap-3">
+                <div className="p-4 rounded-xl bg-red-50 border border-red-500/30 text-red-600 text-sm flex items-center gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                     {errorMessage}
-                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-500 hover:text-red-300">✕</button>
+                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-500 hover:text-red-600">✕</button>
                 </div>
             )}
 
@@ -574,18 +574,18 @@ function StepIndicator({ current }: { current: number }) {
                 <div key={s.id} className="flex items-center flex-1">
                     <div className="flex flex-col items-center gap-1.5 flex-1">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                            current > s.id ? "bg-emerald-500 border-emerald-500 text-slate-950"
-                            : current === s.id ? "bg-slate-900 border-emerald-400 text-emerald-400 shadow-lg shadow-emerald-500/20"
-                            : "bg-slate-900 border-slate-700 text-slate-600"
+                            current > s.id ? "bg-emerald-500 border-emerald-500 text-[var(--surface)]"
+                            : current === s.id ? "bg-white border-[var(--accent)] text-[var(--text-primary)] ring-1 ring-[var(--accent)]"
+                            : "bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-tertiary)]"
                         }`}>
                             {current > s.id ? <Check className="w-4 h-4" /> : s.icon}
                         </div>
                         <span className={`text-[10px] font-bold tracking-wide uppercase transition-colors ${
-                            current === s.id ? "text-emerald-400" : current > s.id ? "text-emerald-600" : "text-slate-600"
+                            current === s.id ? "text-[var(--accent)]" : current > s.id ? "text-emerald-600" : "text-[var(--text-tertiary)]"
                         }`}>{s.label}</span>
                     </div>
                     {i < STEPS.length - 1 && (
-                        <div className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-emerald-500" : "bg-slate-800"}`} />
+                        <div className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-emerald-500" : "bg-[var(--surface-secondary)]"}`} />
                     )}
                 </div>
             ))}
@@ -599,11 +599,11 @@ function StepTemplate({ onSelect }: { onSelect: (t: Template) => void }) {
     const [hovered, setHovered] = useState<string | null>(null);
     return (
         <div className="space-y-5">
-            <div className="glass-panel p-5 rounded-2xl space-y-2">
-                <div className="flex items-center gap-2 text-base font-bold text-white">
-                    <Wand2 className="w-5 h-5 text-emerald-400" /> Pilih Template Tender
+            <div className="card p-5 rounded-2xl space-y-2">
+                <div className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)]">
+                    <Wand2 className="w-5 h-5 text-[var(--accent)]" /> Pilih Template Tender
                 </div>
-                <p className="text-xs text-slate-400">
+                <p className="text-xs text-[var(--text-tertiary)]">
                     Template sudah dilengkapi field dan bobot penilaian yang bisa diubah sepenuhnya.
                 </p>
             </div>
@@ -617,22 +617,22 @@ function StepTemplate({ onSelect }: { onSelect: (t: Template) => void }) {
                             onClick={() => onSelect(tpl)}
                             onMouseEnter={() => setHovered(tpl.id)}
                             onMouseLeave={() => setHovered(null)}
-                            className={`relative text-left p-5 rounded-2xl border transition-all duration-200 bg-gradient-to-br ${tpl.gradient} ${
-                                hovered === tpl.id ? "border-emerald-500/50 shadow-lg shadow-emerald-500/10 scale-[1.02]" : "border-slate-800 hover:border-slate-600"
+                            className={`relative text-left p-5 rounded-xl border transition-all duration-200 bg-white ${
+                                hovered === tpl.id ? "border-[var(--accent)] ring-1 ring-[var(--accent)] scale-[1.02]" : "border-[var(--border)] hover:border-[var(--border-strong)]"
                             }`}
                         >
-                            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${hovered === tpl.id ? "bg-emerald-500/20 text-emerald-400" : "bg-slate-800/80 text-slate-400"} transition-colors`}>
+                            <div className={`inline-flex p-2.5 rounded-xl mb-3 ${hovered === tpl.id ? "bg-[var(--accent-light)] text-[var(--accent)]" : "bg-[var(--surface-secondary)] text-[var(--text-tertiary)]"} transition-colors`}>
                                 {tpl.icon}
                             </div>
-                            <div className="font-bold text-sm text-white mb-1">{tpl.label}</div>
-                            <div className="text-xs text-slate-400 leading-relaxed mb-3">{tpl.description}</div>
+                            <div className="font-bold text-sm text-[var(--text-primary)] mb-1">{tpl.label}</div>
+                            <div className="text-xs text-[var(--text-tertiary)] leading-relaxed mb-3">{tpl.description}</div>
                             {tpl.fields.length > 0 && (
                                 <div className="flex flex-wrap gap-1">
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 text-slate-500 border border-slate-700">{tpl.fields.length} fields</span>
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-500/10 text-purple-400 border border-purple-500/20">{scoredCount} dinilai</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-tertiary)] border border-[var(--border)]">{tpl.fields.length} fields</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-purple-50 text-[var(--text-secondary)] border border-purple-500/20">{scoredCount} dinilai</span>
                                 </div>
                             )}
-                            <ChevronRight className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-all ${hovered === tpl.id ? "text-emerald-400 translate-x-0.5" : "text-slate-700"}`} />
+                            <ChevronRight className={`absolute right-4 top-1/2 -translate-y-1/2 w-4 h-4 transition-all ${hovered === tpl.id ? "text-[var(--accent)] translate-x-0.5" : "text-slate-700"}`} />
                         </button>
                     );
                 })}
@@ -657,32 +657,32 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
     const canNext = form.title.trim().length >= 3 && !!selectedOrgId;
     return (
         <div className="space-y-5">
-            <div className="glass-panel p-6 rounded-2xl space-y-5">
-                <div className="flex items-center gap-2 text-base font-bold text-white border-b border-slate-800 pb-3">
-                    <FileSpreadsheet className="w-5 h-5 text-emerald-400" /> Informasi Dasar Tender
+            <div className="card p-6 rounded-2xl space-y-5">
+                <div className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)] border-b border-[var(--border)] pb-3">
+                    <FileSpreadsheet className="w-5 h-5 text-[var(--accent)]" /> Informasi Dasar Tender
                 </div>
 
                 {/* Org Selector */}
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-300">Organisasi Penyelenggara <span className="text-red-400">*</span></label>
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Organisasi Penyelenggara <span className="text-red-600">*</span></label>
                     {orgsLoading ? (
-                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-500">
+                        <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-tertiary)]">
                             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
                             Memuat organisasi...
                         </div>
                     ) : userOrgs.length === 0 ? (
-                        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-300 text-xs">
+                        <div className="flex items-start gap-3 px-4 py-3 rounded-xl bg-amber-500/10 border border-amber-200 text-amber-600 text-xs">
                             <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                             <div>
                                 <p className="font-semibold">Tidak ada organisasi yang memenuhi syarat.</p>
-                                <p className="text-amber-400/70 mt-0.5">Anda harus menjadi <strong>Procurement Officer</strong> atau <strong>Organization Admin</strong> di organisasi yang sudah diverifikasi untuk membuat tender.</p>
+                                <p className="text-amber-600/70 mt-0.5">Anda harus menjadi <strong>Procurement Officer</strong> atau <strong>Organization Admin</strong> di organisasi yang sudah diverifikasi untuk membuat tender.</p>
                             </div>
                         </div>
                     ) : (
                         <select
                             value={selectedOrgId}
                             onChange={(e) => setSelectedOrgId(e.target.value)}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60"
+                            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/60"
                         >
                             {userOrgs.map((o) => (
                                 <option key={o.id} value={o.id}>
@@ -694,50 +694,50 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-300">Judul Tender <span className="text-red-400">*</span></label>
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Judul Tender <span className="text-red-600">*</span></label>
                     <input type="text" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Contoh: Pengadaan 100 Laptop untuk Kantor Pusat Tahun 2026"
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
+                        className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
                 </div>
 
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5">Kode Tender <span className="text-[10px] text-slate-500 font-normal">(auto)</span></label>
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5">Kode Tender <span className="text-[10px] text-[var(--text-tertiary)] font-normal">(auto)</span></label>
                         <div className="relative">
                             <input type="text" value={form.code} onChange={(e) => setForm((p) => ({ ...p, code: e.target.value }))}
-                                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm font-mono text-emerald-400 focus:outline-none pr-10" />
-                            <button type="button" onClick={() => setForm((p) => ({ ...p, code: generateCode() }))} title="Generate ulang" className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-600 hover:text-emerald-400 transition-colors">
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm font-mono text-[var(--accent)] focus:outline-none pr-10" />
+                            <button type="button" onClick={() => setForm((p) => ({ ...p, code: generateCode() }))} title="Generate ulang" className="absolute right-3 top-1/2 -translate-y-1/2 text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors">
                                 <Copy className="w-4 h-4" />
                             </button>
                         </div>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Kategori Pengadaan</label>
+                        <label className="text-xs font-semibold text-[var(--text-secondary)]">Kategori Pengadaan</label>
                         <select value={form.category} onChange={(e) => setForm((p) => ({ ...p, category: e.target.value }))}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60">
+                            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/60">
                             {CATEGORIES.map((c) => <option key={c} value={c}>{c}</option>)}
                         </select>
                     </div>
                 </div>
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-slate-300">Deskripsi Tender</label>
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Deskripsi Tender</label>
                     <textarea rows={4} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Jelaskan latar belakang kebutuhan, ruang lingkup, dan ketentuan tender..."
-                        className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white placeholder:text-slate-600 focus:outline-none focus:border-emerald-500/60 resize-none" />
+                        className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-emerald-500/60 resize-none" />
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300 flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-emerald-400" /> Batas Akhir Submit Penawaran</label>
+                        <label className="text-xs font-semibold text-[var(--text-secondary)] flex items-center gap-1.5"><Clock className="w-3.5 h-3.5 text-[var(--accent)]" /> Batas Akhir Submit Penawaran</label>
                         <input type="datetime-local" value={form.commitDeadline} onChange={(e) => setForm((p) => ({ ...p, commitDeadline: e.target.value }))}
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60" />
-                        <p className="text-[11px] text-slate-500">Penawaran terenkripsi dikunci setelah waktu ini</p>
+                            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/60" />
+                        <p className="text-[11px] text-[var(--text-tertiary)]">Penawaran terenkripsi dikunci setelah waktu ini</p>
                     </div>
                     <div className="space-y-2">
-                        <label className="text-xs font-semibold text-slate-300">Durasi Reveal Window</label>
+                        <label className="text-xs font-semibold text-[var(--text-secondary)]">Durasi Reveal Window</label>
                         <div className="relative">
                             <input type="number" min={1} max={720} value={form.revealWindowHours} onChange={(e) => setForm((p) => ({ ...p, revealWindowHours: Number(e.target.value) }))}
-                                className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-emerald-500/60 pr-16" />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-slate-500 font-medium">jam</span>
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/60 pr-16" />
+                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary)] font-medium">jam</span>
                         </div>
-                        <p className="text-[11px] text-slate-500">Waktu vendor untuk decrypt dan ungkap penawaran</p>
+                        <p className="text-[11px] text-[var(--text-tertiary)]">Waktu vendor untuk decrypt dan ungkap penawaran</p>
                     </div>
                 </div>
             </div>
@@ -776,18 +776,18 @@ function StepFieldsAndScoring({
     return (
         <div className="space-y-5">
             {/* Header Card */}
-            <div className="glass-panel p-5 rounded-2xl space-y-4">
+            <div className="card p-5 rounded-2xl space-y-4">
                 <div className="flex items-center justify-between">
                     <div>
-                        <div className="flex items-center gap-2 text-base font-bold text-white">
-                            <Layers className="w-5 h-5 text-cyan-400" /> Field Bid & Penilaian
+                        <div className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)]">
+                            <Layers className="w-5 h-5 text-[var(--accent)]" /> Field Bid & Penilaian
                         </div>
-                        <p className="text-xs text-slate-400 mt-0.5">
+                        <p className="text-xs text-[var(--text-tertiary)] mt-0.5">
                             Setiap field bisa punya penilaiannya sendiri. Drag <GripVertical className="inline w-3 h-3" /> untuk ubah urutan.
                         </p>
                     </div>
                     <button type="button" onClick={onAdd}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-cyan-500/10 hover:bg-cyan-500/20 text-cyan-400 text-xs font-semibold border border-cyan-500/30 transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-50 text-[var(--accent)] text-xs font-semibold border border-blue-200 transition-colors">
                         <PlusCircle className="w-3.5 h-3.5" /> Tambah Field
                     </button>
                 </div>
@@ -796,19 +796,19 @@ function StepFieldsAndScoring({
                 {scoredCount > 0 && (
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-semibold">
-                            <span className="text-slate-400">Total Bobot ({scoredCount} field dinilai)</span>
-                            <span className={weightOk ? "text-emerald-400" : totalWeight > 100 ? "text-red-400" : "text-amber-400"}>
+                            <span className="text-[var(--text-tertiary)]">Total Bobot ({scoredCount} field dinilai)</span>
+                            <span className={weightOk ? "text-[var(--accent)]" : totalWeight > 100 ? "text-red-600" : "text-amber-600"}>
                                 {totalWeight}% / 100%
                                 {weightOk && " ✓"}
                                 {!weightOk && totalWeight > 0 && ` (${weightRemaining > 0 ? "+" : ""}${weightRemaining}% lagi)`}
                             </span>
                         </div>
-                        <div className="h-2 bg-slate-800 rounded-full overflow-hidden">
+                        <div className="h-2 bg-[var(--surface-secondary)] rounded-full overflow-hidden">
                             <div
                                 className={`h-full rounded-full transition-all duration-300 ${
-                                    weightOk ? "bg-gradient-to-r from-emerald-500 to-emerald-400"
+                                    weightOk ? "bg-gradient-to-r from-[var(--accent)] to-emerald-400"
                                     : totalWeight > 100 ? "bg-red-500"
-                                    : "bg-gradient-to-r from-purple-500 to-cyan-500"
+                                    : "bg-gradient-to-r from-purple-500 to-teal-600"
                                 }`}
                                 style={{ width: `${Math.min(totalWeight, 100)}%` }}
                             />
@@ -819,10 +819,10 @@ function StepFieldsAndScoring({
 
             {/* Empty state */}
             {fields.length === 0 && (
-                <div onClick={onAdd} className="glass-panel rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-cyan-500/30 transition-colors border-dashed">
-                    <div className="w-12 h-12 rounded-2xl bg-cyan-500/10 flex items-center justify-center text-cyan-400"><PlusCircle className="w-6 h-6" /></div>
-                    <p className="text-sm font-semibold text-slate-300">Belum ada field</p>
-                    <p className="text-xs text-slate-500 text-center">Klik untuk menambah field pertama, atau kembali untuk memilih template</p>
+                <div onClick={onAdd} className="card rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-blue-200 transition-colors border-dashed">
+                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[var(--accent)]"><PlusCircle className="w-6 h-6" /></div>
+                    <p className="text-sm font-semibold text-[var(--text-secondary)]">Belum ada field</p>
+                    <p className="text-xs text-[var(--text-tertiary)] text-center">Klik untuk menambah field pertama, atau kembali untuk memilih template</p>
                 </div>
             )}
 
@@ -840,39 +840,39 @@ function StepFieldsAndScoring({
                             onDragOver={(e) => onDragOver(e, idx)}
                             onDrop={() => onDrop(idx)}
                             onDragEnd={onDragEnd}
-                            className={`glass-panel rounded-2xl overflow-hidden transition-all duration-150 ${isDragging ? "opacity-40 scale-95" : isDragOver ? "border-cyan-500/40 shadow-lg shadow-cyan-500/5" : ""}`}
+                            className={`card rounded-xl overflow-hidden transition-all duration-150 ${isDragging ? "opacity-40 scale-95" : isDragOver ? "border-[var(--accent)] ring-1 ring-[var(--accent)]" : ""}`}
                         >
                             {/* ── Vendor Input Section ── */}
                             <div className="p-4">
                                 <div className="flex items-start gap-3">
-                                    <div className="pt-2.5 cursor-grab active:cursor-grabbing text-slate-700 hover:text-slate-500 transition-colors">
+                                    <div className="pt-2.5 cursor-grab active:cursor-grabbing text-slate-700 hover:text-[var(--text-tertiary)] transition-colors">
                                         <GripVertical className="w-4 h-4" />
                                     </div>
                                     <div className="flex-1 space-y-3">
                                         {/* Row 1: Name + Type + Required */}
                                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                             <div className="sm:col-span-5 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Nama Field</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Nama Field</label>
                                                 <input type="text" value={field.name} onChange={(e) => onUpdate(idx, "name", e.target.value)} placeholder="Contoh: Harga Penawaran Total"
-                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white placeholder:text-slate-700 focus:outline-none focus:border-cyan-500/50" />
+                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-slate-700 focus:outline-none focus:border-[var(--accent)]" />
                                             </div>
                                             <div className="sm:col-span-4 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Tipe Input</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Tipe Input</label>
                                                 <select value={field.type} onChange={(e) => onUpdate(idx, "type", e.target.value as FieldType)}
-                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50">
+                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]">
                                                     {(Object.keys(FIELD_TYPE_META) as FieldType[]).map((t) => (
                                                         <option key={t} value={t}>{FIELD_TYPE_META[t].label}</option>
                                                     ))}
                                                 </select>
                                             </div>
                                             <div className="sm:col-span-3 space-y-1">
-                                                <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Wajib Diisi</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Wajib Diisi</label>
                                                 <div className="flex items-center gap-2 h-[38px]">
                                                     <button type="button" onClick={() => onUpdate(idx, "required", !field.required)}
                                                         className={`relative w-10 h-5 rounded-full transition-colors ${field.required ? "bg-emerald-500" : "bg-slate-700"}`}>
                                                         <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${field.required ? "left-5" : "left-0.5"}`} />
                                                     </button>
-                                                    <span className={`text-xs font-semibold ${field.required ? "text-emerald-400" : "text-slate-500"}`}>
+                                                    <span className={`text-xs font-semibold ${field.required ? "text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}>
                                                         {field.required ? "Wajib" : "Opsional"}
                                                     </span>
                                                 </div>
@@ -880,9 +880,9 @@ function StepFieldsAndScoring({
                                         </div>
                                         {/* Row 2: Help text */}
                                         <div className="space-y-1">
-                                            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">Petunjuk untuk Vendor</label>
+                                            <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Petunjuk untuk Vendor</label>
                                             <input type="text" value={field.helpText} onChange={(e) => onUpdate(idx, "helpText", e.target.value)} placeholder="Contoh: Masukkan total harga termasuk PPN 11%"
-                                                className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-300 placeholder:text-slate-700 focus:outline-none focus:border-cyan-500/50" />
+                                                className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs text-[var(--text-secondary)] placeholder:text-slate-700 focus:outline-none focus:border-[var(--accent)]" />
                                         </div>
                                         {/* Row 3: Options for select */}
                                         {(field.type === "select" || field.type === "multi-select") && (
@@ -891,10 +891,10 @@ function StepFieldsAndScoring({
                                     </div>
                                     {/* Type badge + delete */}
                                     <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <button type="button" onClick={() => onRemove(field.id)} className="p-1.5 text-slate-700 hover:text-red-400 hover:bg-red-500/10 rounded-lg transition-colors">
+                                        <button type="button" onClick={() => onRemove(field.id)} className="p-1.5 text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
-                                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-slate-950 border border-slate-800 text-[10px] font-medium ${meta.color}`}>
+                                        <div className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[10px] font-medium ${meta.color}`}>
                                             {meta.icon}
                                         </div>
                                     </div>
@@ -902,15 +902,15 @@ function StepFieldsAndScoring({
                             </div>
 
                             {/* ── Scoring Section ── */}
-                            <div className={`border-t transition-colors ${field.scored ? "border-purple-500/20 bg-purple-500/5" : "border-slate-800 bg-slate-900/30"}`}>
+                            <div className={`border-t transition-colors ${field.scored ? "border-purple-500/20 bg-purple-500/5" : "border-[var(--border)] bg-[var(--surface-secondary)]/30"}`}>
                                 <div className="px-4 py-3">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
-                                            <Star className={`w-3.5 h-3.5 ${field.scored ? "text-purple-400" : "text-slate-600"}`} />
-                                            <span className={`text-xs font-bold ${field.scored ? "text-purple-300" : "text-slate-600"}`}>
+                                            <Star className={`w-3.5 h-3.5 ${field.scored ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)]"}`} />
+                                            <span className={`text-xs font-bold ${field.scored ? "text-[var(--text-secondary)]" : "text-[var(--text-tertiary)]"}`}>
                                                 Kriteria Penilaian
                                             </span>
-                                            {!field.scored && <span className="text-[10px] text-slate-600">(opsional — aktifkan untuk menilai field ini)</span>}
+                                            {!field.scored && <span className="text-[10px] text-[var(--text-tertiary)]">(opsional — aktifkan untuk menilai field ini)</span>}
                                         </div>
                                         {/* Toggle scored */}
                                         <button type="button" onClick={() => onUpdate(idx, "scored", !field.scored)}
@@ -923,19 +923,19 @@ function StepFieldsAndScoring({
                                         <div className="grid grid-cols-1 sm:grid-cols-12 gap-3">
                                             {/* Weight */}
                                             <div className="sm:col-span-3 space-y-1">
-                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Bobot (%)</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Bobot (%)</label>
                                                 <div className="relative">
                                                     <input type="number" min={0} max={100} value={field.weight}
                                                         onChange={(e) => onUpdate(idx, "weight", Number(e.target.value))}
-                                                        className="w-full px-3 py-2 pr-7 rounded-lg bg-purple-500/10 border border-purple-500/30 text-sm font-bold text-purple-300 focus:outline-none focus:border-purple-500/60" />
+                                                        className="w-full px-3 py-2 pr-7 rounded-lg bg-purple-50 border border-purple-500/30 text-sm font-bold text-[var(--text-secondary)] focus:outline-none focus:border-purple-500/60" />
                                                     <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-purple-500/50" />
                                                 </div>
                                             </div>
                                             {/* Scoring Type */}
                                             <div className="sm:col-span-4 space-y-1">
-                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Metode Scoring</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Metode Scoring</label>
                                                 <select value={field.scoringType} onChange={(e) => onUpdate(idx, "scoringType", e.target.value as ScoringType)}
-                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-purple-500/20 text-xs text-white focus:outline-none focus:border-purple-500/40">
+                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-purple-500/20 text-xs text-[var(--text-primary)] focus:outline-none focus:border-purple-500/40">
                                                     {(Object.keys(SCORING_META) as ScoringType[]).map((t) => (
                                                         <option key={t} value={t}>{SCORING_META[t].label}</option>
                                                     ))}
@@ -946,9 +946,9 @@ function StepFieldsAndScoring({
                                             </div>
                                             {/* Evaluator guide */}
                                             <div className="sm:col-span-5 space-y-1">
-                                                <label className="text-[10px] font-bold text-purple-400 uppercase tracking-wider">Panduan Evaluator</label>
+                                                <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Panduan Evaluator</label>
                                                 <input type="text" value={field.evaluatorGuide} onChange={(e) => onUpdate(idx, "evaluatorGuide", e.target.value)} placeholder="Panduan singkat untuk evaluator..."
-                                                    className="w-full px-3 py-2 rounded-lg bg-slate-950 border border-purple-500/20 text-xs text-slate-300 placeholder:text-slate-700 focus:outline-none focus:border-purple-500/40" />
+                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-purple-500/20 text-xs text-[var(--text-secondary)] placeholder:text-slate-700 focus:outline-none focus:border-purple-500/40" />
                                             </div>
                                         </div>
                                     )}
@@ -981,16 +981,16 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
 
     return (
         <div className="space-y-5">
-            <div className="glass-panel p-5 rounded-2xl space-y-1">
-                <div className="flex items-center gap-2 text-base font-bold text-white"><Eye className="w-5 h-5 text-emerald-400" /> Review & Konfirmasi</div>
-                <p className="text-xs text-slate-400">Periksa kembali semua detail sebelum tender dipublikasikan.</p>
+            <div className="card p-5 rounded-2xl space-y-1">
+                <div className="flex items-center gap-2 text-base font-bold text-[var(--text-primary)]"><Eye className="w-5 h-5 text-[var(--accent)]" /> Review & Konfirmasi</div>
+                <p className="text-xs text-[var(--text-tertiary)]">Periksa kembali semua detail sebelum tender dipublikasikan.</p>
             </div>
 
             {/* Info */}
-            <div className="glass-panel p-5 rounded-2xl space-y-3">
+            <div className="card p-5 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white">Informasi Tender</h3>
-                    <button type="button" onClick={() => onGoToStep(2)} className="text-xs text-emerald-400 hover:text-emerald-300">Edit</button>
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">Informasi Tender</h3>
+                    <button type="button" onClick={() => onGoToStep(2)} className="text-xs text-[var(--accent)] hover:text-[var(--accent)]">Edit</button>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                     <ReviewRow label="Judul" value={form.title || "—"} />
@@ -1003,38 +1003,38 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
             </div>
 
             {/* Fields + Scoring summary */}
-            <div className="glass-panel p-5 rounded-2xl space-y-3">
+            <div className="card p-5 rounded-2xl space-y-3">
                 <div className="flex items-center justify-between">
-                    <h3 className="text-sm font-bold text-white">
+                    <h3 className="text-sm font-bold text-[var(--text-primary)]">
                         Field Bid — {form.fields.length} field, {scoredFields.length} dinilai
                     </h3>
-                    <button type="button" onClick={() => onGoToStep(3)} className="text-xs text-emerald-400 hover:text-emerald-300">Edit</button>
+                    <button type="button" onClick={() => onGoToStep(3)} className="text-xs text-[var(--accent)] hover:text-[var(--accent)]">Edit</button>
                 </div>
                 <div className="space-y-2">
                     {form.fields.map((f, i) => {
                         const meta = FIELD_TYPE_META[f.type];
                         const sMeta = f.scored ? SCORING_META[f.scoringType] : null;
                         return (
-                            <div key={f.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${f.scored ? "bg-purple-500/5 border-purple-500/15" : "bg-slate-900/60 border-slate-800"}`}>
-                                <span className="text-[10px] text-slate-600 font-mono w-4">{i + 1}</span>
+                            <div key={f.id} className={`flex items-center gap-3 px-3 py-2.5 rounded-lg border ${f.scored ? "bg-purple-500/5 border-purple-500/15" : "bg-[var(--surface-secondary)]/60 border-[var(--border)]"}`}>
+                                <span className="text-[10px] text-[var(--text-tertiary)] font-mono w-4">{i + 1}</span>
                                 <span className={meta.color}>{meta.icon}</span>
-                                <span className="text-sm text-white font-medium flex-1 truncate">{f.name || <span className="text-slate-600 italic">Tanpa nama</span>}</span>
+                                <span className="text-sm text-[var(--text-primary)] font-medium flex-1 truncate">{f.name || <span className="text-[var(--text-tertiary)] italic">Tanpa nama</span>}</span>
                                 {f.scored && sMeta ? (
                                     <div className="flex items-center gap-2 shrink-0">
                                         <span className={`flex items-center gap-1 text-[10px] font-medium ${sMeta.color}`}>
                                             {sMeta.icon}
                                         </span>
-                                        <span className="text-sm font-bold text-purple-400">{f.weight}%</span>
+                                        <span className="text-sm font-bold text-[var(--text-secondary)]">{f.weight}%</span>
                                     </div>
                                 ) : (
-                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-slate-800 border border-slate-700 text-slate-500 shrink-0">Informatif</span>
+                                    <span className="text-[10px] px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] border border-[var(--border)] text-[var(--text-tertiary)] shrink-0">Informatif</span>
                                 )}
                             </div>
                         );
                     })}
                 </div>
                 {scoredFields.length > 0 && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-emerald-500/10 border border-emerald-500/20 text-emerald-400" : "bg-red-500/10 border border-red-500/20 text-red-400"}`}>
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)]" : "bg-red-50 border border-red-200 text-red-600"}`}>
                         {weightOk ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                         Total Bobot: {totalWeight}% {weightOk ? "— Valid ✓" : "— Harus tepat 100%"}
                     </div>
@@ -1047,11 +1047,11 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
             </div>
 
             <div className="flex items-center justify-between gap-4 pt-2">
-                <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+                <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-xs font-semibold text-[var(--text-secondary)] transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> Kembali
                 </button>
                 <button type="button" onClick={onSubmit} disabled={loading || !weightOk}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold text-sm hover:from-emerald-400 hover:to-cyan-400 transition-all shadow-lg shadow-emerald-500/25 disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[14px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                     {loading ? (
                         <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Membuat Tender...</>
                     ) : (
@@ -1070,49 +1070,49 @@ function LivePreviewPanel({ fields, title }: { fields: BidField[]; title: string
         <div className="sticky top-4 space-y-4">
             <div className="flex items-center gap-2 px-1">
                 <div className="w-2 h-2 rounded-full bg-cyan-400 animate-pulse" />
-                <span className="text-xs font-bold text-cyan-400 uppercase tracking-wider">Live Preview</span>
-                <span className="text-xs text-slate-600">— Tampilan form vendor</span>
+                <span className="text-xs font-bold text-[var(--accent)] uppercase tracking-wider">Live Preview</span>
+                <span className="text-xs text-[var(--text-tertiary)]">— Tampilan form vendor</span>
             </div>
-            <div className="glass-panel rounded-2xl overflow-hidden border-cyan-500/20">
-                <div className="flex items-center gap-2 px-4 py-2.5 bg-slate-950/80 border-b border-slate-800">
+            <div className="card rounded-2xl overflow-hidden border-cyan-500/20">
+                <div className="flex items-center gap-2 px-4 py-2.5 bg-[var(--surface)]/80 border-b border-[var(--border)]">
                     <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /></div>
-                    <div className="flex-1 h-5 rounded bg-slate-800/80 text-[10px] text-slate-600 flex items-center px-2">tenderseal.app/tenders/submit</div>
+                    <div className="flex-1 h-5 rounded bg-[var(--surface-secondary)] text-[10px] text-[var(--text-tertiary)] flex items-center px-2">tenderseal.app/tenders/submit</div>
                 </div>
                 <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
                     <div>
-                        <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-1">Form Penawaran</div>
-                        <h3 className="text-sm font-bold text-white leading-snug">{title || <span className="text-slate-600 italic">Judul tender belum diisi</span>}</h3>
+                        <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-1">Form Penawaran</div>
+                        <h3 className="text-sm font-bold text-[var(--text-primary)] leading-snug">{title || <span className="text-[var(--text-tertiary)] italic">Judul tender belum diisi</span>}</h3>
                     </div>
                     {fields.length === 0 ? (
-                        <div className="text-center py-6 text-slate-600 text-xs">Tambah field untuk melihat preview</div>
+                        <div className="text-center py-6 text-[var(--text-tertiary)] text-xs">Tambah field untuk melihat preview</div>
                     ) : (
                         <div className="space-y-3.5">
                             {fields.map((f) => {
                                 const meta = FIELD_TYPE_META[f.type];
                                 return (
                                     <div key={f.id} className="space-y-1.5">
-                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-slate-300">
+                                        <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)]">
                                             <span className={meta.color}>{meta.icon}</span>
-                                            {f.name || <span className="text-slate-600 italic">Nama field</span>}
-                                            {f.required && <span className="text-red-400">*</span>}
-                                            {f.scored && <span className="ml-auto text-[10px] font-bold text-purple-400">{f.weight}%</span>}
+                                            {f.name || <span className="text-[var(--text-tertiary)] italic">Nama field</span>}
+                                            {f.required && <span className="text-red-600">*</span>}
+                                            {f.scored && <span className="ml-auto text-[10px] font-bold text-[var(--text-secondary)]">{f.weight}%</span>}
                                         </label>
                                         {f.type === "currency" && (
-                                            <div className="flex items-center px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 gap-2">
+                                            <div className="flex items-center px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] gap-2">
                                                 <span className="text-xs font-bold text-emerald-600">Rp</span>
-                                                <span className="text-xs text-slate-600 italic">{f.helpText || "0"}</span>
+                                                <span className="text-xs text-[var(--text-tertiary)] italic">{f.helpText || "0"}</span>
                                             </div>
                                         )}
                                         {(f.type === "text" || f.type === "number") && (
-                                            <div className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-600 italic">{f.helpText || "Masukkan nilai..."}</div>
+                                            <div className="px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs text-[var(--text-tertiary)] italic">{f.helpText || "Masukkan nilai..."}</div>
                                         )}
                                         {f.type === "file" && (
-                                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-slate-950 border border-dashed border-slate-700 text-xs text-slate-600">
+                                            <div className="flex items-center gap-2 px-3 py-2 rounded-lg bg-[var(--surface)] border border-dashed border-[var(--border)] text-xs text-[var(--text-tertiary)]">
                                                 <FileUp className="w-3 h-3" />{f.helpText || "Upload file..."}
                                             </div>
                                         )}
                                         {(f.type === "select" || f.type === "multi-select") && (
-                                            <div className="px-3 py-2 rounded-lg bg-slate-950 border border-slate-800 text-xs text-slate-600 italic">
+                                            <div className="px-3 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-xs text-[var(--text-tertiary)] italic">
                                                 {f.options?.length ? `Pilih: ${f.options.slice(0, 3).join(", ")}${f.options.length > 3 ? "..." : ""}` : "Pilih opsi..."}
                                             </div>
                                         )}
@@ -1146,22 +1146,22 @@ function OptionsChipInput({ options, onChange }: { options: string[]; onChange: 
 
     return (
         <div className="space-y-1.5">
-            <label className="text-[10px] font-bold text-slate-500 uppercase tracking-wider">
+            <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">
                 Pilihan Opsi{" "}
-                <span className="text-slate-600 normal-case font-normal">
-                    — ketik lalu tekan <kbd className="px-1 py-0.5 rounded bg-slate-800 text-slate-400 text-[9px] font-mono">Enter</kbd> untuk menambah
+                <span className="text-[var(--text-tertiary)] normal-case font-normal">
+                    — ketik lalu tekan <kbd className="px-1 py-0.5 rounded bg-[var(--surface-secondary)] text-[var(--text-tertiary)] text-[9px] font-mono">Enter</kbd> untuk menambah
                 </span>
             </label>
-            <div className="flex flex-wrap gap-1.5 px-2.5 py-2 rounded-lg bg-slate-950 border border-slate-800 focus-within:border-cyan-500/50 transition-colors min-h-[38px] cursor-text" onClick={() => inputRef.current?.focus()}>
+            <div className="flex flex-wrap gap-1.5 px-2.5 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] focus-within:border-cyan-500/50 transition-colors min-h-[38px] cursor-text" onClick={() => inputRef.current?.focus()}>
                 {options.map((opt) => (
-                    <span key={opt} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/15 border border-cyan-500/30 text-cyan-300 text-xs font-medium">
+                    <span key={opt} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/15 border border-blue-200 text-[var(--accent)] text-xs font-medium">
                         {opt}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onChange(options.filter((o) => o !== opt)); }} className="text-cyan-500/60 hover:text-red-400 transition-colors leading-none">✕</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onChange(options.filter((o) => o !== opt)); }} className="text-cyan-500/60 hover:text-red-600 transition-colors leading-none">✕</button>
                     </span>
                 ))}
                 <input ref={inputRef} type="text" value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={handleKeyDown} onBlur={commit}
                     placeholder={options.length === 0 ? "Ketik opsi, tekan Enter..." : "Tambah opsi..."}
-                    className="flex-1 min-w-[120px] bg-transparent text-xs text-slate-300 placeholder:text-slate-700 outline-none" />
+                    className="flex-1 min-w-[120px] bg-transparent text-xs text-[var(--text-secondary)] placeholder:text-slate-700 outline-none" />
             </div>
         </div>
     );
@@ -1172,8 +1172,8 @@ function OptionsChipInput({ options, onChange }: { options: string[]; onChange: 
 function ReviewRow({ label, value, mono, full }: { label: string; value: string; mono?: boolean; full?: boolean }) {
     return (
         <div className={full ? "col-span-full" : ""}>
-            <div className="text-[10px] font-bold text-slate-500 uppercase tracking-wider mb-0.5">{label}</div>
-            <div className={`text-sm text-white ${mono ? "font-mono text-emerald-400" : ""}`}>{value}</div>
+            <div className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-0.5">{label}</div>
+            <div className={`text-sm text-[var(--text-primary)] ${mono ? "font-mono text-[var(--accent)]" : ""}`}>{value}</div>
         </div>
     );
 }
@@ -1181,11 +1181,11 @@ function ReviewRow({ label, value, mono, full }: { label: string; value: string;
 function StepNav({ onBack, onNext, nextDisabled, nextLabel }: { onBack: () => void; onNext: () => void; nextDisabled?: boolean; nextLabel?: string }) {
     return (
         <div className="flex items-center justify-between gap-4 pt-2">
-            <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-slate-800 hover:bg-slate-700 text-xs font-semibold text-slate-300 transition-colors">
+            <button type="button" onClick={onBack} className="flex items-center gap-2 px-5 py-3 rounded-xl bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-xs font-semibold text-[var(--text-secondary)] transition-colors">
                 <ArrowLeft className="w-3.5 h-3.5" /> Kembali
             </button>
             <button type="button" onClick={onNext} disabled={nextDisabled}
-                className="flex items-center gap-2 px-6 py-3 rounded-xl bg-gradient-to-r from-emerald-500 to-cyan-500 text-slate-950 font-bold text-xs hover:from-emerald-400 hover:to-cyan-400 transition-all shadow-md shadow-emerald-500/20 disabled:opacity-40 disabled:cursor-not-allowed disabled:shadow-none">
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                 {nextLabel || "Lanjut"} <ArrowRight className="w-3.5 h-3.5" />
             </button>
         </div>

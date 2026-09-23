@@ -308,7 +308,8 @@ export default function TenderDetailPage() {
             // @ts-ignore
             const provider = new ethers.BrowserProvider(window.ethereum);
             const signer = await provider.getSigner();
-            const contract = new ethers.Contract("0x5FbDB2315678afecb367f032d93F642f64180aa3", TenderSealABI, signer);
+            const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x8e0dce737aC922f30bc2fc30d9930657029b6553";
+            const contract = new ethers.Contract(contractAddress, TenderSealABI, signer);
             
             const scTx = await contract.commitBid(tenderId, selectedOrgId, commitmentHash);
             await scTx.wait();
@@ -550,35 +551,35 @@ export default function TenderDetailPage() {
     }, [allBids, tender, manualScores]);
 
     if (loading) {
-        return <div className="p-8 text-center text-slate-400">Loading tender data...</div>;
+        return <div className="p-8 text-center text-[var(--text-tertiary)]">Loading tender data...</div>;
     }
     
     if (!tender) {
-        return <div className="p-8 text-center text-red-400">Tender not found.</div>;
+        return <div className="p-8 text-center text-red-600">Tender not found.</div>;
     }
 
     return (
         <div className="space-y-8">
             {/* Header */}
             <div className="space-y-3">
-                <Link href="/tenders" className="inline-flex items-center gap-1 text-xs font-semibold text-slate-400 hover:text-emerald-400 transition-colors">
+                <Link href="/tenders" className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors">
                     <ArrowLeft className="w-3.5 h-3.5" /> Kembali ke Katalog Tender
                 </Link>
 
                 <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                     <div>
                         <div className="flex items-center gap-3">
-                            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-slate-800 text-emerald-400 border border-slate-700">
+                            <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[var(--surface-secondary)] text-[var(--accent)] border border-[var(--border)]">
                                 {tender.code}
                             </span>
-                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tender.status === 'OPEN' ? 'bg-emerald-500/20 text-emerald-300' : 'bg-amber-500/20 text-amber-300'}`}>
+                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tender.status === 'OPEN' ? 'bg-[var(--accent-light)] text-[var(--accent)]' : 'bg-amber-50 text-amber-600'}`}>
                                 {tender.status}
                             </span>
                         </div>
-                        <h1 className="text-2xl sm:text-3xl font-extrabold text-white tracking-tight mt-2">
+                        <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight mt-2">
                             {tender.title}
                         </h1>
-                        <p className="text-xs text-slate-400 mt-1 flex items-center gap-2">
+                        <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-2">
                             <Building2 className="w-3.5 h-3.5" /> {tender.organization?.name} • {tender.category}
                         </p>
                         
@@ -604,18 +605,18 @@ export default function TenderDetailPage() {
                                             alert("Error jaringan: " + e.message);
                                         }
                                     }}
-                                    className="px-4 py-2 bg-emerald-600 hover:bg-emerald-500 text-white text-xs font-bold rounded-lg shadow-lg shadow-emerald-900/20 transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2"
                                 >
                                     <ShieldCheck className="w-4 h-4" /> Publikasikan ke Blockchain (Set OPEN)
                                 </button>
-                                <span className="text-[10px] text-slate-500 max-w-xs">Setelah dipublikasikan, tender tidak dapat diubah dan vendor dapat mulai mengirim Sealed Bid.</span>
+                                <span className="text-[10px] text-[var(--text-tertiary)] max-w-xs">Setelah dipublikasikan, tender tidak dapat diubah dan vendor dapat mulai mengirim Sealed Bid.</span>
                             </div>
                         )}
                     </div>
 
                     <div className="flex items-center gap-2">
-                        <span className="text-xs text-slate-400">Commit Deadline:</span>
-                        <span className="text-xs font-bold text-amber-400 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-500/20">
+                        <span className="text-xs text-[var(--text-tertiary)]">Commit Deadline:</span>
+                        <span className="text-xs font-bold text-amber-600 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-200">
                             {new Date(tender.commitDeadline).toLocaleString('id-ID')}
                         </span>
                     </div>
@@ -623,22 +624,22 @@ export default function TenderDetailPage() {
             </div>
 
             {/* Navigation Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-800/80 pb-px overflow-x-auto">
-                <button onClick={() => setActiveTab("overview")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "overview" ? "border-emerald-400 text-emerald-400 bg-slate-900/60" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+            <div className="flex items-center gap-2 border-b border-[var(--border)] pb-px overflow-x-auto">
+                <button onClick={() => setActiveTab("overview")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "overview" ? "border-emerald-400 text-[var(--accent)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <Layers className="w-4 h-4" /> Detail Tender
                 </button>
-                <button onClick={() => setActiveTab("encrypt")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "encrypt" ? "border-cyan-400 text-cyan-400 bg-slate-900/60" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                <button onClick={() => setActiveTab("encrypt")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "encrypt" ? "border-cyan-400 text-[var(--accent)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <Lock className="w-4 h-4" /> Submit Bid (Encrypt)
                 </button>
-                <button onClick={() => setActiveTab("reveal")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "reveal" ? "border-purple-400 text-purple-400 bg-slate-900/60" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                <button onClick={() => setActiveTab("reveal")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "reveal" ? "border-purple-400 text-[var(--text-secondary)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <KeyRound className="w-4 h-4" /> Commit-Reveal
                 </button>
                 {(isCreator || tender.status === 'SCORING' || tender.status === 'COMPLETED') && (
-                    <button onClick={() => setActiveTab("scoring")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "scoring" ? "border-amber-400 text-amber-400 bg-slate-900/60" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                    <button onClick={() => setActiveTab("scoring")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "scoring" ? "border-amber-400 text-amber-600 bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                         <Award className="w-4 h-4" /> Scoring Engine
                     </button>
                 )}
-                <button onClick={() => setActiveTab("audit")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "audit" ? "border-indigo-400 text-indigo-400 bg-slate-900/60" : "border-transparent text-slate-400 hover:text-slate-200"}`}>
+                <button onClick={() => setActiveTab("audit")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "audit" ? "border-indigo-400 text-[var(--text-secondary)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <History className="w-4 h-4" /> Audit Log
                 </button>
             </div>
@@ -646,38 +647,38 @@ export default function TenderDetailPage() {
             {/* TAB 1: OVERVIEW */}
             {activeTab === "overview" && (
                 <div className="space-y-6">
-                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80 text-sm text-slate-300 leading-relaxed whitespace-pre-wrap">
+                    <div className="card p-6 rounded-2xl border-[var(--border)] text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                         {tender.description}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <FileCode2 className="w-5 h-5 text-emerald-400" /> Kebutuhan Data Bid
+                        <div className="card p-6 rounded-2xl border-[var(--border)]">
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                                <FileCode2 className="w-5 h-5 text-[var(--accent)]" /> Kebutuhan Data Bid
                             </h3>
                             <div className="space-y-3">
                                 {tender.fields?.map((f: any) => (
-                                    <div key={f.id} className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/50">
+                                    <div key={f.id} className="p-3 rounded-xl bg-[var(--surface-secondary)]/50 border border-[var(--border)]/50">
                                         <div className="flex justify-between items-start">
-                                            <span className="font-semibold text-slate-200">{f.name}</span>
-                                            <span className="text-xs font-mono text-slate-500 bg-slate-950 px-2 py-0.5 rounded">{f.key}</span>
+                                            <span className="font-semibold text-[var(--text-primary)]">{f.name}</span>
+                                            <span className="text-xs font-mono text-[var(--text-tertiary)] bg-[var(--surface)] px-2 py-0.5 rounded">{f.key}</span>
                                         </div>
-                                        <p className="text-xs text-slate-400 mt-1">Tipe: {f.type} {f.required ? "(Wajib)" : "(Opsional)"}</p>
+                                        <p className="text-xs text-[var(--text-tertiary)] mt-1">Tipe: {f.type} {f.required ? "(Wajib)" : "(Opsional)"}</p>
                                     </div>
                                 ))}
                             </div>
                         </div>
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                            <h3 className="text-lg font-bold text-white mb-4 flex items-center gap-2">
-                                <Award className="w-5 h-5 text-emerald-400" /> Kriteria Penilaian
+                        <div className="card p-6 rounded-2xl border-[var(--border)]">
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 flex items-center gap-2">
+                                <Award className="w-5 h-5 text-[var(--accent)]" /> Kriteria Penilaian
                             </h3>
                             <div className="space-y-3">
                                 {tender.criteria?.map((c: any) => (
-                                    <div key={c.id} className="p-3 rounded-xl bg-slate-900/50 border border-slate-800/50 flex justify-between items-center">
+                                    <div key={c.id} className="p-3 rounded-xl bg-[var(--surface-secondary)]/50 border border-[var(--border)]/50 flex justify-between items-center">
                                         <div>
-                                            <span className="font-semibold text-slate-200 block">{c.name}</span>
-                                            <span className="text-xs text-slate-400 block">{c.description}</span>
+                                            <span className="font-semibold text-[var(--text-primary)] block">{c.name}</span>
+                                            <span className="text-xs text-[var(--text-tertiary)] block">{c.description}</span>
                                         </div>
-                                        <span className="font-bold text-emerald-400">{c.weight}%</span>
+                                        <span className="font-bold text-[var(--accent)]">{c.weight}%</span>
                                     </div>
                                 ))}
                             </div>
@@ -689,30 +690,30 @@ export default function TenderDetailPage() {
             {/* TAB 2: ENCRYPT (Submit Bid) */}
             {activeTab === "encrypt" && (
                 <div className="max-w-3xl mx-auto space-y-6">
-                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                    <div className="card p-6 rounded-2xl border-[var(--border)]">
                         <div className="flex items-center gap-3 mb-6">
-                            <div className="p-2.5 rounded-xl bg-emerald-500/10 border border-emerald-500/20">
-                                <Lock className="w-5 h-5 text-emerald-400" />
+                            <div className="p-2.5 rounded-xl bg-[var(--accent-light)] border border-teal-200">
+                                <Lock className="w-5 h-5 text-[var(--accent)]" />
                             </div>
                             <div>
-                                <h3 className="text-base font-bold text-white leading-tight">Data Penawaran (Bid)</h3>
-                                <p className="text-xs text-slate-400 mt-0.5">Isi data sesuai kriteria tender. Data akan otomatis dienkripsi sebelum dikirim.</p>
+                                <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">Data Penawaran (Bid)</h3>
+                                <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Isi data sesuai kriteria tender. Data akan otomatis dienkripsi sebelum dikirim.</p>
                             </div>
                         </div>
                         
                         <div className="space-y-4">
                             {/* Vendor Org Selector */}
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-slate-300">Pilih Organisasi Vendor Anda</label>
+                                <label className="text-xs font-semibold text-[var(--text-secondary)]">Pilih Organisasi Vendor Anda</label>
                                 {userOrgs.length === 0 ? (
-                                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-400 text-xs flex items-center gap-2">
+                                    <div className="p-3 rounded-xl bg-amber-500/10 text-amber-600 text-xs flex items-center gap-2">
                                         <AlertCircle className="w-4 h-4" /> Anda tidak tergabung di organisasi VENDOR yang diverifikasi.
                                     </div>
                                 ) : (
                                     <select
                                         value={selectedOrgId}
                                         onChange={(e) => setSelectedOrgId(e.target.value)}
-                                        className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50"
+                                        className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)]"
                                     >
                                         {userOrgs.map(o => (
                                             <option key={o.id} value={o.id}>{o.name}</option>
@@ -721,16 +722,16 @@ export default function TenderDetailPage() {
                                 )}
                             </div>
                             
-                            <hr className="border-slate-800" />
+                            <hr className="border-[var(--border)]" />
 
                             {tender.fields?.map((f: any) => (
                                 <div key={f.key} className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-slate-300">{f.name} {f.required && <span className="text-red-400">*</span>}</label>
+                                    <label className="text-xs font-semibold text-[var(--text-secondary)]">{f.name} {f.required && <span className="text-red-600">*</span>}</label>
                                     {f.type.toLowerCase() === 'textarea' ? (
                                         <textarea
                                             value={formData[f.key] || ""}
                                             onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
-                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                                             rows={3}
                                         />
                                     ) : f.type.toLowerCase() === 'file' ? (
@@ -751,10 +752,10 @@ export default function TenderDetailPage() {
                                                         setFormData(p => ({ ...p, [f.key]: "" }));
                                                     }
                                                 }}
-                                                className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer"
+                                                className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-secondary)] focus:outline-none focus:border-[var(--accent)] transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-blue-50 file:text-[var(--accent)] hover:file:bg-blue-50 cursor-pointer"
                                             />
                                             {formData[f.key] && formData[f.key] instanceof File && (
-                                                <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                                <p className="text-xs text-[var(--accent)] mt-1 flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi & diunggah secara Zero-Knowledge
                                                 </p>
                                             )}
@@ -766,23 +767,23 @@ export default function TenderDetailPage() {
                                             value={formData[f.key] || ""}
                                             onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                             placeholder={f.type.toLowerCase() === 'currency' ? 'Hanya masukkan angka (contoh: 15000000)' : ''}
-                                            className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
+                                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                                         />
                                     )}
                                 </div>
                             ))}
 
-                            <hr className="border-slate-800" />
+                            <hr className="border-[var(--border)]" />
                             
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-cyan-400">Secret Key / PIN Enkripsi <span className="text-red-400">*</span></label>
-                                <p className="text-[11px] text-slate-500">Kunci ini tidak akan dikirim ke server. Gunakan kunci yang kuat dan INGAT kunci ini untuk fase Reveal.</p>
+                                <label className="text-xs font-semibold text-[var(--accent)]">Secret Key / PIN Enkripsi <span className="text-red-600">*</span></label>
+                                <p className="text-[11px] text-[var(--text-tertiary)]">Kunci ini tidak akan dikirim ke server. Gunakan kunci yang kuat dan INGAT kunci ini untuk fase Reveal.</p>
                                 <input
                                     type="password"
                                     value={vendorSecret}
                                     onChange={(e) => setVendorSecret(e.target.value)}
                                     placeholder="Masukkan Secret PIN (min. 6 karakter)"
-                                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-cyan-900/50 text-sm text-cyan-300 focus:outline-none focus:border-cyan-400 transition-colors"
+                                    className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-cyan-900/50 text-sm text-[var(--accent)] focus:outline-none focus:border-cyan-400 transition-colors"
                                 />
                             </div>
                         </div>
@@ -791,7 +792,7 @@ export default function TenderDetailPage() {
                             <button
                                 onClick={handleSubmitBid}
                                 disabled={submittingBid || userOrgs.length === 0}
-                                className="mt-6 w-full py-3.5 rounded-xl bg-gradient-to-r from-emerald-600 to-teal-600 hover:from-emerald-500 hover:to-teal-500 text-white font-bold text-sm shadow-lg shadow-emerald-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-6 w-full py-3 rounded-lg bg-[var(--text-primary)] hover:opacity-90 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {submittingBid ? (
                                     <>
@@ -806,7 +807,7 @@ export default function TenderDetailPage() {
                                 )}
                             </button>
                         ) : (
-                            <div className="mt-6 w-full py-3.5 rounded-xl bg-emerald-500/10 border border-emerald-500/30 text-emerald-400 font-bold text-sm flex items-center justify-center gap-2">
+                            <div className="mt-6 w-full py-3.5 rounded-xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] font-bold text-sm flex items-center justify-center gap-2">
                                 <CheckCircle2 className="w-5 h-5" /> Sealed Bid Berhasil Disubmit ke Blockchain!
                             </div>
                         )}
@@ -816,14 +817,14 @@ export default function TenderDetailPage() {
             
             {/* TAB 3: REVEAL */}
             {activeTab === "reveal" && (
-                <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                <div className="card p-6 rounded-2xl border-[var(--border)]">
                      <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
-                            <KeyRound className="w-5 h-5 text-purple-400" />
+                        <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-500/20">
+                            <KeyRound className="w-5 h-5 text-[var(--text-secondary)]" />
                         </div>
                         <div>
-                            <h3 className="text-base font-bold text-white leading-tight">Fase Reveal & Dekripsi</h3>
-                            <p className="text-xs text-slate-400 mt-0.5">Masukkan Secret PIN yang digunakan saat submit untuk membuka bid.</p>
+                            <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">Fase Reveal & Dekripsi</h3>
+                            <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Masukkan Secret PIN yang digunakan saat submit untuk membuka bid.</p>
                         </div>
                     </div>
                     <div className="max-w-md mx-auto space-y-4 py-8">
@@ -832,24 +833,24 @@ export default function TenderDetailPage() {
                             value={revealSecret}
                             onChange={(e) => setRevealSecret(e.target.value)}
                             placeholder="Secret PIN"
-                            className="w-full px-4 py-3 rounded-xl bg-slate-900 border border-purple-900/50 text-sm text-purple-300 focus:outline-none focus:border-purple-500 transition-colors text-center font-mono"
+                            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-purple-900/50 text-sm text-[var(--text-secondary)] focus:outline-none focus:border-purple-500 transition-colors text-center font-mono"
                         />
                         <button
                             onClick={handleRunReveal}
                             disabled={revealing}
-                            className="w-full py-3 rounded-xl bg-purple-600 hover:bg-purple-500 text-white font-bold text-sm shadow-lg shadow-purple-900/50 transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
                         >
                             {revealing ? "Proses Verifikasi..." : <><KeyRound className="w-4 h-4" /> Proses Dekripsi & Reveal</>}
                         </button>
                         
                         {revealResult && (
-                            <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-emerald-500/10 text-emerald-400 border border-emerald-500/30' : 'bg-red-500/10 text-red-400 border border-red-500/30'}`}>
+                            <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
                                 <div className="flex items-center gap-2">
                                     {revealResult.isValid ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                                     {revealResult.message}
                                 </div>
                                 {revealResult.isValid && !!revealResult.decryptedPayload && (
-                                    <pre className="text-[10px] bg-slate-950 p-3 rounded-lg overflow-x-auto text-slate-300">
+                                    <pre className="text-[10px] bg-[var(--surface)] p-3 rounded-lg overflow-x-auto text-[var(--text-secondary)]">
                                         {JSON.stringify(revealResult.decryptedPayload, null, 2)}
                                     </pre>
                                 )}
@@ -862,18 +863,18 @@ export default function TenderDetailPage() {
             {/* TAB 4: SCORING (placeholder) */}
             {activeTab === "scoring" && (
                 <div className="space-y-6">
-                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                    <div className="card p-6 rounded-2xl border-[var(--border)]">
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                             <div>
-                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
-                                    <Award className="w-5 h-5 text-amber-400" /> Scoring Engine (Hybrid)
+                                <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-amber-600" /> Scoring Engine (Hybrid)
                                 </h3>
-                                <p className="text-xs text-slate-400 mt-1">Bandingkan dan beri nilai penawaran yang sudah terenkripsi & diverifikasi.</p>
+                                <p className="text-xs text-[var(--text-tertiary)] mt-1">Bandingkan dan beri nilai penawaran yang sudah terenkripsi & diverifikasi.</p>
                             </div>
                             <button 
                                 onClick={handleFinalizeWinner}
                                 disabled={isFinalizing || tender.status === 'COMPLETED'}
-                                className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-amber-900/50 flex items-center justify-center gap-2">
+                                className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
                                 {isFinalizing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} 
                                 {tender.status === 'COMPLETED' ? 'Tender Selesai' : 'Finalize Pemenang (On-Chain)'}
                             </button>
@@ -883,43 +884,43 @@ export default function TenderDetailPage() {
                             {scoredBids.map((bid: any) => {
                                 const payload = bid.reveal?.revealedPayload || {};
                                 return (
-                                    <div key={bid.id} className={`bg-slate-900 border ${bid.totalScore > 0 ? 'border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'border-slate-800'} rounded-xl overflow-hidden flex flex-col transition-all duration-300`}>
-                                        <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
-                                            <span className="font-bold text-slate-200">{bid.organization?.name}</span>
-                                            <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20">
+                                    <div key={bid.id} className={`bg-white border ${bid.totalScore > 0 ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]' : 'border-[var(--border)]'} rounded-xl overflow-hidden flex flex-col transition-all duration-300`}>
+                                        <div className="p-4 bg-[var(--surface-secondary)]/50 border-b border-[var(--border)] flex justify-between items-center">
+                                            <span className="font-bold text-[var(--text-primary)]">{bid.organization?.name}</span>
+                                            <span className="text-[10px] font-mono font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md border border-teal-200">
                                                 REVEALED_VALID
                                             </span>
                                         </div>
                                         <div className="p-4 space-y-4 flex-1">
                                             {tender.fields?.map((f: any) => (
                                                 <div key={f.key} className="space-y-1">
-                                                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{f.name}</span>
+                                                    <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">{f.name}</span>
                                                     {f.type.toLowerCase() === 'file' ? (
                                                         <div>
                                                             {payload[f.key] ? (
                                                                 payload[f.key].includes("_isEncryptedFile") ? (
-                                                                    <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-xs font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                                                                    <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
                                                                         <Lock className="w-3.5 h-3.5" /> Buka Kriptografi & Unduh
                                                                     </button>
                                                                 ) : (
-                                                                    <a href={payload[f.key]} download={`${f.name}-${bid.organization?.name}`} className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                    <a href={payload[f.key]} download={`${f.name}-${bid.organization?.name}`} className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
                                                                         <UploadCloud className="w-3.5 h-3.5" /> Unduh Lampiran
                                                                     </a>
                                                                 )
                                                             ) : (
-                                                                <span className="text-xs text-slate-500">Tidak ada file</span>
+                                                                <span className="text-xs text-[var(--text-tertiary)]">Tidak ada file</span>
                                                             )}
                                                         </div>
                                                     ) : f.type.toLowerCase() === 'currency' ? (
-                                                        <p className="text-sm font-bold text-slate-200">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</p>
+                                                        <p className="text-sm font-bold text-[var(--text-primary)]">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</p>
                                                     ) : (
-                                                        <p className="text-sm text-slate-300 whitespace-pre-wrap">{payload[f.key] || "-"}</p>
+                                                        <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">{payload[f.key] || "-"}</p>
                                                     )}
                                                 </div>
                                             ))}
                                         </div>
-                                        <div className="p-4 border-t border-slate-800 bg-slate-950">
-                                            <h4 className="text-xs font-bold text-slate-400 mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Kalkulasi Skor</h4>
+                                        <div className="p-4 border-t border-[var(--border)] bg-[var(--surface)]">
+                                            <h4 className="text-xs font-bold text-[var(--text-tertiary)] mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Kalkulasi Skor</h4>
                                             <div className="space-y-3">
                                                 {tender.criteria?.map((c: any) => {
                                                     const isManual = c.scoringType === 'MANUAL';
@@ -927,8 +928,8 @@ export default function TenderDetailPage() {
                                                     return (
                                                         <div key={c.id} className="flex justify-between items-center group">
                                                             <div className="flex flex-col">
-                                                                <span className="text-xs text-slate-400">{c.name}</span>
-                                                                <span className="text-[10px] text-slate-500">Bobot: {c.weight}% {criteriaScore ? `(Nilai: ${criteriaScore.weightedScore.toFixed(2)})` : ''}</span>
+                                                                <span className="text-xs text-[var(--text-tertiary)]">{c.name}</span>
+                                                                <span className="text-[10px] text-[var(--text-tertiary)]">Bobot: {c.weight}% {criteriaScore ? `(Nilai: ${criteriaScore.weightedScore.toFixed(2)})` : ''}</span>
                                                             </div>
                                                             {isManual ? (
                                                                 <input 
@@ -936,11 +937,11 @@ export default function TenderDetailPage() {
                                                                     value={manualScores[bid.id]?.[c.id] || ''}
                                                                     onChange={(e) => handleManualScoreChange(bid.id, c.id, e.target.value, Number(c.maxScore))}
                                                                     placeholder={`Max ${c.maxScore}`} 
-                                                                    className="w-20 px-2 py-1.5 bg-slate-900 border border-slate-700 text-amber-400 text-xs rounded-md text-right focus:border-amber-500 focus:bg-slate-800 outline-none transition-colors" 
+                                                                    className="w-20 px-2 py-1.5 bg-[var(--surface-secondary)] border border-[var(--border)] text-amber-600 text-xs rounded-md text-right focus:border-amber-500 focus:bg-[var(--surface-secondary)] outline-none transition-colors" 
                                                                 />
                                                             ) : (
                                                                 <div className="flex flex-col items-end">
-                                                                    <span className="text-xs font-mono font-bold text-slate-500 bg-slate-900 border border-slate-800 px-2 py-1 rounded">Auto</span>
+                                                                    <span className="text-xs font-mono font-bold text-[var(--text-tertiary)] bg-[var(--surface-secondary)] border border-[var(--border)] px-2 py-1 rounded">Auto</span>
                                                                     <span className="text-[10px] text-amber-500 mt-1 font-mono">Skor: {criteriaScore?.rawScore.toFixed(1) || '0.0'}</span>
                                                                 </div>
                                                             )}
@@ -948,9 +949,9 @@ export default function TenderDetailPage() {
                                                     );
                                                 })}
                                             </div>
-                                            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
-                                                <span className="text-sm font-bold text-white">Total Skor</span>
-                                                <span className={`text-2xl font-extrabold ${bid.totalScore > 80 ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-slate-300'}`}>
+                                            <div className="mt-4 pt-3 border-t border-[var(--border)] flex justify-between items-center">
+                                                <span className="text-sm font-bold text-[var(--text-primary)]">Total Skor</span>
+                                                <span className={`text-2xl font-extrabold ${bid.totalScore > 80 ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'}`}>
                                                     {bid.totalScore.toFixed(2)}
                                                 </span>
                                             </div>
@@ -960,9 +961,9 @@ export default function TenderDetailPage() {
                             })}
                             
                             {allBids.filter(b => b.status === "REVEALED_VALID").length === 0 && (
-                                <div className="col-span-full py-16 text-center text-slate-500 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
+                                <div className="col-span-full py-16 text-center text-[var(--text-tertiary)] bg-[var(--surface-secondary)]/50 rounded-xl border border-dashed border-[var(--border)]">
                                     <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                    <p className="font-semibold text-slate-400">Belum Ada Penawaran Terbuka</p>
+                                    <p className="font-semibold text-[var(--text-tertiary)]">Belum Ada Penawaran Terbuka</p>
                                     <p className="text-xs mt-1">Vendor harus melakukan Commit-Reveal terlebih dahulu agar bisa dinilai.</p>
                                 </div>
                             )}
@@ -975,36 +976,36 @@ export default function TenderDetailPage() {
             {activeTab === "audit" && (
                 <div className="space-y-6">
                     {tender.status !== "COMPLETED" ? (
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                            <p className="text-slate-400 text-center py-12 flex flex-col items-center justify-center">
-                                <Lock className="w-12 h-12 text-slate-500/50 mb-4" />
+                        <div className="card p-6 rounded-2xl border-[var(--border)]">
+                            <p className="text-[var(--text-tertiary)] text-center py-12 flex flex-col items-center justify-center">
+                                <Lock className="w-12 h-12 text-[var(--text-tertiary)]/50 mb-4" />
                                 Transparansi / Log Audit belum tersedia.<br/>
                                 <span className="text-sm mt-2">Data ini hanya akan dibuka ke publik setelah tender berstatus COMPLETED.</span>
                             </p>
                         </div>
                     ) : loadingAuditData ? (
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80 flex items-center justify-center py-12">
+                        <div className="card p-6 rounded-2xl border-[var(--border)] flex items-center justify-center py-12">
                             <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
                         </div>
                     ) : auditData ? (
                         <div className="space-y-6">
                             {/* Winner Card */}
-                            <div className="bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 border border-emerald-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(52,211,153,0.1)]">
+                            <div className="bg-teal-50 border border-[var(--accent)] rounded-xl p-6">
                                 <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-emerald-500/20 rounded-xl">
-                                        <Award className="w-8 h-8 text-emerald-400" />
+                                    <div className="p-3 bg-[var(--accent-light)] rounded-xl">
+                                        <Award className="w-8 h-8 text-[var(--accent)]" />
                                     </div>
                                     <div className="flex-1">
-                                        <h3 className="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
-                                        <p className="text-2xl font-bold text-white mb-2">
+                                        <h3 className="text-[var(--accent)] font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
+                                        <p className="text-2xl font-bold text-[var(--text-primary)] mb-2">
                                             {auditData.bids.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
                                         </p>
                                         <div className="flex flex-wrap gap-4 text-xs font-mono">
-                                            <span className="bg-slate-900/50 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-emerald-300">
-                                                Skor Akhir: <span className="font-bold text-white">{Number(auditData.result?.finalScore).toFixed(2)}</span>
+                                            <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)]">
+                                                Skor Akhir: <span className="font-bold text-[var(--text-primary)]">{Number(auditData.result?.finalScore).toFixed(2)}</span>
                                             </span>
-                                            <span className="bg-slate-900/50 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-emerald-300 flex items-center gap-1">
-                                                <Layers className="w-3 h-3" /> TxHash: <span className="text-slate-400 truncate max-w-[200px]">{auditData.transaction?.txHash}</span>
+                                            <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)] flex items-center gap-1">
+                                                <Layers className="w-3 h-3" /> TxHash: <span className="text-[var(--text-tertiary)] truncate max-w-[200px]">{auditData.transaction?.txHash}</span>
                                             </span>
                                         </div>
                                     </div>
@@ -1012,8 +1013,8 @@ export default function TenderDetailPage() {
                             </div>
 
                             {/* Transparent Bids Breakdown */}
-                            <h3 className="text-lg font-bold text-white mb-4 mt-8 flex items-center gap-2">
-                                <Eye className="w-5 h-5 text-cyan-400" /> Transparansi Proposal & Penilaian
+                            <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 mt-8 flex items-center gap-2">
+                                <Eye className="w-5 h-5 text-[var(--accent)]" /> Transparansi Proposal & Penilaian
                             </h3>
                             <div className="grid grid-cols-1 gap-6">
                                 {auditData.bids.map((bid: any) => {
@@ -1022,15 +1023,15 @@ export default function TenderDetailPage() {
                                     const isWinner = auditData.result?.winningBidId === bid.id;
                                     
                                     return (
-                                        <div key={bid.id} className={`bg-slate-900/50 border ${isWinner ? 'border-emerald-500/30' : 'border-slate-800'} rounded-xl overflow-hidden`}>
-                                            <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-emerald-500/20' : 'bg-slate-800/30 border-slate-800'} flex justify-between items-center`}>
+                                        <div key={bid.id} className={`bg-[var(--surface-secondary)]/50 border ${isWinner ? 'border-teal-200' : 'border-[var(--border)]'} rounded-xl overflow-hidden`}>
+                                            <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-teal-200' : 'bg-[var(--surface-secondary)]/30 border-[var(--border)]'} flex justify-between items-center`}>
                                                 <div>
-                                                    <span className="font-bold text-slate-200 text-lg">{bid.organization?.name}</span>
-                                                    {isWinner && <span className="ml-3 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md uppercase">Pemenang</span>}
+                                                    <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
+                                                    {isWinner && <span className="ml-3 text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
                                                 </div>
                                                 <div className="text-right">
-                                                    <span className="text-xs text-slate-500 block mb-1">Total Skor</span>
-                                                    <span className={`text-xl font-bold ${isWinner ? 'text-emerald-400' : 'text-white'}`}>
+                                                    <span className="text-xs text-[var(--text-tertiary)] block mb-1">Total Skor</span>
+                                                    <span className={`text-xl font-bold ${isWinner ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'}`}>
                                                         {scoresForBid.reduce((acc: number, curr: any) => acc + Number(curr.weightedScore), 0).toFixed(2)}
                                                     </span>
                                                 </div>
@@ -1039,27 +1040,27 @@ export default function TenderDetailPage() {
                                             <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
                                                 {/* Left: Original Proposal */}
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">Proposal Penawaran (Asli)</h4>
+                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">Proposal Penawaran (Asli)</h4>
                                                     <div className="space-y-3">
                                                         {tender.fields?.map((f: any) => (
-                                                            <div key={f.key} className="bg-slate-900 rounded-lg p-3 border border-slate-800/50">
-                                                                <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">{f.name}</span>
+                                                            <div key={f.key} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50">
+                                                                <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase block mb-1">{f.name}</span>
                                                                 {f.type.toLowerCase() === 'file' ? (
                                                                     payload[f.key] ? (
                                                                         payload[f.key].includes("_isEncryptedFile") ? (
-                                                                            <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-sm font-semibold text-emerald-400 hover:text-emerald-300 flex items-center gap-1">
+                                                                            <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
                                                                                 <Lock className="w-4 h-4" /> Buka Kriptografi & Unduh
                                                                             </button>
                                                                         ) : (
-                                                                            <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                            <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
                                                                                 <FileCode2 className="w-4 h-4" /> Lihat Dokumen
                                                                             </a>
                                                                         )
-                                                                    ) : <span className="text-sm text-slate-500">-</span>
+                                                                    ) : <span className="text-sm text-[var(--text-tertiary)]">-</span>
                                                                 ) : f.type.toLowerCase() === 'currency' ? (
-                                                                    <span className="text-sm font-bold text-white">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>
+                                                                    <span className="text-sm font-bold text-[var(--text-primary)]">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>
                                                                 ) : (
-                                                                    <span className="text-sm text-slate-300">{payload[f.key] || '-'}</span>
+                                                                    <span className="text-sm text-[var(--text-secondary)]">{payload[f.key] || '-'}</span>
                                                                 )}
                                                             </div>
                                                         ))}
@@ -1068,18 +1069,18 @@ export default function TenderDetailPage() {
                                                 
                                                 {/* Right: Score Breakdown */}
                                                 <div>
-                                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">Rincian Penilaian Panitia</h4>
+                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">Rincian Penilaian Panitia</h4>
                                                     <div className="space-y-3">
                                                         {tender.criteria?.map((c: any) => {
                                                             const sc = scoresForBid.find((s: any) => s.criterionId === c.id);
                                                             return (
-                                                                <div key={c.id} className="bg-slate-900 rounded-lg p-3 border border-slate-800/50 flex justify-between items-center">
+                                                                <div key={c.id} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50 flex justify-between items-center">
                                                                     <div>
-                                                                        <span className="text-xs font-bold text-slate-300 block">{c.name} <span className="text-slate-500 font-normal">({c.weight}%)</span></span>
-                                                                        <span className="text-[10px] text-slate-500">Nilai Mentah: {sc ? Number(sc.rawScore).toFixed(1) : '0'}</span>
+                                                                        <span className="text-xs font-bold text-[var(--text-secondary)] block">{c.name} <span className="text-[var(--text-tertiary)] font-normal">({c.weight}%)</span></span>
+                                                                        <span className="text-[10px] text-[var(--text-tertiary)]">Nilai Mentah: {sc ? Number(sc.rawScore).toFixed(1) : '0'}</span>
                                                                     </div>
                                                                     <div className="text-right">
-                                                                        <span className="text-sm font-bold text-amber-400">{sc ? Number(sc.weightedScore).toFixed(2) : '0.00'}</span>
+                                                                        <span className="text-sm font-bold text-amber-600">{sc ? Number(sc.weightedScore).toFixed(2) : '0.00'}</span>
                                                                     </div>
                                                                 </div>
                                                             )
@@ -1093,8 +1094,8 @@ export default function TenderDetailPage() {
                             </div>
                         </div>
                     ) : (
-                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80 text-center">
-                            <p className="text-slate-400">Gagal memuat data audit.</p>
+                        <div className="card p-6 rounded-2xl border-[var(--border)] text-center">
+                            <p className="text-[var(--text-tertiary)]">Gagal memuat data audit.</p>
                         </div>
                     )}
                 </div>

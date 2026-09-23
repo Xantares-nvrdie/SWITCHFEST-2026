@@ -2,6 +2,7 @@
 
 import { useState, useEffect } from "react";
 import Link from "next/link";
+import { useSession } from "@/lib/auth-client";
 import {
     Building2,
     PlusCircle,
@@ -42,6 +43,8 @@ export default function OrganizationsPage() {
     const [activeTab, setActiveTab] = useState<"my" | "all">("my");
     const [isLoading, setIsLoading] = useState(true);
     const [verifyingId, setVerifyingId] = useState<string | null>(null);
+    const { data: session } = useSession();
+    const isSysAdmin = session?.user?.role === "admin";
 
     const loadData = async () => {
         setIsLoading(true);
@@ -79,15 +82,21 @@ export default function OrganizationsPage() {
         }
     };
 
-    const orgsToDisplay = activeTab === "my" ? myOrgs : allOrgs;
+    const orgsToDisplay = activeTab === "my" 
+        ? myOrgs 
+        : allOrgs.filter((org) => {
+            if (isSysAdmin) return true;
+            const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
+            return status === "APPROVED";
+        });
 
     return (
         <div className="space-y-8">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-white tracking-tight">Manajemen Organisasi</h1>
-                    <p className="text-sm text-slate-400 mt-1">
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">Manajemen Organisasi</h1>
+                    <p className="text-sm text-[var(--text-tertiary)] mt-1">
                         Kelola organisasi Anda, atur anggota, atau ikuti organisasi baru melalui kode undangan.
                     </p>
                 </div>
@@ -95,14 +104,14 @@ export default function OrganizationsPage() {
                 <div className="flex items-center gap-3">
                     <Link
                         href="/join-organization"
-                        className="px-4 py-2.5 rounded-xl border border-slate-700 bg-slate-900/80 text-emerald-400 font-semibold text-sm hover:bg-slate-800 transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--accent)] font-semibold text-sm hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
                     >
                         <Key className="w-4 h-4" />
                         Join via Kode
                     </Link>
                     <Link
                         href="/setup-organization"
-                        className="px-5 py-2.5 rounded-xl bg-gradient-to-r from-emerald-400 via-cyan-500 to-indigo-600 text-slate-950 font-bold text-sm hover:opacity-95 transition-all shadow-lg shadow-emerald-500/20 flex items-center justify-center gap-2"
+                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                     >
                         <PlusCircle className="w-4 h-4" />
                         Buat Organisasi Baru
@@ -111,13 +120,13 @@ export default function OrganizationsPage() {
             </div>
 
             {/* Tabs */}
-            <div className="flex items-center gap-2 border-b border-slate-800 pb-3">
+            <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
                 <button
                     onClick={() => setActiveTab("my")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "my"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                     }`}
                 >
                     Organisasi Saya ({myOrgs.length})
@@ -126,8 +135,8 @@ export default function OrganizationsPage() {
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "all"
-                            ? "bg-emerald-500/10 text-emerald-400 border border-emerald-500/30"
-                            : "text-slate-400 hover:text-slate-200"
+                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
                     }`}
                 >
                     Semua Organisasi ({allOrgs.length})
@@ -137,16 +146,16 @@ export default function OrganizationsPage() {
             {/* Organizations Grid */}
             {isLoading ? (
                 <div className="flex items-center justify-center py-16">
-                    <Loader2 className="w-8 h-8 text-emerald-400 animate-spin" />
+                    <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin" />
                 </div>
             ) : orgsToDisplay.length === 0 ? (
-                <div className="text-center py-16 rounded-2xl glass-panel border-slate-800 space-y-4">
-                    <Building2 className="w-12 h-12 text-slate-600 mx-auto" />
+                <div className="text-center py-16 rounded-2xl card border-[var(--border)] space-y-4">
+                    <Building2 className="w-12 h-12 text-[var(--text-tertiary)] mx-auto" />
                     <div>
-                        <h3 className="text-base font-semibold text-white">
+                        <h3 className="text-base font-semibold text-[var(--text-primary)]">
                             {activeTab === "my" ? "Belum Bergabung dengan Organisasi" : "Belum Ada Organisasi"}
                         </h3>
-                        <p className="text-xs text-slate-400 mt-1 max-w-sm mx-auto">
+                        <p className="text-xs text-[var(--text-tertiary)] mt-1 max-w-sm mx-auto">
                             {activeTab === "my"
                                 ? "Buat organisasi baru atau masukkan kode undangan dari admin organisasi kamu."
                                 : "Belum ada organisasi yang terdaftar di sistem."}
@@ -156,13 +165,13 @@ export default function OrganizationsPage() {
                         <div className="flex items-center justify-center gap-3 pt-2">
                             <Link
                                 href="/join-organization"
-                                className="px-4 py-2 rounded-xl bg-slate-800 text-xs font-semibold text-emerald-400 hover:bg-slate-700"
+                                className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                             >
                                 Input Kode Undangan
                             </Link>
                             <Link
                                 href="/setup-organization"
-                                className="px-4 py-2 rounded-xl bg-emerald-500 text-xs font-semibold text-slate-950 hover:bg-emerald-400"
+                                className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[13px] font-semibold text-white hover:opacity-90"
                             >
                                 Buat Organisasi
                             </Link>
@@ -182,7 +191,7 @@ export default function OrganizationsPage() {
                         return (
                             <div
                                 key={org.id}
-                                className="glass-panel glass-panel-hover p-6 rounded-2xl border-slate-800 flex flex-col justify-between space-y-4 relative"
+                                className="card card-hover p-6 rounded-2xl border-[var(--border)] flex flex-col justify-between space-y-4 relative"
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -190,10 +199,10 @@ export default function OrganizationsPage() {
                                             <span
                                                 className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
                                                     org.type === "BUYER"
-                                                        ? "bg-emerald-500/20 text-emerald-300 border-emerald-500/30"
+                                                        ? "bg-[var(--accent-light)] text-[var(--accent)] border-teal-200"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-cyan-500/20 text-cyan-300 border-cyan-500/30"
-                                                        : "bg-indigo-500/20 text-indigo-300 border-indigo-500/30"
+                                                        ? "bg-blue-50 text-[var(--accent)] border-blue-200"
+                                                        : "bg-indigo-500/20 text-indigo-300 border-blue-200"
                                                 }`}
                                             >
                                                 {org.type}
@@ -201,62 +210,62 @@ export default function OrganizationsPage() {
 
                                             {/* Verification status badge */}
                                             {isApproved && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-emerald-500/10 text-emerald-400 border border-emerald-500/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Approved
                                                 </span>
                                             )}
                                             {isPending && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-400 border border-amber-500/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center gap-1">
                                                     <ShieldCheck className="w-3 h-3" /> Pending Admin Approval
                                                 </span>
                                             )}
                                             {isRejected && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-400 border border-red-500/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-500/30 flex items-center gap-1">
                                                     Ditolak
                                                 </span>
                                             )}
                                         </div>
 
                                         {memberRole && (
-                                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-slate-800 text-slate-300 border border-slate-700 flex items-center gap-1">
-                                                {memberRole === "ORGANIZATION_ADMIN" && <Crown className="w-3 h-3 text-amber-400" />}
-                                                {memberRole === "PROCUREMENT_OFFICER" && <Briefcase className="w-3 h-3 text-emerald-400" />}
-                                                {memberRole === "AUDITOR" && <Eye className="w-3 h-3 text-indigo-400" />}
-                                                {memberRole === "MEMBER" && <User className="w-3 h-3 text-slate-400" />}
+                                            <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
+                                                {memberRole === "ORGANIZATION_ADMIN" && <Crown className="w-3 h-3 text-amber-600" />}
+                                                {memberRole === "PROCUREMENT_OFFICER" && <Briefcase className="w-3 h-3 text-[var(--accent)]" />}
+                                                {memberRole === "AUDITOR" && <Eye className="w-3 h-3 text-[var(--text-secondary)]" />}
+                                                {memberRole === "MEMBER" && <User className="w-3 h-3 text-[var(--text-tertiary)]" />}
                                                 {memberRole.replace("_", " ")}
                                             </span>
                                         )}
                                     </div>
 
                                     <div>
-                                        <h3 className="text-lg font-bold text-white">{org.name}</h3>
+                                        <h3 className="text-lg font-bold text-[var(--text-primary)]">{org.name}</h3>
                                         {org.email && (
-                                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5">
-                                                <Mail className="w-3.5 h-3.5 text-slate-500 shrink-0" /> {org.email}
+                                            <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5">
+                                                <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.email}
                                             </p>
                                         )}
                                         {org.address && (
-                                            <p className="text-xs text-slate-400 mt-1 flex items-center gap-1.5 line-clamp-1">
-                                                <MapPin className="w-3.5 h-3.5 text-slate-500 shrink-0" /> {org.address}
+                                            <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5 line-clamp-1">
+                                                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.address}
                                             </p>
                                         )}
                                     </div>
 
                                     {/* Admin verification actions */}
-                                    {isPending && (
+                                    {isPending && isSysAdmin && (
                                         <div className="pt-2 flex items-center gap-2">
                                             <button
                                                 onClick={() => handleVerifyOrg(org.id, "APPROVED")}
                                                 disabled={verifyingId === org.id}
-                                                className="px-2.5 py-1 rounded-lg bg-emerald-500/20 hover:bg-emerald-500/30 text-emerald-300 border border-emerald-500/40 text-[11px] font-semibold flex items-center gap-1 transition-all disabled:opacity-50"
+                                                className="px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[12px] flex items-center gap-1.5 transition-all disabled:opacity-50 hover:opacity-90"
                                             >
-                                                {verifyingId === org.id ? <Loader2 className="w-3 h-3 animate-spin" /> : <CheckCircle2 className="w-3 h-3" />}
+                                                {verifyingId === org.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
                                                 Approve
                                             </button>
                                             <button
                                                 onClick={() => handleVerifyOrg(org.id, "REJECTED")}
                                                 disabled={verifyingId === org.id}
-                                                className="px-2.5 py-1 rounded-lg bg-red-500/20 hover:bg-red-500/30 text-red-300 border border-red-500/40 text-[11px] font-semibold flex items-center gap-1 transition-all disabled:opacity-50"
+                                                className="px-3 py-1.5 rounded-lg bg-white border border-[var(--border)] text-red-600 font-semibold text-[12px] flex items-center gap-1.5 transition-colors disabled:opacity-50 hover:bg-red-50"
                                             >
                                                 Reject
                                             </button>
@@ -264,22 +273,29 @@ export default function OrganizationsPage() {
                                     )}
                                 </div>
 
-                                <div className="pt-3 border-t border-slate-800/80 flex items-center justify-between">
-                                    <span className="text-xs text-slate-400 flex items-center gap-1 font-medium">
-                                        <Users className="w-4 h-4 text-emerald-400" />
+                                <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
+                                    <span className="text-xs text-[var(--text-tertiary)] flex items-center gap-1 font-medium">
+                                        <Users className="w-4 h-4 text-[var(--accent)]" />
                                         {org.members ? org.members.length : 1} Anggota
                                     </span>
 
                                     {isMine ? (
                                         <Link
                                             href={`/organizations/${org.id}/manage`}
-                                            className="px-3 py-1.5 rounded-lg bg-emerald-500/10 hover:bg-emerald-500/20 text-emerald-400 border border-emerald-500/30 text-xs font-semibold flex items-center gap-1.5 transition-all"
+                                            className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
+                                                memberRole === "ORGANIZATION_ADMIN" 
+                                                    ? "bg-[var(--accent-light)] hover:opacity-90 text-[var(--accent)] border border-teal-200"
+                                                    : "bg-white hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
+                                            }`}
                                         >
-                                            <Settings className="w-3.5 h-3.5" />
-                                            Kelola
+                                            {memberRole === "ORGANIZATION_ADMIN" ? (
+                                                <><Settings className="w-3.5 h-3.5" /> Kelola</>
+                                            ) : (
+                                                <><Eye className="w-3.5 h-3.5" /> Lihat Detail</>
+                                            )}
                                         </Link>
                                     ) : (
-                                        <span className="text-[11px] text-slate-500 italic">Bukan Anggota</span>
+                                        <span className="text-[11px] text-[var(--text-tertiary)] italic">Bukan Anggota</span>
                                     )}
                                 </div>
                             </div>
