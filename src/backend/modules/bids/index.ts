@@ -96,9 +96,31 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
                 return { message: "Forbidden: You are not an active member of the submitting vendor organization" };
             }
 
-            const result = await BidService.submitSealed(params.tenderId, body);
-            set.status = 201;
-            return { message: "Sealed bid submitted successfully", data: result };
+            try {
+                const result = await BidService.submitSealed(params.tenderId, body);
+                set.status = 201;
+                return { message: "Sealed bid submitted successfully", data: result };
+            } catch (error: any) {
+                set.status = 500;
+                
+                // Extract inner cause from DrizzleError if available
+                const cause = error.cause || error;
+                const causeMsg = cause.message || "";
+                const causeCode = cause.code || "";
+                
+                // If it's a unique constraint violation
+                if (causeMsg.includes("duplicate key") || causeCode === "23505" || causeMsg.includes("uq_bids_tender_org")) {
+                    set.status = 400;
+                    return { message: "Organisasi Anda sudah pernah mensubmit bid untuk tender ini." };
+                }
+                console.error("Bid submission error:", error);
+                
+                // Return full error trace to frontend for debugging
+                return { 
+                    message: "Database Error: " + causeMsg, 
+                    detail: causeCode 
+                };
+            }
         },
         {
             auth: true,

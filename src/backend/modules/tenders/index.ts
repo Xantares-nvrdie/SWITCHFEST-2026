@@ -218,6 +218,53 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 summary: "Add evaluation criterion to tender",
                 description: "Menambahkan kriteria dan bobot penilaian tender.",
             },
+        }
+    )
+    // ── Finalize Tender ───────────────────────────────────────────────────────
+    .post(
+        "/:id/finalize",
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins can finalize the tender" };
+            }
+
+            try {
+                const result = await TenderService.finalizeTender(params.id, body, user.id);
+                set.status = 200;
+                return { message: "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)", data: result };
+            } catch (err: any) {
+                set.status = 400;
+                return { message: err.message || "Failed to finalize tender" };
+            }
+        },
+        {
+            auth: true,
+            params: t.Object({ id: t.String() }),
+            body: TenderModel.finalizeBody,
+            detail: {
+                summary: "Finalize tender & Pick Winner",
+                description: "Menyelesaikan tender, menyimpan semua skor, menetapkan pemenang, dan memicu transaksi pencatatan ke Smart Contract.",
+            },
         },
     );
 

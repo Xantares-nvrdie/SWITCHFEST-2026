@@ -51,8 +51,23 @@ export namespace TenderModel {
         sortOrder: t.Optional(t.Number({ default: 0 })),
     });
 
+    export const finalizeBody = t.Object({
+        winningBidId: t.String(),
+        finalScore: t.Number(),
+        bids: t.Array(t.Object({
+            bidId: t.String(),
+            totalScore: t.Number(),
+            criteriaScores: t.Array(t.Object({
+                criterionId: t.String(),
+                rawScore: t.Number(),
+                weightedScore: t.Number(),
+            }))
+        }))
+    });
+
     export type createInput = typeof createBody.static;
     export type updateStatusInput = typeof updateStatusBody.static;
     export type addFieldInput = typeof addFieldBody.static;
     export type addCriterionInput = typeof addCriterionBody.static;
+    export type finalizeInput = typeof finalizeBody.static;
 }

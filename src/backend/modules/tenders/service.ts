@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { tenderCriteria, tenderFields, tenders } from "@/db/schema";
+import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { TenderModel } from "./model";
 
@@ -130,5 +130,76 @@ export abstract class TenderService {
         });
 
         return { id: criterionId };
+    }
+    static async finalizeTender(tenderId: string, payload: TenderModel.finalizeInput, userId: string) {
+        const tender = await db.query.tenders.findFirst({
+            where: (t, { eq }) => eq(t.id, tenderId),
+        });
+
+        if (!tender) throw new Error("Tender not found");
+        if (tender.status !== "CLOSED") {
+            throw new Error("Tender can only be finalized if its status is CLOSED");
+        }
+
+        const now = new Date();
+
+        // 1. Transaction to save all scores, results, and mock blockchain
+        await db.transaction(async (tx) => {
+            // A. Save Scores for each bid
+            for (const bid of payload.bids) {
+                for (const score of bid.criteriaScores) {
+                    await tx.insert(bidScores).values({
+                        id: crypto.randomUUID(),
+                        bidId: bid.bidId,
+                        criterionId: score.criterionId,
+                        rawScore: score.rawScore.toString(),
+                        weightedScore: score.weightedScore.toString(),
+                        scoredBy: userId,
+                        createdAt: now,
+                        updatedAt: now,
+                    });
+                }
+            }
+
+            // B. Save Final Result
+            await tx.insert(tenderResults).values({
+                id: crypto.randomUUID(),
+                tenderId,
+                winningBidId: payload.winningBidId,
+                finalScore: payload.finalScore.toString(),
+                decidedBy: userId,
+                decidedAt: now,
+                blockchainTxHash: `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`, // Mock blockchain tx hash
+                createdAt: now,
+            });
+
+            // C. Mock Blockchain Transaction Record
+            await tx.insert(blockchainTransactions).values({
+                id: crypto.randomUUID(),
+                tenderId,
+                bidId: payload.winningBidId,
+                transactionType: "RESULT",
+                txHash: `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`,
+                chainId: 1337,
+                contractAddress: "0xMockSmartContractAddress",
+                blockNumber: 1234567,
+                blockTimestamp: now,
+                metadata: {
+                    action: "finalize",
+                    winningBidId: payload.winningBidId,
+                    finalScore: payload.finalScore
+                },
+                createdAt: now,
+            });
+
+            // D. Update Tender Status
+            await tx.update(tenders).set({
+                status: "COMPLETED",
+                completedAt: now,
+                updatedAt: now,
+            }).where(eq(tenders.id, tenderId));
+        });
+
+        return { success: true };
     }
 }

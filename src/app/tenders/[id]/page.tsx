@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -31,6 +31,7 @@ import {
     Save,
     Check,
     AlertCircle,
+    RefreshCw
 } from "lucide-react";
 
 interface TenderData {
@@ -103,15 +104,37 @@ export default function TenderDetailPage() {
         message: string;
     } | null>(null);
 
+    const [allBids, setAllBids] = useState<any[]>([]);
+    const [manualScores, setManualScores] = useState<Record<string, Record<string, number>>>({});
+    const [isFinalizing, setIsFinalizing] = useState(false);
+
+    const handleManualScoreChange = (bidId: string, criteriaId: string, val: string, maxScore: number) => {
+        let num = Number(val);
+        if (num > maxScore) num = maxScore;
+        if (num < 0) num = 0;
+        
+        setManualScores(prev => ({
+            ...prev,
+            [bidId]: {
+                ...(prev[bidId] || {}),
+                [criteriaId]: num
+            }
+        }));
+    };
+
     // Fetch Tender Data and Organizations
     useEffect(() => {
         if (!tenderId) return;
         
         Promise.all([
             fetch(`/api/tenders/${tenderId}`).then((r) => r.json()),
-            session?.user ? fetch("/api/organizations/me").then((r) => r.json()) : Promise.resolve([])
+            session?.user ? fetch("/api/organizations/me").then((r) => r.json()) : Promise.resolve([]),
+            fetch(`/api/bids/tender/${tenderId}`).then((r) => r.json()),
         ])
-        .then(([tenderData, orgsData]) => {
+        .then(([tenderData, orgsData, bidsData]) => {
+            if (Array.isArray(bidsData)) {
+                setAllBids(bidsData);
+            }
             if (tenderData.id) {
                 setTender(tenderData);
                 // Initialize form data with empty strings based on required criteria/fields
@@ -202,14 +225,21 @@ export default function TenderDetailPage() {
                     bidSalt: encryptionResult.bidSalt,
                 }),
             });
-            const data = await res.json();
+            let data;
+            try {
+                data = await res.json();
+            } catch (e) {
+                const text = await res.text();
+                throw new Error("Server error: " + text);
+            }
             if (res.ok) {
                 setSubmittedSealed(true);
             } else {
                 alert(data.message || "Gagal submit bid");
             }
-        } catch (err) {
+        } catch (err: any) {
             console.error(err);
+            alert(err.message || "Terjadi kesalahan saat menghubungi server");
         } finally {
             setSubmittingBid(false);
         }
@@ -242,7 +272,7 @@ export default function TenderDetailPage() {
 
             // 2. Decrypt Ciphertext in Browser
             const decryptedPayload = await decryptBidPayload(
-                myBid.encryptedPayload.ciphertext,
+                myBid.encryptedPayload.encryptedPayload,
                 myBid.crypto.encryptionIv,
                 key,
             );
@@ -289,16 +319,125 @@ export default function TenderDetailPage() {
                     message: "INVALID! Secret/PIN salah atau data penawaran telah diubah!",
                 });
             }
-        } catch (_err) {
+        } catch (err: any) {
+            console.error("Reveal Error:", err);
             setRevealResult({
                 isValid: false,
                 decryptedPayload: null,
-                message: "INVALID! Gagal dekripsi — Secret/PIN salah!",
+                message: "INVALID! Gagal dekripsi — " + (err.message || "Secret/PIN salah!"),
             });
         } finally {
             setRevealing(false);
         }
     };
+
+    const handleFinalizeWinner = async () => {
+        if (!scoredBids || scoredBids.length === 0) {
+            alert("Belum ada bid yang valid untuk dinilai.");
+            return;
+        }
+
+        const winner = scoredBids[0]; // Already sorted by totalScore descending
+        if (winner.totalScore === 0) {
+            alert("Harap lengkapi perhitungan skor terlebih dahulu.");
+            return;
+        }
+
+        if (!confirm(`Anda yakin ingin menetapkan ${winner.organization.name} sebagai pemenang dengan skor ${winner.totalScore.toFixed(2)}?\n\nTindakan ini akan mengunci hasil ke dalam Smart Contract dan tidak bisa dibatalkan!`)) {
+            return;
+        }
+
+        setIsFinalizing(true);
+        try {
+            const payload = {
+                winningBidId: winner.id,
+                finalScore: winner.totalScore,
+                bids: scoredBids.map((b: any) => ({
+                    bidId: b.id,
+                    totalScore: b.totalScore,
+                    criteriaScores: b.criteriaScores.map((cs: any) => ({
+                        criterionId: cs.criteriaId,
+                        rawScore: cs.rawScore,
+                        weightedScore: cs.weightedScore
+                    }))
+                }))
+            };
+
+            const res = await fetch(`/api/tenders/${tenderId}/finalize`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+
+            const data = await res.json();
+            if (res.ok) {
+                alert(data.message || "Tender berhasil diselesaikan!");
+                window.location.reload();
+            } else {
+                alert(data.message || "Gagal memproses finalisasi tender.");
+            }
+        } catch (err: any) {
+            alert("Terjadi kesalahan jaringan: " + err.message);
+        } finally {
+            setIsFinalizing(false);
+        }
+    };
+
+    // --- Scoring Engine Logic ---
+    const scoredBids = useMemo(() => {
+        const validBids = allBids.filter(b => b.status === "REVEALED_VALID");
+        if (!validBids.length || !tender?.criteria) return [];
+
+        return validBids.map(bid => {
+            let totalScore = 0;
+            const payload = bid.reveal?.revealedPayload || {};
+            
+            const criteriaScores = tender.criteria!.map((c: any) => {
+                let score = 0;
+                const valStr = String(payload[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                const val = Number(valStr);
+
+                if (c.scoringType === "MANUAL") {
+                    score = manualScores[bid.id]?.[c.id] || 0;
+                    score = Math.min(Math.max(score, 0), Number(c.maxScore));
+                } else if (c.scoringType === "LOWEST_PRICE") {
+                    const allVals = validBids.map(b => {
+                        const vStr = String((b.reveal?.revealedPayload || {})[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                        return Number(vStr);
+                    }).filter(v => v > 0);
+                    const minVal = allVals.length ? Math.min(...allVals) : 0;
+                    if (val > 0 && minVal > 0) {
+                        score = (minVal / val) * Number(c.maxScore);
+                    }
+                } else if (c.scoringType === "HIGHEST_VALUE") {
+                    const allVals = validBids.map(b => {
+                        const vStr = String((b.reveal?.revealedPayload || {})[c.name] || "0").replace(/[^0-9.-]+/g, "");
+                        return Number(vStr);
+                    }).filter(v => v > 0);
+                    const maxVal = allVals.length ? Math.max(...allVals) : 0;
+                    if (val > 0 && maxVal > 0) {
+                        score = (val / maxVal) * Number(c.maxScore);
+                    }
+                }
+
+                // Bobot proporsional (e.g., 40.00 = 40%)
+                const weightedScore = score * (Number(c.weight) / 100);
+                totalScore += weightedScore;
+
+                return {
+                    criteriaId: c.id,
+                    rawScore: score,
+                    weightedScore
+                };
+            });
+
+            return {
+                ...bid,
+                totalScore,
+                criteriaScores
+            };
+        }).sort((a, b) => b.totalScore - a.totalScore); // Ranking highest first
+    }, [allBids, tender, manualScores]);
 
     if (loading) {
         return <div className="p-8 text-center text-slate-400">Loading tender data...</div>;
@@ -449,16 +588,46 @@ export default function TenderDetailPage() {
                                 {tender.fields?.map((f: any) => (
                                     <div key={f.key} className="space-y-1.5">
                                         <label className="text-xs font-semibold text-slate-300">{f.name} {f.required && <span className="text-red-400">*</span>}</label>
-                                        {f.type === 'TEXTAREA' ? (
+                                        {f.type.toLowerCase() === 'textarea' ? (
                                             <textarea
                                                 value={formData[f.key] || ""}
                                                 onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
                                                 rows={3}
                                             />
+                                        ) : f.type.toLowerCase() === 'file' ? (
+                                            <div>
+                                                <input
+                                                    type="file"
+                                                    accept=".pdf,.doc,.docx,.jpg,.png"
+                                                    onChange={(e) => {
+                                                        const file = e.target.files?.[0];
+                                                        if (file) {
+                                                            if (file.size > 2 * 1024 * 1024) {
+                                                                alert("Maaf, ukuran file maksimal 2MB untuk menjaga performa enkripsi browser.");
+                                                                e.target.value = '';
+                                                                return;
+                                                            }
+                                                            const reader = new FileReader();
+                                                            reader.onload = (ev) => {
+                                                                setFormData(p => ({ ...p, [f.key]: ev.target?.result as string }));
+                                                            };
+                                                            reader.readAsDataURL(file);
+                                                        } else {
+                                                            setFormData(p => ({ ...p, [f.key]: "" }));
+                                                        }
+                                                    }}
+                                                    className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-slate-300 focus:outline-none focus:border-cyan-500/50 transition-colors file:mr-4 file:py-2 file:px-4 file:rounded-full file:border-0 file:text-xs file:font-semibold file:bg-cyan-500/10 file:text-cyan-400 hover:file:bg-cyan-500/20 cursor-pointer"
+                                                />
+                                                {formData[f.key] && formData[f.key].startsWith("data:") && (
+                                                    <p className="text-xs text-emerald-400 mt-1 flex items-center gap-1">
+                                                        <CheckCircle2 className="w-3 h-3" /> File siap dienkripsi
+                                                    </p>
+                                                )}
+                                            </div>
                                         ) : (
                                             <input
-                                                type={f.type === 'NUMBER' || f.type === 'CURRENCY' ? 'number' : 'text'}
+                                                type={f.type.toLowerCase() === 'number' || f.type.toLowerCase() === 'currency' ? 'number' : 'text'}
                                                 value={formData[f.key] || ""}
                                                 onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
                                                 className="w-full px-4 py-2.5 rounded-xl bg-slate-900 border border-slate-800 text-sm text-white focus:outline-none focus:border-cyan-500/50 transition-colors"
@@ -590,8 +759,107 @@ export default function TenderDetailPage() {
             
             {/* TAB 4: SCORING (placeholder) */}
             {activeTab === "scoring" && (
-                <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                     <p className="text-slate-400 text-center py-12">Scoring engine akan merender bids di sini. (Akan diimplementasikan pada fase berikutnya)</p>
+                <div className="space-y-6">
+                    <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                        <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
+                            <div>
+                                <h3 className="text-lg font-bold text-white flex items-center gap-2">
+                                    <Award className="w-5 h-5 text-amber-400" /> Scoring Engine (Hybrid)
+                                </h3>
+                                <p className="text-xs text-slate-400 mt-1">Bandingkan dan beri nilai penawaran yang sudah terenkripsi & diverifikasi.</p>
+                            </div>
+                            <button 
+                                onClick={handleFinalizeWinner}
+                                disabled={isFinalizing || tender.status === 'COMPLETED'}
+                                className="w-full sm:w-auto px-4 py-2.5 bg-gradient-to-r from-amber-600 to-orange-600 hover:from-amber-500 hover:to-orange-500 disabled:opacity-50 text-white font-bold rounded-xl text-sm transition-colors shadow-lg shadow-amber-900/50 flex items-center justify-center gap-2">
+                                {isFinalizing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} 
+                                {tender.status === 'COMPLETED' ? 'Tender Selesai' : 'Finalize Pemenang (On-Chain)'}
+                            </button>
+                        </div>
+                        
+                        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+                            {scoredBids.map((bid: any) => {
+                                const payload = bid.reveal?.revealedPayload || {};
+                                return (
+                                    <div key={bid.id} className={`bg-slate-900 border ${bid.totalScore > 0 ? 'border-amber-500/30 shadow-[0_0_15px_rgba(245,158,11,0.1)]' : 'border-slate-800'} rounded-xl overflow-hidden flex flex-col transition-all duration-300`}>
+                                        <div className="p-4 bg-slate-800/50 border-b border-slate-800 flex justify-between items-center">
+                                            <span className="font-bold text-slate-200">{bid.organization?.name}</span>
+                                            <span className="text-[10px] font-mono font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md border border-emerald-500/20">
+                                                REVEALED_VALID
+                                            </span>
+                                        </div>
+                                        <div className="p-4 space-y-4 flex-1">
+                                            {tender.fields?.map((f: any) => (
+                                                <div key={f.key} className="space-y-1">
+                                                    <span className="text-[10px] font-semibold text-slate-500 uppercase tracking-wider">{f.name}</span>
+                                                    {f.type.toLowerCase() === 'file' ? (
+                                                        <div>
+                                                            {payload[f.key] ? (
+                                                                <a href={payload[f.key]} download={`${f.name}-${bid.organization?.name}`} className="text-xs font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                    <UploadCloud className="w-3.5 h-3.5" /> Unduh Lampiran
+                                                                </a>
+                                                            ) : (
+                                                                <span className="text-xs text-slate-500">Tidak ada file</span>
+                                                            )}
+                                                        </div>
+                                                    ) : f.type.toLowerCase() === 'currency' ? (
+                                                        <p className="text-sm font-bold text-slate-200">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</p>
+                                                    ) : (
+                                                        <p className="text-sm text-slate-300 whitespace-pre-wrap">{payload[f.key] || "-"}</p>
+                                                    )}
+                                                </div>
+                                            ))}
+                                        </div>
+                                        <div className="p-4 border-t border-slate-800 bg-slate-950">
+                                            <h4 className="text-xs font-bold text-slate-400 mb-3 flex items-center gap-1.5"><CheckCircle2 className="w-3.5 h-3.5" /> Kalkulasi Skor</h4>
+                                            <div className="space-y-3">
+                                                {tender.criteria?.map((c: any) => {
+                                                    const isManual = c.scoringType === 'MANUAL';
+                                                    const criteriaScore = bid.criteriaScores?.find((s: any) => s.criteriaId === c.id);
+                                                    return (
+                                                        <div key={c.id} className="flex justify-between items-center group">
+                                                            <div className="flex flex-col">
+                                                                <span className="text-xs text-slate-400">{c.name}</span>
+                                                                <span className="text-[10px] text-slate-500">Bobot: {c.weight}% {criteriaScore ? `(Nilai: ${criteriaScore.weightedScore.toFixed(2)})` : ''}</span>
+                                                            </div>
+                                                            {isManual ? (
+                                                                <input 
+                                                                    type="number" 
+                                                                    value={manualScores[bid.id]?.[c.id] || ''}
+                                                                    onChange={(e) => handleManualScoreChange(bid.id, c.id, e.target.value, Number(c.maxScore))}
+                                                                    placeholder={`Max ${c.maxScore}`} 
+                                                                    className="w-20 px-2 py-1.5 bg-slate-900 border border-slate-700 text-amber-400 text-xs rounded-md text-right focus:border-amber-500 focus:bg-slate-800 outline-none transition-colors" 
+                                                                />
+                                                            ) : (
+                                                                <div className="flex flex-col items-end">
+                                                                    <span className="text-xs font-mono font-bold text-slate-500 bg-slate-900 border border-slate-800 px-2 py-1 rounded">Auto</span>
+                                                                    <span className="text-[10px] text-amber-500 mt-1 font-mono">Skor: {criteriaScore?.rawScore.toFixed(1) || '0.0'}</span>
+                                                                </div>
+                                                            )}
+                                                        </div>
+                                                    );
+                                                })}
+                                            </div>
+                                            <div className="mt-4 pt-3 border-t border-slate-800 flex justify-between items-center">
+                                                <span className="text-sm font-bold text-white">Total Skor</span>
+                                                <span className={`text-2xl font-extrabold ${bid.totalScore > 80 ? 'text-emerald-400 drop-shadow-[0_0_10px_rgba(52,211,153,0.5)]' : 'text-slate-300'}`}>
+                                                    {bid.totalScore.toFixed(2)}
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                );
+                            })}
+                            
+                            {allBids.filter(b => b.status === "REVEALED_VALID").length === 0 && (
+                                <div className="col-span-full py-16 text-center text-slate-500 bg-slate-900/50 rounded-xl border border-dashed border-slate-800">
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-20" />
+                                    <p className="font-semibold text-slate-400">Belum Ada Penawaran Terbuka</p>
+                                    <p className="text-xs mt-1">Vendor harus melakukan Commit-Reveal terlebih dahulu agar bisa dinilai.</p>
+                                </div>
+                            )}
+                        </div>
+                    </div>
                 </div>
             )}
             

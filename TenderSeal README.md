@@ -556,10 +556,10 @@ REVEAL WINDOW CLOSED
 SCORING
     |
     v
-WINNER SELECTION
+WINNER SELECTION (Manual Finalize oleh Panitia)
     |
     v
-RESULT RECORDED
+RESULT RECORDED TO SMART CONTRACT
 ```
 
 ### 11.1 Bagaimana Plaintext Bid Dipakai untuk Scoring?
