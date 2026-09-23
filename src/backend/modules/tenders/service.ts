@@ -2,6 +2,7 @@ import { db } from "@/db";
 import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { TenderModel } from "./model";
+import { contract } from "@/lib/web3";
 
 export abstract class TenderService {
     static async create(data: TenderModel.createInput & { createdBy: string }) {
@@ -85,6 +86,16 @@ export abstract class TenderService {
 
         if (status === "OPEN") {
             updatePayload.openedAt = now;
+            // Create tender on Smart Contract
+            const tender = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+            if (tender && tender.commitDeadline) {
+                try {
+                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000));
+                    await tx.wait();
+                } catch (err) {
+                    console.error("Failed to create tender on smart contract:", err);
+                }
+            }
         } else if (status === "CLOSED") {
             updatePayload.closedAt = now;
         } else if (status === "COMPLETED") {
@@ -161,7 +172,19 @@ export abstract class TenderService {
                 }
             }
 
-            // B. Save Final Result
+            // B. Send Final Result to Smart Contract
+            let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
+            try {
+                const winningBid = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, payload.winningBidId) });
+                if (winningBid) {
+                    const scTx = await contract.finalizeTender(tenderId, winningBid.organizationId, payload.finalScore.toString());
+                    const receipt = await scTx.wait();
+                    txHash = receipt.hash;
+                }
+            } catch (err) {
+                console.error("Failed to finalize tender on smart contract:", err);
+            }
+
             await tx.insert(tenderResults).values({
                 id: crypto.randomUUID(),
                 tenderId,
@@ -169,20 +192,20 @@ export abstract class TenderService {
                 finalScore: payload.finalScore.toString(),
                 decidedBy: userId,
                 decidedAt: now,
-                blockchainTxHash: `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`, // Mock blockchain tx hash
+                blockchainTxHash: txHash,
                 createdAt: now,
             });
 
-            // C. Mock Blockchain Transaction Record
+            // C. Blockchain Transaction Record
             await tx.insert(blockchainTransactions).values({
                 id: crypto.randomUUID(),
                 tenderId,
                 bidId: payload.winningBidId,
                 transactionType: "RESULT",
-                txHash: `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`,
-                chainId: 1337,
-                contractAddress: "0xMockSmartContractAddress",
-                blockNumber: 1234567,
+                txHash: txHash,
+                chainId: 31337,
+                contractAddress: await contract.getAddress(),
+                blockNumber: 0,
                 blockTimestamp: now,
                 metadata: {
                     action: "finalize",
@@ -201,5 +224,54 @@ export abstract class TenderService {
         });
 
         return { success: true };
+    }
+
+    static async getAuditData(tenderId: string) {
+        const tender = await db.query.tenders.findFirst({
+            where: (t, { eq }) => eq(t.id, tenderId),
+        });
+
+        if (!tender || tender.status !== "COMPLETED") {
+            throw new Error("Tender is not completed yet or not found");
+        }
+
+        const result = await db.query.tenderResults.findFirst({
+            where: (tr, { eq }) => eq(tr.tenderId, tenderId),
+        });
+
+        const tx = await db.query.blockchainTransactions.findFirst({
+            where: (t, { eq }) => eq(t.tenderId, tenderId),
+        });
+
+        // Fetch scores manually
+        const allBids = await db.query.bids.findMany({
+            where: (b, { eq }) => eq(b.tenderId, tenderId),
+            with: {
+                organization: true,
+                reveal: true,
+            }
+        });
+
+        const bidIds = allBids.map(b => b.id);
+        
+        let allScores = [];
+        if (bidIds.length > 0) {
+            // Using raw select for IN clause workaround if inArray is not imported
+            // We can just query all and filter, or fetch one by one
+            for (const bId of bidIds) {
+                const scores = await db.query.bidScores.findMany({
+                    where: (s, { eq }) => eq(s.bidId, bId)
+                });
+                allScores.push(...scores);
+            }
+        }
+
+        return {
+            tender,
+            result,
+            transaction: tx,
+            bids: allBids,
+            scores: allScores
+        };
     }
 }

@@ -4,6 +4,8 @@ import { useState, useEffect, useMemo } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
+import { ethers } from "ethers";
+import TenderSealABI from "@/lib/TenderSealABI.json";
 import {
     calculateCommitmentHash,
     decryptBidPayload,
@@ -107,6 +109,8 @@ export default function TenderDetailPage() {
     const [allBids, setAllBids] = useState<any[]>([]);
     const [manualScores, setManualScores] = useState<Record<string, Record<string, number>>>({});
     const [isFinalizing, setIsFinalizing] = useState(false);
+    const [auditData, setAuditData] = useState<any>(null);
+    const [loadingAuditData, setLoadingAuditData] = useState(false);
 
     // Load draft scores from localStorage
     useEffect(() => {
@@ -157,6 +161,16 @@ export default function TenderDetailPage() {
             }
             if (tenderData.id) {
                 setTender(tenderData);
+
+                if (tenderData.status === "COMPLETED") {
+                    setLoadingAuditData(true);
+                    fetch(`/api/tenders/${tenderId}/audit`)
+                        .then(r => r.json())
+                        .then(data => setAuditData(data))
+                        .catch(err => console.error("Failed to load audit data:", err))
+                        .finally(() => setLoadingAuditData(false));
+                }
+
                 // Initialize form data with empty strings based on required criteria/fields
                 const initialForm: Record<string, string> = {};
                 tenderData.fields?.forEach((f: any) => {
@@ -233,6 +247,25 @@ export default function TenderDetailPage() {
         if (!encryptionResult || !selectedOrgId) return;
         setSubmittingBid(true);
         try {
+            // 1. Web3 Smart Contract Commit
+            // @ts-ignore
+            if (!window.ethereum) {
+                alert("Please install MetaMask to submit a bid.");
+                setSubmittingBid(false);
+                return;
+            }
+            
+            // @ts-ignore
+            await window.ethereum.request({ method: 'eth_requestAccounts' });
+            // @ts-ignore
+            const provider = new ethers.BrowserProvider(window.ethereum);
+            const signer = await provider.getSigner();
+            const contract = new ethers.Contract("0x5FbDB2315678afecb367f032d93F642f64180aa3", TenderSealABI, signer);
+            
+            const scTx = await contract.commitBid(tenderId, selectedOrgId, encryptionResult.commitmentHash);
+            await scTx.wait();
+
+            // 2. Submit to Backend
             const res = await fetch(`/api/bids/tender/${tenderId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },
@@ -883,10 +916,126 @@ export default function TenderDetailPage() {
                 </div>
             )}
             
-            {/* TAB 5: AUDIT (placeholder) */}
+            {/* TAB 5: AUDIT */}
             {activeTab === "audit" && (
-                <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
-                     <p className="text-slate-400 text-center py-12">Log audit akan dirender di sini. (Akan diimplementasikan pada fase berikutnya)</p>
+                <div className="space-y-6">
+                    {tender.status !== "COMPLETED" ? (
+                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80">
+                            <p className="text-slate-400 text-center py-12 flex flex-col items-center justify-center">
+                                <Lock className="w-12 h-12 text-slate-500/50 mb-4" />
+                                Transparansi / Log Audit belum tersedia.<br/>
+                                <span className="text-sm mt-2">Data ini hanya akan dibuka ke publik setelah tender berstatus COMPLETED.</span>
+                            </p>
+                        </div>
+                    ) : loadingAuditData ? (
+                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80 flex items-center justify-center py-12">
+                            <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
+                        </div>
+                    ) : auditData ? (
+                        <div className="space-y-6">
+                            {/* Winner Card */}
+                            <div className="bg-gradient-to-r from-emerald-900/40 to-emerald-800/20 border border-emerald-500/30 rounded-2xl p-6 shadow-[0_0_30px_rgba(52,211,153,0.1)]">
+                                <div className="flex items-start gap-4">
+                                    <div className="p-3 bg-emerald-500/20 rounded-xl">
+                                        <Award className="w-8 h-8 text-emerald-400" />
+                                    </div>
+                                    <div className="flex-1">
+                                        <h3 className="text-emerald-400 font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
+                                        <p className="text-2xl font-bold text-white mb-2">
+                                            {auditData.bids.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
+                                        </p>
+                                        <div className="flex flex-wrap gap-4 text-xs font-mono">
+                                            <span className="bg-slate-900/50 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-emerald-300">
+                                                Skor Akhir: <span className="font-bold text-white">{Number(auditData.result?.finalScore).toFixed(2)}</span>
+                                            </span>
+                                            <span className="bg-slate-900/50 px-3 py-1.5 rounded-lg border border-emerald-500/20 text-emerald-300 flex items-center gap-1">
+                                                <Layers className="w-3 h-3" /> TxHash: <span className="text-slate-400 truncate max-w-[200px]">{auditData.transaction?.txHash}</span>
+                                            </span>
+                                        </div>
+                                    </div>
+                                </div>
+                            </div>
+
+                            {/* Transparent Bids Breakdown */}
+                            <h3 className="text-lg font-bold text-white mb-4 mt-8 flex items-center gap-2">
+                                <Eye className="w-5 h-5 text-cyan-400" /> Transparansi Proposal & Penilaian
+                            </h3>
+                            <div className="grid grid-cols-1 gap-6">
+                                {auditData.bids.map((bid: any) => {
+                                    const payload = bid.reveal?.revealedPayload || {};
+                                    const scoresForBid = auditData.scores.filter((s: any) => s.bidId === bid.id);
+                                    const isWinner = auditData.result?.winningBidId === bid.id;
+                                    
+                                    return (
+                                        <div key={bid.id} className={`bg-slate-900/50 border ${isWinner ? 'border-emerald-500/30' : 'border-slate-800'} rounded-xl overflow-hidden`}>
+                                            <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-emerald-500/20' : 'bg-slate-800/30 border-slate-800'} flex justify-between items-center`}>
+                                                <div>
+                                                    <span className="font-bold text-slate-200 text-lg">{bid.organization?.name}</span>
+                                                    {isWinner && <span className="ml-3 text-[10px] font-bold bg-emerald-500/20 text-emerald-400 px-2 py-1 rounded-md uppercase">Pemenang</span>}
+                                                </div>
+                                                <div className="text-right">
+                                                    <span className="text-xs text-slate-500 block mb-1">Total Skor</span>
+                                                    <span className={`text-xl font-bold ${isWinner ? 'text-emerald-400' : 'text-white'}`}>
+                                                        {scoresForBid.reduce((acc: number, curr: any) => acc + Number(curr.weightedScore), 0).toFixed(2)}
+                                                    </span>
+                                                </div>
+                                            </div>
+                                            
+                                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                {/* Left: Original Proposal */}
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">Proposal Penawaran (Asli)</h4>
+                                                    <div className="space-y-3">
+                                                        {tender.fields?.map((f: any) => (
+                                                            <div key={f.key} className="bg-slate-900 rounded-lg p-3 border border-slate-800/50">
+                                                                <span className="text-[10px] font-semibold text-slate-500 uppercase block mb-1">{f.name}</span>
+                                                                {f.type.toLowerCase() === 'file' ? (
+                                                                    payload[f.key] ? (
+                                                                        <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-cyan-400 hover:text-cyan-300 flex items-center gap-1">
+                                                                            <FileCode2 className="w-4 h-4" /> Lihat Dokumen
+                                                                        </a>
+                                                                    ) : <span className="text-sm text-slate-500">-</span>
+                                                                ) : f.type.toLowerCase() === 'currency' ? (
+                                                                    <span className="text-sm font-bold text-white">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>
+                                                                ) : (
+                                                                    <span className="text-sm text-slate-300">{payload[f.key] || '-'}</span>
+                                                                )}
+                                                            </div>
+                                                        ))}
+                                                    </div>
+                                                </div>
+                                                
+                                                {/* Right: Score Breakdown */}
+                                                <div>
+                                                    <h4 className="text-xs font-bold text-slate-400 uppercase tracking-wider mb-3 pb-2 border-b border-slate-800">Rincian Penilaian Panitia</h4>
+                                                    <div className="space-y-3">
+                                                        {tender.criteria?.map((c: any) => {
+                                                            const sc = scoresForBid.find((s: any) => s.criterionId === c.id);
+                                                            return (
+                                                                <div key={c.id} className="bg-slate-900 rounded-lg p-3 border border-slate-800/50 flex justify-between items-center">
+                                                                    <div>
+                                                                        <span className="text-xs font-bold text-slate-300 block">{c.name} <span className="text-slate-500 font-normal">({c.weight}%)</span></span>
+                                                                        <span className="text-[10px] text-slate-500">Nilai Mentah: {sc ? Number(sc.rawScore).toFixed(1) : '0'}</span>
+                                                                    </div>
+                                                                    <div className="text-right">
+                                                                        <span className="text-sm font-bold text-amber-400">{sc ? Number(sc.weightedScore).toFixed(2) : '0.00'}</span>
+                                                                    </div>
+                                                                </div>
+                                                            )
+                                                        })}
+                                                    </div>
+                                                </div>
+                                            </div>
+                                        </div>
+                                    );
+                                })}
+                            </div>
+                        </div>
+                    ) : (
+                        <div className="glass-panel p-6 rounded-2xl border-slate-800/80 text-center">
+                            <p className="text-slate-400">Gagal memuat data audit.</p>
+                        </div>
+                    )}
                 </div>
             )}
         </div>

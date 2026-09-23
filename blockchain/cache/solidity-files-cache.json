@@ -1,0 +1,41 @@
+{
+  "_format": "hh-sol-cache-2",
+  "files": {
+    "/Users/Xantares/WORKZEN/TenderSeal/blockchain/contracts/TenderSeal.sol": {
+      "lastModificationDate": 1790179128664,
+      "contentHash": "ce607acbef0f23a8afc31f3775a6747d",
+      "sourceName": "contracts/TenderSeal.sol",
+      "solcConfig": {
+        "version": "0.8.28",
+        "settings": {
+          "evmVersion": "paris",
+          "optimizer": {
+            "enabled": false,
+            "runs": 200
+          },
+          "outputSelection": {
+            "*": {
+              "*": [
+                "abi",
+                "evm.bytecode",
+                "evm.deployedBytecode",
+                "evm.methodIdentifiers",
+                "metadata"
+              ],
+              "": [
+                "ast"
+              ]
+            }
+          }
+        }
+      },
+      "imports": [],
+      "versionPragmas": [
+        "^0.8.20"
+      ],
+      "artifacts": [
+        "TenderSeal"
+      ]
+    }
+  }
+}

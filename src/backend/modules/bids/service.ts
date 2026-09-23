@@ -3,6 +3,7 @@ import { db } from "@/db";
 import { bidCrypto, bidReveals, bids, encryptedBids } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { BidModel } from "./model";
+import { contract } from "@/lib/web3";
 
 export abstract class BidService {
     static async getByTenderId(tenderId: string) {
@@ -131,6 +132,20 @@ export abstract class BidService {
                 });
             }
         });
+
+        if (isValid) {
+            // Attest reveal on Smart Contract (Relayer signs this)
+            try {
+                // Find tenderId for this bid
+                const bidRecord = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bidId) });
+                if (bidRecord) {
+                    const tx = await contract.attestReveal(bidRecord.tenderId, bidRecord.organizationId);
+                    await tx.wait();
+                }
+            } catch (err) {
+                console.error("Failed to attest reveal on smart contract:", err);
+            }
+        }
 
         return {
             bidId,

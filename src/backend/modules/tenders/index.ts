@@ -265,7 +265,28 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 summary: "Finalize tender & Pick Winner",
                 description: "Menyelesaikan tender, menyimpan semua skor, menetapkan pemenang, dan memicu transaksi pencatatan ke Smart Contract.",
             },
+        }
+    )
+
+    // ── Audit Log ─────────────────────────────────────────────────────────────
+    .get(
+        "/:id/audit",
+        async ({ params, set }) => {
+            try {
+                const data = await TenderService.getAuditData(params.id);
+                return data;
+            } catch (err: any) {
+                set.status = 400;
+                return { message: err.message || "Failed to fetch audit data" };
+            }
         },
+        {
+            params: t.Object({ id: t.String() }),
+            detail: {
+                summary: "Get Audit Log",
+                description: "Mengambil data transparan hasil akhir tender beserta jejak skor dan blockchain.",
+            },
+        }
     );
 
 export default tendersModule;

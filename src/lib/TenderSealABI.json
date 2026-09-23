@@ -1,0 +1,274 @@
+[
+  {
+    "inputs": [],
+    "stateMutability": "nonpayable",
+    "type": "constructor"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "bidId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "address",
+        "name": "vendor",
+        "type": "address"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "commitmentHash",
+        "type": "string"
+      }
+    ],
+    "name": "BidCommitted",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "bidId",
+        "type": "string"
+      }
+    ],
+    "name": "RevealAttested",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "uint256",
+        "name": "commitDeadline",
+        "type": "uint256"
+      }
+    ],
+    "name": "TenderCreated",
+    "type": "event"
+  },
+  {
+    "anonymous": false,
+    "inputs": [
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "winningBidId",
+        "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "string",
+        "name": "finalScore",
+        "type": "string"
+      }
+    ],
+    "name": "TenderFinalized",
+    "type": "event"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "bidId",
+        "type": "string"
+      }
+    ],
+    "name": "attestReveal",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "bidId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "commitmentHash",
+        "type": "string"
+      }
+    ],
+    "name": "commitBid",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "commitDeadline",
+        "type": "uint256"
+      }
+    ],
+    "name": "createTender",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "winningBidId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "finalScore",
+        "type": "string"
+      }
+    ],
+    "name": "finalizeTender",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [],
+    "name": "relayer",
+    "outputs": [
+      {
+        "internalType": "address",
+        "name": "",
+        "type": "address"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "tenderBids",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "bidId",
+        "type": "string"
+      },
+      {
+        "internalType": "address",
+        "name": "vendor",
+        "type": "address"
+      },
+      {
+        "internalType": "string",
+        "name": "commitmentHash",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "revealed",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "",
+        "type": "string"
+      }
+    ],
+    "name": "tenders",
+    "outputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "uint256",
+        "name": "commitDeadline",
+        "type": "uint256"
+      },
+      {
+        "internalType": "string",
+        "name": "winningBidId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "finalScore",
+        "type": "string"
+      },
+      {
+        "internalType": "bool",
+        "name": "finalized",
+        "type": "bool"
+      }
+    ],
+    "stateMutability": "view",
+    "type": "function"
+  }
+]

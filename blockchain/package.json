@@ -1,0 +1,18 @@
+{
+  "name": "blockchain",
+  "module": "index.ts",
+  "type": "module",
+  "private": true,
+  "devDependencies": {
+    "@nomicfoundation/hardhat-toolbox": "^6.1.2",
+    "@types/bun": "latest",
+    "@types/chai": "^5.2.3",
+    "@types/mocha": "^10.0.10",
+    "@types/node": "^26.6.2",
+    "hardhat": "2.22.17",
+    "ts-node": "^10.9.2"
+  },
+  "peerDependencies": {
+    "typescript": "^7.0.2"
+  }
+}
