@@ -108,6 +108,26 @@ export default function TenderDetailPage() {
     const [manualScores, setManualScores] = useState<Record<string, Record<string, number>>>({});
     const [isFinalizing, setIsFinalizing] = useState(false);
 
+    // Load draft scores from localStorage
+    useEffect(() => {
+        if (!tenderId) return;
+        const saved = localStorage.getItem(`tenderseal_draft_scores_${tenderId}`);
+        if (saved) {
+            try {
+                setManualScores(JSON.parse(saved));
+            } catch (e) {
+                console.error("Failed to parse draft scores");
+            }
+        }
+    }, [tenderId]);
+
+    // Save draft scores to localStorage whenever it changes
+    useEffect(() => {
+        if (tenderId && Object.keys(manualScores).length > 0) {
+            localStorage.setItem(`tenderseal_draft_scores_${tenderId}`, JSON.stringify(manualScores));
+        }
+    }, [manualScores, tenderId]);
+
     const handleManualScoreChange = (bidId: string, criteriaId: string, val: string, maxScore: number) => {
         let num = Number(val);
         if (num > maxScore) num = maxScore;
