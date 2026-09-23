@@ -1,16 +1,23 @@
 import { Elysia, t } from "elysia";
 import { ProcurementModel } from "./model";
 import { ProcurementService } from "./service";
+import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 
 const procurementModule = new Elysia({ prefix: "/procurement", tags: ["Procurement"] })
+    .use(betterAuthMiddleware)
     .post(
         "/scores",
-        async ({ body, set }) => {
+        async ({ body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
             const result = await ProcurementService.scoreBid(body);
             set.status = 201;
             return { message: "Bid scored successfully", data: result };
         },
         {
+            auth: true,
             body: ProcurementModel.scoreBidBody,
             detail: {
                 summary: "Score bid criterion",
@@ -21,12 +28,17 @@ const procurementModule = new Elysia({ prefix: "/procurement", tags: ["Procureme
 
     .post(
         "/tenders/:tenderId/results",
-        async ({ params, body, set }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
             const result = await ProcurementService.recordResult(params.tenderId, body);
             set.status = 201;
             return { message: "Tender result recorded successfully", data: result };
         },
         {
+            auth: true,
             params: t.Object({ tenderId: t.String() }),
             body: ProcurementModel.recordResultBody,
             detail: {
@@ -57,12 +69,17 @@ const procurementModule = new Elysia({ prefix: "/procurement", tags: ["Procureme
 
     .post(
         "/documents",
-        async ({ body, set }) => {
+        async ({ body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
             const result = await ProcurementService.uploadDocument(body);
             set.status = 201;
             return { message: "Document metadata stored successfully", data: result };
         },
         {
+            auth: true,
             body: ProcurementModel.uploadDocumentBody,
             detail: {
                 summary: "Record document metadata",
@@ -73,12 +90,17 @@ const procurementModule = new Elysia({ prefix: "/procurement", tags: ["Procureme
 
     .post(
         "/blockchain-tx",
-        async ({ body, set }) => {
+        async ({ body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
             const result = await ProcurementService.recordBlockchainTx(body);
             set.status = 201;
             return { message: "Blockchain transaction recorded successfully", data: result };
         },
         {
+            auth: true,
             body: ProcurementModel.recordBlockchainTxBody,
             detail: {
                 summary: "Record blockchain transaction",
