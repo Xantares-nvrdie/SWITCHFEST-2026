@@ -3,7 +3,7 @@ import { t } from "elysia";
 export namespace TenderModel {
     export const createBody = t.Object({
         organizationId: t.String(),
-        createdBy: t.String(),
+        createdBy: t.Optional(t.String()),
         code: t.String({ minLength: 3 }),
         title: t.String({ minLength: 3 }),
         description: t.Optional(t.String()),
@@ -11,6 +11,7 @@ export namespace TenderModel {
         commitDeadline: t.String({ description: "ISO 8601 Timestamp string" }),
         revealWindowHours: t.Optional(t.Number({ default: 48 })),
     });
+
 
     export const updateStatusBody = t.Object({
         status: t.Union([

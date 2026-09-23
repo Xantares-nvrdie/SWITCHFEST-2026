@@ -47,8 +47,15 @@ export namespace OrganizationModel {
         status: t.Optional(t.Union([t.Literal("INVITED"), t.Literal("ACTIVE"), t.Literal("SUSPENDED")])),
     });
 
+    export const verifyBody = t.Object({
+        status: t.Union([t.Literal("APPROVED"), t.Literal("REJECTED")]),
+        rejectionReason: t.Optional(t.String()),
+    });
+
     export type createInput = typeof createBody.static;
     export type updateInput = typeof updateBody.static;
+    export type verifyInput = typeof verifyBody.static;
     export type addMemberInput = typeof addMemberBody.static;
     export type updateMemberInput = typeof updateMemberBody.static;
 }
+

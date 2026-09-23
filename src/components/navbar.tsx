@@ -1,25 +1,32 @@
 "use client";
 
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { useRouter, usePathname } from "next/navigation";
 import { useDemo, type DemoRole } from "@/context/demo-context";
+import { useSession, signOut } from "@/lib/auth-client";
 import {
     ShieldCheck,
     FileText,
     Building2,
     History,
     PlusCircle,
-    UserCheck,
     BookOpen,
     Lock,
     Sparkles,
     Briefcase,
     Eye,
+    LogIn,
+    UserPlus,
+    LogOut,
+    User,
+    Loader2,
 } from "lucide-react";
 
 export default function Navbar() {
+    const router = useRouter();
     const pathname = usePathname();
     const { activeRole, setActiveRole } = useDemo();
+    const { data: session, isPending } = useSession();
 
     const roleBadges: Record<DemoRole, { label: string; icon: React.ElementType; color: string }> = {
         PROCUREMENT_OFFICER: {
@@ -39,7 +46,11 @@ export default function Navbar() {
         },
     };
 
-    const ActiveRoleIcon = roleBadges[activeRole].icon;
+    const handleLogout = async () => {
+        await signOut();
+        router.push("/login");
+        router.refresh();
+    };
 
     return (
         <header className="sticky top-0 z-50 w-full border-b border-slate-800/80 bg-slate-950/80 backdrop-blur-xl">
@@ -125,9 +136,22 @@ export default function Navbar() {
                                     : "text-slate-400 hover:text-slate-200 hover:bg-slate-900"
                             }`}
                         >
-                            <History className="w-4 h-4 text-amber-400" />
+                            <History className="w-4 h-4 text-emerald-400" />
                             Audit Trail
                         </Link>
+
+                        <Link
+                            href="/admin"
+                            className={`px-3 py-1.5 rounded-lg text-sm font-medium transition-colors flex items-center gap-2 ${
+                                pathname.startsWith("/admin")
+                                    ? "bg-slate-800 text-amber-300 border border-amber-500/30"
+                                    : "text-amber-400/90 hover:text-amber-300 hover:bg-slate-900"
+                            }`}
+                        >
+                            <ShieldCheck className="w-4 h-4 text-amber-400" />
+                            Admin Control
+                        </Link>
+
 
                         <a
                             href="/api/labs"
@@ -140,8 +164,9 @@ export default function Navbar() {
                         </a>
                     </nav>
 
-                    {/* Interactive Role Switcher Pill */}
+                    {/* Right side — Auth + Demo Role */}
                     <div className="flex items-center gap-3">
+                        {/* Demo Role Switcher */}
                         <div className="flex items-center bg-slate-900/90 p-1 rounded-xl border border-slate-800">
                             <span className="text-xs text-slate-500 font-medium px-2 hidden lg:inline">Demo Role:</span>
                             {(["PROCUREMENT_OFFICER", "VENDOR", "AUDITOR"] as DemoRole[]).map((r) => {
@@ -163,6 +188,55 @@ export default function Navbar() {
                                 );
                             })}
                         </div>
+
+                        {/* Auth State */}
+                        {isPending ? (
+                            <div className="w-8 h-8 flex items-center justify-center">
+                                <Loader2 className="w-4 h-4 text-slate-500 animate-spin" />
+                            </div>
+                        ) : session?.user ? (
+                            /* Logged in — user info + logout */
+                            <div className="flex items-center gap-2">
+                                <div className="flex items-center gap-2 px-3 py-1.5 rounded-lg bg-slate-900/80 border border-slate-800">
+                                    <div className="w-6 h-6 rounded-full bg-gradient-to-br from-emerald-400 to-cyan-500 flex items-center justify-center shrink-0">
+                                        <User className="w-3 h-3 text-slate-950" />
+                                    </div>
+                                    <span className="text-sm text-slate-300 font-medium max-w-[120px] truncate hidden sm:inline">
+                                        {session.user.name}
+                                    </span>
+                                </div>
+                                <button
+                                    onClick={handleLogout}
+                                    className="flex items-center gap-1.5 px-2.5 py-1.5 rounded-lg text-xs font-medium text-slate-400 hover:text-red-400 hover:bg-red-500/10 border border-transparent hover:border-red-500/20 transition-all duration-200"
+                                    title="Sign out"
+                                >
+                                    <LogOut className="w-3.5 h-3.5" />
+                                    <span className="hidden sm:inline">Logout</span>
+                                </button>
+                            </div>
+                        ) : (
+                            /* Not logged in — Login / Register */
+                            <div className="flex items-center gap-2">
+                                <Link
+                                    href="/login"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-sm font-medium text-slate-300 hover:text-white hover:bg-slate-800 border border-slate-700/50 hover:border-slate-600 transition-all duration-200"
+                                >
+                                    <LogIn className="w-3.5 h-3.5" />
+                                    Login
+                                </Link>
+                                <Link
+                                    href="/register"
+                                    className="flex items-center gap-1.5 px-3 py-1.5 rounded-xl text-sm font-semibold text-white transition-all duration-200"
+                                    style={{
+                                        background: "linear-gradient(135deg, #34d399 0%, #06b6d4 60%, #6366f1 100%)",
+                                        boxShadow: "0 2px 12px -3px rgba(52,211,153,0.35)",
+                                    }}
+                                >
+                                    <UserPlus className="w-3.5 h-3.5" />
+                                    Register
+                                </Link>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

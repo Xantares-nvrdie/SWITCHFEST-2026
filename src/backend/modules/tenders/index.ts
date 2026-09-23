@@ -1,8 +1,12 @@
 import { Elysia, t } from "elysia";
 import { TenderModel } from "./model";
 import { TenderService } from "./service";
+import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
+import { db } from "@/db";
 
 const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
+    .use(betterAuthMiddleware)
+
     .get(
         "/",
         async () => {
@@ -35,46 +39,136 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
         },
     )
 
+    // ── Create Tender (Requires Verified BUYER/BOTH Org + Officer/Admin Role) ──
     .post(
         "/",
-        async ({ body, set }) => {
-            const result = await TenderService.create(body);
+        async ({ body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized: Please login to create tender" };
+            }
+
+            // 1. Check organization verification status
+            const org = await db.query.organizations.findFirst({
+                where: (o, { eq }) => eq(o.id, body.organizationId),
+            });
+
+            if (!org) {
+                set.status = 404;
+                return { message: "Organization not found" };
+            }
+
+            const isApproved = org.verificationStatus === "APPROVED" || org.isVerified;
+            if (!isApproved) {
+                set.status = 403;
+                return { message: "Forbidden: Organization must be approved by TenderSeal Admin before creating tenders" };
+            }
+
+            // 2. Check user's role in the organization (Must be PROCUREMENT_OFFICER or ORGANIZATION_ADMIN)
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, body.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Organization Admins can create tenders" };
+            }
+
+            const result = await TenderService.create({
+                ...body,
+                createdBy: user.id,
+            });
+
             set.status = 201;
             return { message: "Tender created successfully", data: result };
         },
         {
+            auth: true,
             body: TenderModel.createBody,
             detail: {
                 summary: "Create a new tender",
-                description: "Membuat draft tender baru beserta penentuan batas waktu commit & reveal.",
+                description: "Membuat draft tender baru (Hanya Procurement Officer / Admin dari Organisasi Terverifikasi).",
             },
         },
     )
 
+    // ── Update Status (Requires Officer / Admin of Tender Org) ────────────────
     .patch(
         "/:id/status",
-        async ({ params, body }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins of this tender's organization can update status" };
+            }
+
             await TenderService.updateStatus(params.id, body.status);
             return { message: `Tender status updated to ${body.status}` };
         },
         {
+            auth: true,
             params: t.Object({ id: t.String() }),
             body: TenderModel.updateStatusBody,
             detail: {
                 summary: "Update tender status",
-                description: "Mengubah alur status tender (DRAFT -> OPEN -> CLOSED -> REVEAL -> SCORING -> COMPLETED).",
+                description: "Mengubah alur status tender (Hanya Procurement Officer / Admin dari Organisasi Penyelenggara).",
             },
         },
     )
 
+    // ── Add Field ─────────────────────────────────────────────────────────────
     .post(
         "/:id/fields",
-        async ({ params, body, set }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins can add dynamic fields" };
+            }
+
             const result = await TenderService.addField(params.id, body);
             set.status = 201;
             return { message: "Dynamic tender field added successfully", data: result };
         },
         {
+            auth: true,
             params: t.Object({ id: t.String() }),
             body: TenderModel.addFieldBody,
             detail: {
@@ -84,14 +178,40 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
         },
     )
 
+    // ── Add Criterion ─────────────────────────────────────────────────────────
     .post(
         "/:id/criteria",
-        async ({ params, body, set }) => {
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins can add criteria" };
+            }
+
             const result = await TenderService.addCriterion(params.id, body);
             set.status = 201;
             return { message: "Tender evaluation criterion added successfully", data: result };
         },
         {
+            auth: true,
             params: t.Object({ id: t.String() }),
             body: TenderModel.addCriterionBody,
             detail: {
@@ -102,3 +222,4 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
     );
 
 export default tendersModule;
+

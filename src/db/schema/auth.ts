@@ -1,4 +1,4 @@
-import { bigint, boolean, integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -11,13 +11,15 @@ export const user = pgTable("user", {
         .defaultNow()
         .$onUpdate(() => /* @__PURE__ */ new Date())
         .notNull(),
+
+    // Required by better-auth admin() plugin
+    role: text("role"),
     banned: boolean("banned").default(false),
     banReason: text("ban_reason"),
     banExpires: timestamp("ban_expires"),
-
-    // Field baru untuk Loyalty Program
-    stamps: integer("stamps").default(0).notNull(),
 });
+
+
 
 export const session = pgTable("session", {
     id: text("id").primaryKey(),

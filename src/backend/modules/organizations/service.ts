@@ -70,6 +70,24 @@ export abstract class OrganizationService {
             .where(eq(organizations.id, id));
     }
 
+    static async verify(id: string, data: OrganizationModel.verifyInput, verifierUserId: string) {
+        const now = new Date();
+        const isApproved = data.status === "APPROVED";
+
+        await db
+            .update(organizations)
+            .set({
+                verificationStatus: data.status,
+                isVerified: isApproved,
+                verifiedAt: now,
+                verifiedBy: verifierUserId,
+                rejectionReason: isApproved ? null : (data.rejectionReason ?? null),
+                updatedAt: now,
+            })
+            .where(eq(organizations.id, id));
+    }
+
+
     static async addMember(organizationId: string, data: OrganizationModel.addMemberInput) {
         const memberId = crypto.randomUUID();
         const now = new Date();

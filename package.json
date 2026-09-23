@@ -1,5 +1,5 @@
 {
-    "name": "mediqku-new",
+    "name": "tenderseal",
     "version": "0.1.0",
     "private": true,
     "scripts": {
@@ -10,8 +10,12 @@
         "format": "biome format --write",
         "db:generate": "drizzle-kit generate",
         "db:push": "drizzle-kit push",
-        "db:studio": "drizzle-kit studio"
+        "db:studio": "drizzle-kit studio",
+        "db:seed": "bun run src/db/seed.ts",
+        "test": "bun test ./tests"
     },
+
+
     "dependencies": {
         "@elysiajs/openapi": "^1.4.11",
         "better-auth": "^1.4.7",

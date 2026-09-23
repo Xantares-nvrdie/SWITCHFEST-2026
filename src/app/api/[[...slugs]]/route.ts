@@ -2,6 +2,8 @@ import { fromTypes, openapi } from "@elysiajs/openapi";
 import { Elysia } from "elysia";
 import baseRoute from "@/backend/modules/base";
 import organizationsModule from "@/backend/modules/organizations";
+import invitesModule, { joinViaInviteModule } from "@/backend/modules/organizations/invites";
+import adminModule from "@/backend/modules/admin";
 import tendersModule from "@/backend/modules/tenders";
 import tenderParticipantsModule from "@/backend/modules/tender-participants";
 import bidsModule from "@/backend/modules/bids";
@@ -25,6 +27,7 @@ export const app = new Elysia({ prefix: "/api" })
                 },
                 paths: authDocs.paths as unknown as Record<string, never>,
                 tags: [
+                    { name: "System Admin", description: "Platform control, stats & organization approvals" },
                     { name: "Organizations", description: "Multi-organization management & members" },
                     { name: "Tenders", description: "Tender creation, dynamic fields & evaluation criteria" },
                     { name: "Tender Participants", description: "Vendor participation & invitations" },
@@ -46,11 +49,15 @@ export const app = new Elysia({ prefix: "/api" })
     /* FEATURE MODULES */
     .use(baseRoute)
     .use(organizationsModule)
+    .use(invitesModule)
+    .use(joinViaInviteModule)
+    .use(adminModule)
     .use(tendersModule)
     .use(tenderParticipantsModule)
     .use(bidsModule)
     .use(procurementModule)
     .use(auditLogsModule);
+
 
 export type app = typeof app;
 

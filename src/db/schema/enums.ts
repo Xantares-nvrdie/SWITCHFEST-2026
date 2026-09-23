@@ -2,6 +2,11 @@ import { pgEnum } from "drizzle-orm/pg-core";
 
 // ─── Organization ────────────────────────────────────────────────────────────
 export const organizationTypeEnum = pgEnum("organization_type", ["BUYER", "VENDOR", "BOTH"]);
+export const organizationVerificationStatusEnum = pgEnum("organization_verification_status", [
+    "PENDING",
+    "APPROVED",
+    "REJECTED",
+]);
 
 export const organizationMemberRoleEnum = pgEnum("organization_member_role", [
     "ORGANIZATION_ADMIN",
