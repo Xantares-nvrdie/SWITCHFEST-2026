@@ -97,6 +97,7 @@ export default function TenderDetailPage() {
     } | null>(null);
     const [submittingBid, setSubmittingBid] = useState(false);
     const [submittedSealed, setSubmittedSealed] = useState(false);
+    const [isRevealing, setIsRevealing] = useState(false);
 
     // View Bid State
     const [viewSecret, setViewSecret] = useState("");
@@ -408,7 +409,13 @@ export default function TenderDetailPage() {
                         bidSalt: myBid.crypto.bidSalt
                     }),
                 });
-                const revealData = await revealRes.json();
+                const revealText = await revealRes.text();
+                let revealData;
+                try {
+                    revealData = JSON.parse(revealText);
+                } catch (parseError) {
+                    throw new Error("Server error: " + revealText.substring(0, 1000));
+                }
                 
                 if (revealRes.ok) {
                     setRevealResult({
@@ -446,17 +453,17 @@ export default function TenderDetailPage() {
         setViewingBid(true);
         setViewResult(null);
         try {
+            const myBid = allBids.find((b: any) => userOrgs.some(o => o.id === b.organizationId));
             if (!myBid || !myBid.crypto || !myBid.encryptedPayload) {
                 setViewResult({ isValid: false, decryptedPayload: null, message: "Tidak ada data enkripsi bid ditemukan."});
                 return;
             }
             
+            const { key } = await deriveKdfKey(viewSecret, myBid.crypto.kdfSalt);
             const decryptedPayload = await decryptBidPayload(
                 myBid.encryptedPayload.encryptedPayload,
                 myBid.crypto.encryptionIv,
-                viewSecret,
-                myBid.crypto.kdfSalt,
-                myBid.crypto.bidSalt
+                key
             );
 
             setViewResult({
@@ -757,7 +764,7 @@ export default function TenderDetailPage() {
                                     </Link>
                                 </div>
                             </div>
-                        ) : submittedSealed ? (
+                        ) : (submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
                             <div className="space-y-6">
                                 <div className="p-5 rounded-2xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] flex flex-col items-center justify-center text-center gap-3">
                                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
