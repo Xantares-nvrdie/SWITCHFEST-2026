@@ -92,14 +92,20 @@ export default function Navbar() {
                         <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
                     ) : session?.user ? (
                         <div className="flex items-center gap-2">
-                            <div className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border-light)]">
-                                <div className="w-5 h-5 rounded-full bg-[var(--accent)] flex items-center justify-center">
-                                    <User className="w-3 h-3 text-white" />
-                                </div>
-                                <span className="text-[12px] text-[var(--text-primary)] font-medium max-w-[100px] truncate hidden sm:inline">
+                            <Link href="/profile" className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[var(--surface-secondary)] transition-colors border border-transparent hover:border-[var(--border-light)] cursor-pointer">
+                                {session.user.image ? (
+                                    <img src={session.user.image} alt={session.user.name} className="w-6 h-6 rounded-full object-cover border border-[var(--border)]" />
+                                ) : (
+                                    <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                                        <span className="text-[10px] font-bold text-white uppercase tracking-wider">
+                                            {session.user.name.substring(0, 2)}
+                                        </span>
+                                    </div>
+                                )}
+                                <span className="text-[13px] text-[var(--text-primary)] font-medium max-w-[120px] truncate hidden sm:inline">
                                     {session.user.name}
                                 </span>
-                            </div>
+                            </Link>
                             <button
                                 onClick={handleLogout}
                                 className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] hover:text-red-600 hover:bg-red-50 transition-colors"

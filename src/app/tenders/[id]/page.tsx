@@ -71,10 +71,10 @@ export default function TenderDetailPage() {
 
     const [tender, setTender] = useState<TenderData | null>(null);
     const [loading, setLoading] = useState(true);
-    
     // Vendor Organization Selection
     const [userOrgs, setUserOrgs] = useState<OrgOption[]>([]);
     const [selectedOrgId, setSelectedOrgId] = useState<string>("");
+    const [userWallet, setUserWallet] = useState<string | null>(null);
 
     // Active Tab state
     const [activeTab, setActiveTab] = useState<"overview" | "encrypt" | "reveal" | "scoring" | "audit">("overview");
@@ -155,8 +155,12 @@ export default function TenderDetailPage() {
             fetch(`/api/tenders/${tenderId}`).then((r) => r.json()),
             session?.user ? fetch("/api/organizations/me").then((r) => r.json()) : Promise.resolve([]),
             fetch(`/api/bids/tender/${tenderId}`).then((r) => r.json()),
+            session?.user ? fetch("/api/profile/wallet").then((r) => r.json()) : Promise.resolve({}),
         ])
-        .then(([tenderData, orgsData, bidsData]) => {
+        .then(([tenderData, orgsData, bidsData, walletData]) => {
+            if (walletData?.walletAddress) {
+                setUserWallet(walletData.walletAddress);
+            }
             if (Array.isArray(bidsData)) {
                 setAllBids(bidsData);
             }
@@ -701,6 +705,21 @@ export default function TenderDetailPage() {
                             </div>
                         </div>
                         
+                        {!userWallet ? (
+                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-200 text-amber-700 text-sm flex flex-col gap-3">
+                                <div className="flex items-center gap-2 font-semibold">
+                                    <AlertCircle className="w-4 h-4" /> Perhatian: EVM Wallet Belum Tertaut
+                                </div>
+                                <p className="text-[13px]">
+                                    Karena penawaran akan dikunci di dalam *Smart Contract* Blockchain, Anda wajib menautkan alamat dompet (Wallet Address) pada profil Anda sebelum dapat mengajukan penawaran.
+                                </p>
+                                <div>
+                                    <Link href="/profile" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-white rounded-lg font-medium text-xs hover:bg-amber-600 transition-colors">
+                                        Pergi ke Profil Saya
+                                    </Link>
+                                </div>
+                            </div>
+                        ) : (
                         <div className="space-y-4">
                             {/* Vendor Org Selector */}
                             <div className="space-y-1.5">
@@ -787,8 +806,9 @@ export default function TenderDetailPage() {
                                 />
                             </div>
                         </div>
+                        )}
                         
-                        {!submittedSealed ? (
+                        {userWallet && !submittedSealed ? (
                             <button
                                 onClick={handleSubmitBid}
                                 disabled={submittingBid || userOrgs.length === 0}
