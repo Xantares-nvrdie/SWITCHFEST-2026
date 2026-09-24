@@ -51,7 +51,7 @@ export default function AdminDashboardPage() {
     const fetchOrgs = useCallback(async () => {
         setIsLoading(true);
         try {
-            const res = await fetch("/api/organizations");
+            const res = await fetch("/api/admin/organizations");
             if (res.ok) {
                 const data: Organization[] = await res.json();
                 setOrgs(data);
@@ -70,7 +70,7 @@ export default function AdminDashboardPage() {
     const handleVerify = async (orgId: string, status: "APPROVED" | "REJECTED", reason?: string) => {
         setActionLoadingId(orgId);
         try {
-            const res = await fetch(`/api/organizations/${orgId}/verify`, {
+            const res = await fetch(`/api/admin/organizations/${orgId}/verify`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({

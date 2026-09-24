@@ -42,7 +42,6 @@ export default function OrganizationsPage() {
     const [allOrgs, setAllOrgs] = useState<Organization[]>([]);
     const [activeTab, setActiveTab] = useState<"my" | "all">("my");
     const [isLoading, setIsLoading] = useState(true);
-    const [verifyingId, setVerifyingId] = useState<string | null>(null);
     const { data: session } = useSession();
     const isSysAdmin = (session?.user as any)?.role === "admin";
 
@@ -65,22 +64,6 @@ export default function OrganizationsPage() {
     useEffect(() => {
         loadData();
     }, []);
-
-    const handleVerifyOrg = async (orgId: string, status: "APPROVED" | "REJECTED") => {
-        setVerifyingId(orgId);
-        try {
-            const res = await fetch(`/api/organizations/${orgId}/verify`, {
-                method: "PATCH",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status }),
-            });
-            if (res.ok) {
-                await loadData();
-            }
-        } finally {
-            setVerifyingId(null);
-        }
-    };
 
     const orgsToDisplay = activeTab === "my" 
         ? myOrgs 
@@ -251,26 +234,6 @@ export default function OrganizationsPage() {
                                         )}
                                     </div>
 
-                                    {/* Admin verification actions */}
-                                    {isPending && isSysAdmin && (
-                                        <div className="pt-2 flex items-center gap-2">
-                                            <button
-                                                onClick={() => handleVerifyOrg(org.id, "APPROVED")}
-                                                disabled={verifyingId === org.id}
-                                                className="px-3 py-1.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[12px] flex items-center gap-1.5 transition-all disabled:opacity-50 hover:opacity-90"
-                                            >
-                                                {verifyingId === org.id ? <Loader2 className="w-3.5 h-3.5 animate-spin" /> : <CheckCircle2 className="w-3.5 h-3.5" />}
-                                                Approve
-                                            </button>
-                                            <button
-                                                onClick={() => handleVerifyOrg(org.id, "REJECTED")}
-                                                disabled={verifyingId === org.id}
-                                                className="px-3 py-1.5 rounded-lg bg-white border border-[var(--border)] text-red-600 font-semibold text-[12px] flex items-center gap-1.5 transition-colors disabled:opacity-50 hover:bg-red-50"
-                                            >
-                                                Reject
-                                            </button>
-                                        </div>
-                                    )}
                                 </div>
 
                                 <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
