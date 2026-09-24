@@ -410,7 +410,8 @@ export default function TenderDetailPage() {
                 try {
                     revealData = JSON.parse(revealText);
                 } catch (parseError) {
-                    throw new Error("Server error: " + revealText.substring(0, 1000));
+                    // Not JSON, likely plain text error from backend
+                    revealData = { message: revealText };
                 }
                 
                 if (revealRes.ok) {

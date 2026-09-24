@@ -120,6 +120,10 @@ export abstract class BidService {
             throw new Error("Bid not found");
         }
 
+        if (existingBid.status === "REVEALED_VALID" || existingBid.status === "REVEALED_INVALID") {
+            throw new Error("Penawaran ini sudah di-reveal sebelumnya.");
+        }
+
         const now = new Date();
         const payloadJsonString = JSON.stringify(data.revealedPayload);
 
