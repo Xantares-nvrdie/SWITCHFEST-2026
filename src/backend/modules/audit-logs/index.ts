@@ -12,11 +12,9 @@ const auditLogsModule = new Elysia({ prefix: "/audit-logs", tags: ["Audit Logs"]
             return await AuditLogService.getAll();
         },
         {
-            auth: true,
-            beforeHandle: [requireSystemAdmin],
             detail: {
                 summary: "Get all audit logs",
-                description: "Mengambil seluruh riwayat log audit aktivitas sistem.",
+                description: "Mengambil seluruh riwayat log audit aktivitas sistem (Public).",
             },
         },
     )

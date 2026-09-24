@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { BidModel } from "./model";
 import { BidService } from "./service";
+import { AuditLogService } from "../audit-logs/service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 import { db } from "@/db";
 
@@ -116,6 +117,20 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
 
             try {
                 const result = await BidService.submitSealed(params.tenderId, body);
+                
+                // Log activity
+                await AuditLogService.log({
+                    userId: user.id,
+                    organizationId: body.organizationId,
+                    tenderId: params.tenderId,
+                    bidId: result.id,
+                    action: "SUBMIT_SEALED_BID",
+                    entityType: "bids",
+                    entityId: result.id,
+                    description: `Vendor mengirimkan sealed bid terenkripsi AES-GCM + commitment hash untuk tender ${params.tenderId}`,
+                    // Ideally we get IP from request headers if available
+                });
+
                 set.status = 201;
                 return { message: "Sealed bid submitted successfully", data: result };
             } catch (error: any) {
@@ -171,6 +186,18 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
             const result = await BidService.submitReveal(params.id, {
                 ...body,
                 verifiedBy: user.id,
+            });
+
+            // Log activity
+            await AuditLogService.log({
+                userId: user.id,
+                organizationId: existingBid.organizationId,
+                tenderId: existingBid.tenderId,
+                bidId: params.id,
+                action: "REVEAL_BID",
+                entityType: "bid_reveals",
+                entityId: params.id,
+                description: `Dekripsi penawaran di browser selesai dan diverifikasi. (Status: ${result.status})`,
             });
 
             return { message: "Reveal processed", data: result };

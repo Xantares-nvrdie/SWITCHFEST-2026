@@ -1,6 +1,7 @@
 import { Elysia, t } from "elysia";
 import { TenderModel } from "./model";
 import { TenderService } from "./service";
+import { AuditLogService } from "../audit-logs/service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 import { db } from "@/db";
 import { requireSystemAdmin } from "@/backend/utils/rbac";
@@ -251,6 +252,18 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
 
             try {
                 const result = await TenderService.finalizeTender(params.id, body, user.id);
+                
+                // Log activity
+                await AuditLogService.log({
+                    userId: user.id,
+                    organizationId: tender.organizationId,
+                    tenderId: params.id,
+                    action: "DECLARE_TENDER_WINNER",
+                    entityType: "tender_results",
+                    entityId: params.id,
+                    description: `Procurement Officer menetapkan pemenang tender. Transaksi skor dikirim ke Smart Contract.`,
+                });
+
                 set.status = 200;
                 return { message: "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)", data: result };
             } catch (err: any) {
