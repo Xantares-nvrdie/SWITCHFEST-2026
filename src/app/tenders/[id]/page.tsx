@@ -327,6 +327,12 @@ export default function TenderDetailPage() {
             }
             if (res.ok) {
                 setSubmittedSealed(true);
+                // Re-fetch bids so we can view the encrypted bid immediately
+                const bidsRes = await fetch(`/api/bids/tender/${tenderId}`);
+                if (bidsRes.ok) {
+                    const freshBids = await bidsRes.json();
+                    setAllBids(freshBids);
+                }
             } else {
                 alert(data.message || "Gagal submit bid");
             }
@@ -340,6 +346,11 @@ export default function TenderDetailPage() {
 
     // Execute Client-Side Reveal Decryption & Verification
     const handleRunReveal = async () => {
+        if (tender?.status === "OPEN" || tender?.status === "DRAFT") {
+            alert("Fase Reveal belum dimulai! Anda tidak bisa membuka penawaran saat ini.");
+            return;
+        }
+
         if (!revealSecret || revealSecret.length < 6) {
             alert("Secret PIN tidak valid.");
             return;
@@ -926,36 +937,45 @@ export default function TenderDetailPage() {
                             <p className="text-xs text-[var(--text-tertiary)] mt-0.5">Masukkan Secret PIN yang digunakan saat submit untuk membuka bid.</p>
                         </div>
                     </div>
-                    <div className="max-w-md mx-auto space-y-4 py-8">
-                        <input
-                            type="password"
-                            value={revealSecret}
-                            onChange={(e) => setRevealSecret(e.target.value)}
-                            placeholder="Secret PIN"
-                            className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-purple-900/50 text-sm text-[var(--text-secondary)] focus:outline-none focus:border-purple-500 transition-colors text-center font-mono"
-                        />
-                        <button
-                            onClick={handleRunReveal}
-                            disabled={revealing}
-                            className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
-                        >
-                            {revealing ? "Proses Verifikasi..." : <><KeyRound className="w-4 h-4" /> Proses Dekripsi & Reveal</>}
-                        </button>
-                        
-                        {revealResult && (
-                            <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
-                                <div className="flex items-center gap-2">
-                                    {revealResult.isValid ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
-                                    {revealResult.message}
+
+                    {tender?.status === "OPEN" || tender?.status === "DRAFT" ? (
+                        <div className="py-12 text-center bg-purple-50/50 border border-purple-200/50 rounded-xl flex flex-col items-center justify-center">
+                            <Lock className="w-12 h-12 text-purple-300 mx-auto mb-4" />
+                            <h4 className="font-bold text-purple-800 text-lg">Fase Reveal Belum Dimulai</h4>
+                            <p className="text-sm text-purple-700 mt-2 max-w-sm">Anda baru bisa melakukan proses Dekripsi & Reveal setelah batas waktu pengumpulan (Commit Deadline) berakhir.</p>
+                        </div>
+                    ) : (
+                        <div className="max-w-md mx-auto space-y-4 py-8">
+                            <input
+                                type="password"
+                                value={revealSecret}
+                                onChange={(e) => setRevealSecret(e.target.value)}
+                                placeholder="Secret PIN"
+                                className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-purple-900/50 text-sm text-[var(--text-secondary)] focus:outline-none focus:border-purple-500 transition-colors text-center font-mono"
+                            />
+                            <button
+                                onClick={handleRunReveal}
+                                disabled={revealing}
+                                className="w-full py-2.5 rounded-lg bg-blue-600 hover:bg-blue-700 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50"
+                            >
+                                {revealing ? "Proses Verifikasi..." : <><KeyRound className="w-4 h-4" /> Proses Dekripsi & Reveal</>}
+                            </button>
+                            
+                            {revealResult && (
+                                <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
+                                    <div className="flex items-center gap-2">
+                                        {revealResult.isValid ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
+                                        {revealResult.message}
+                                    </div>
+                                    {revealResult.isValid && !!revealResult.decryptedPayload && (
+                                        <pre className="text-[10px] bg-[var(--surface)] p-3 rounded-lg overflow-x-auto text-[var(--text-secondary)]">
+                                            {JSON.stringify(revealResult.decryptedPayload, null, 2)}
+                                        </pre>
+                                    )}
                                 </div>
-                                {revealResult.isValid && !!revealResult.decryptedPayload && (
-                                    <pre className="text-[10px] bg-[var(--surface)] p-3 rounded-lg overflow-x-auto text-[var(--text-secondary)]">
-                                        {JSON.stringify(revealResult.decryptedPayload, null, 2)}
-                                    </pre>
-                                )}
-                            </div>
-                        )}
-                    </div>
+                            )}
+                        </div>
+                    )}
                 </div>
             )}
             
@@ -1125,8 +1145,13 @@ export default function TenderDetailPage() {
                                         <div key={bid.id} className={`bg-[var(--surface-secondary)]/50 border ${isWinner ? 'border-teal-200' : 'border-[var(--border)]'} rounded-xl overflow-hidden`}>
                                             <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-teal-200' : 'bg-[var(--surface-secondary)]/30 border-[var(--border)]'} flex justify-between items-center`}>
                                                 <div>
-                                                    <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
-                                                    {isWinner && <span className="ml-3 text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
+                                                    <div className="flex items-center">
+                                                        <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
+                                                        {isWinner && <span className="ml-3 text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
+                                                    </div>
+                                                    <span className="text-[10px] text-[var(--text-tertiary)] mt-1 flex items-center gap-1">
+                                                        <Clock className="w-3 h-3" /> Submitted: {new Date(bid.submittedAt).toLocaleString('id-ID')}
+                                                    </span>
                                                 </div>
                                                 <div className="text-right">
                                                     <span className="text-xs text-[var(--text-tertiary)] block mb-1">Total Skor</span>
