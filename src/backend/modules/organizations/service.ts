@@ -8,6 +8,15 @@ export abstract class OrganizationService {
         const orgId = crypto.randomUUID();
         const now = new Date();
 
+        if (data.registrationNumber) {
+            const existing = await db.query.organizations.findFirst({
+                where: (o, { eq }) => eq(o.registrationNumber, data.registrationNumber!),
+            });
+            if (existing) {
+                throw new Error("Nomor registrasi sudah terdaftar oleh organisasi lain.");
+            }
+        }
+
         await db.transaction(async (tx) => {
             await tx.insert(organizations).values({
                 id: orgId,

@@ -77,9 +77,14 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
                 set.status = 401;
                 return { message: "Unauthorized" };
             }
-            const result = await OrganizationService.create(body, user.id);
-            set.status = 201;
-            return { message: "Organization created successfully", data: result };
+            try {
+                const result = await OrganizationService.create(body, user.id);
+                set.status = 201;
+                return { message: "Organization created successfully", data: result };
+            } catch (error: any) {
+                set.status = 400;
+                return { message: error.message || "Failed to create organization" };
+            }
         },
         {
             auth: true,
