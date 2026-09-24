@@ -133,10 +133,8 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
                 }
                 console.error("Bid submission error:", error);
                 
-                // Return full error trace to frontend for debugging
                 return { 
-                    message: "Database Error: " + causeMsg, 
-                    detail: causeCode 
+                    message: "Terjadi kesalahan internal pada server saat memproses bid."
                 };
             }
         },

@@ -52,6 +52,7 @@ contract TenderSeal {
     function commitBid(string memory tenderId, string memory bidId, string memory commitmentHash) external {
         Tender memory tender = tenders[tenderId];
         require(tender.commitDeadline > 0, "Tender does not exist");
+        require(block.timestamp <= tender.commitDeadline, "Commit deadline passed");
         
         require(tenderBids[tenderId][bidId].vendor == address(0), "Bid already committed");
 
