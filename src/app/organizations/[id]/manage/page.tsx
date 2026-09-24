@@ -531,7 +531,7 @@ export default function OrgManagePage() {
                                 </button>
                             </div>
                         </div>
-                    )}
+                    ) : null}
 
                     {/* Invite codes list */}
                     <div className="card">
