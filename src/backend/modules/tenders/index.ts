@@ -316,8 +316,6 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             }
         },
         {
-            auth: true,
-            beforeHandle: [requireSystemAdmin],
             params: t.Object({ id: t.String() }),
             detail: {
                 summary: "Get Audit Log",

@@ -1118,7 +1118,7 @@ export default function TenderDetailPage() {
                                     <div className="flex-1">
                                         <h3 className="text-[var(--accent)] font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
                                         <p className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-                                            {auditData.bids.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
+                                            {auditData.bids?.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
                                         </p>
                                         <div className="flex flex-wrap gap-4 text-xs font-mono">
                                             <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)]">
@@ -1137,9 +1137,9 @@ export default function TenderDetailPage() {
                                 <Eye className="w-5 h-5 text-[var(--accent)]" /> Transparansi Proposal & Penilaian
                             </h3>
                             <div className="grid grid-cols-1 gap-6">
-                                {auditData.bids.map((bid: any) => {
+                                {auditData.bids?.map((bid: any) => {
                                     const payload = bid.reveal?.revealedPayload || {};
-                                    const scoresForBid = auditData.scores.filter((s: any) => s.bidId === bid.id);
+                                    const scoresForBid = auditData.scores?.filter((s: any) => s.bidId === bid.id) || [];
                                     const isWinner = auditData.result?.winningBidId === bid.id;
                                     
                                     return (
