@@ -732,10 +732,56 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
                     </div>
                     <div className="space-y-2">
                         <label className="text-xs font-semibold text-[var(--text-secondary)]">Durasi Reveal Window</label>
-                        <div className="relative">
-                            <input type="number" min={1} max={720} value={form.revealWindowHours} onChange={(e) => setForm((p) => ({ ...p, revealWindowHours: Number(e.target.value) }))}
-                                className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-emerald-500/60 pr-16" />
-                            <span className="absolute right-4 top-1/2 -translate-y-1/2 text-xs text-[var(--text-tertiary)] font-medium">jam</span>
+                        <div className="pt-1">
+                            <div className="flex items-center gap-2">
+                                <input 
+                                    type="number" 
+                                    min={0} 
+                                    max={30} 
+                                    placeholder="Hari"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-transparent text-sm"
+                                    value={Math.floor(form.revealWindowHours / 24)} 
+                                    onChange={(e) => {
+                                        const days = Number(e.target.value) || 0;
+                                        const hours = Math.floor(form.revealWindowHours % 24);
+                                        const minutes = Math.round((form.revealWindowHours % 1) * 60);
+                                        setForm(p => ({ ...p, revealWindowHours: (days * 24) + hours + (minutes / 60) }));
+                                    }} 
+                                />
+                                <span className="text-xs text-[var(--text-tertiary)]">Hari</span>
+                                
+                                <input 
+                                    type="number" 
+                                    min={0} 
+                                    max={23} 
+                                    placeholder="Jam"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-transparent text-sm"
+                                    value={Math.floor(form.revealWindowHours % 24)} 
+                                    onChange={(e) => {
+                                        const days = Math.floor(form.revealWindowHours / 24);
+                                        const hours = Number(e.target.value) || 0;
+                                        const minutes = Math.round((form.revealWindowHours % 1) * 60);
+                                        setForm(p => ({ ...p, revealWindowHours: (days * 24) + hours + (minutes / 60) }));
+                                    }} 
+                                />
+                                <span className="text-xs text-[var(--text-tertiary)]">Jam</span>
+                                
+                                <input 
+                                    type="number" 
+                                    min={0} 
+                                    max={59} 
+                                    placeholder="Menit"
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)] bg-transparent text-sm"
+                                    value={Math.round((form.revealWindowHours % 1) * 60)} 
+                                    onChange={(e) => {
+                                        const days = Math.floor(form.revealWindowHours / 24);
+                                        const hours = Math.floor(form.revealWindowHours % 24);
+                                        const minutes = Number(e.target.value) || 0;
+                                        setForm(p => ({ ...p, revealWindowHours: (days * 24) + hours + (minutes / 60) }));
+                                    }} 
+                                />
+                                <span className="text-xs text-[var(--text-tertiary)]">Menit</span>
+                            </div>
                         </div>
                         <p className="text-[11px] text-[var(--text-tertiary)]">Waktu vendor untuk decrypt dan ungkap penawaran</p>
                     </div>
@@ -997,7 +1043,9 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
                     <ReviewRow label="Kode" value={form.code} mono />
                     <ReviewRow label="Kategori" value={form.category} />
                     <ReviewRow label="Commit Deadline" value={deadline ? deadline.toLocaleString("id-ID") : "—"} />
-                    <ReviewRow label="Reveal Window" value={`${form.revealWindowHours} jam`} />
+                    
+    <ReviewRow label="Reveal Window" value={`${Math.floor(form.revealWindowHours / 24) > 0 ? Math.floor(form.revealWindowHours / 24) + " Hari " : ""}${Math.floor(form.revealWindowHours % 24) > 0 ? Math.floor(form.revealWindowHours % 24) + " Jam " : ""}${Math.round((form.revealWindowHours % 1) * 60) > 0 ? Math.round((form.revealWindowHours % 1) * 60) + " Menit" : ""}`} />
+    
                     <ReviewRow label="Deskripsi" value={form.description || "—"} full />
                 </div>
             </div>

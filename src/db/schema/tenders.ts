@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, varchar, real } from "drizzle-orm/pg-core";
 import { tenderStatusEnum } from "./enums";
 import { organizations } from "./organizations";
 import { user } from "./auth";
@@ -18,7 +18,7 @@ export const tenders = pgTable("tenders", {
     status: tenderStatusEnum("status").default("DRAFT").notNull(),
     commitDeadline: timestamp("commit_deadline", { withTimezone: true }).notNull(),
     // Durasi reveal window dalam jam, default 48 jam
-    revealWindowHours: integer("reveal_window_hours").default(48).notNull(),
+    revealWindowHours: real("reveal_window_hours").default(48).notNull(),
     // Dihitung dari commit_deadline + reveal_window_hours saat tender ditutup
     revealDeadline: timestamp("reveal_deadline", { withTimezone: true }),
     openedAt: timestamp("opened_at", { withTimezone: true }),
