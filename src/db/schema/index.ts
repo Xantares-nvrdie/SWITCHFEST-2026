@@ -20,8 +20,9 @@ export * from "./bids";
 // Procurement (documents, blockchain, scoring, results)
 export * from "./procurement";
 
-// Audit
+// Audit & Notifications
 export * from "./audit-logs";
+export * from "./notifications";
 
 // Drizzle relations (required for with:{} eager loading)
 export * from "./relations";

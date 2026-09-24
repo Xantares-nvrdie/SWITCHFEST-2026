@@ -9,6 +9,7 @@ import tenderParticipantsModule from "@/backend/modules/tender-participants";
 import bidsModule from "@/backend/modules/bids";
 import procurementModule from "@/backend/modules/procurement";
 import auditLogsModule from "@/backend/modules/audit-logs";
+import notificationsModule from "@/backend/modules/notifications";
 import betterAuthView from "@/backend/utils/better-auth";
 import { AuthDocs } from "@/backend/utils/better-auth/docs";
 
@@ -34,6 +35,7 @@ export const app = new Elysia({ prefix: "/api" })
                     { name: "Bids", description: "Client-side encrypted sealed bidding & reveal verification" },
                     { name: "Procurement", description: "Scoring engine, winner results & blockchain logs" },
                     { name: "Audit Logs", description: "System & audit trail tracking" },
+                    { name: "Notifications", description: "User notifications & inbox" },
                 ],
             },
             scalar: {
@@ -56,7 +58,8 @@ export const app = new Elysia({ prefix: "/api" })
     .use(tenderParticipantsModule)
     .use(bidsModule)
     .use(procurementModule)
-    .use(auditLogsModule);
+    .use(auditLogsModule)
+    .use(notificationsModule);
 
 
 export type app = typeof app;

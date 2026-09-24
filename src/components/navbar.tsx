@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { NotificationBell } from "@/components/NotificationBell";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
     FileText,
@@ -125,6 +126,7 @@ export default function Navbar() {
                         <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
                     ) : session?.user ? (
                         <div className="flex items-center gap-2">
+                            <NotificationBell />
                             <Link href="/profile" className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[var(--surface-secondary)] transition-colors border border-transparent hover:border-[var(--border-light)] cursor-pointer">
                                 {session.user.image ? (
                                     <img src={session.user.image} alt={session.user.name} className="w-6 h-6 rounded-full object-cover border border-[var(--border)]" />

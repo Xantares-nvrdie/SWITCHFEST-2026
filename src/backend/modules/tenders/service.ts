@@ -3,6 +3,7 @@ import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockc
 import { eq } from "drizzle-orm";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
+import { NotificationService } from "../notifications/service";
 
 export abstract class TenderService {
     static async create(data: TenderModel.createInput & { createdBy: string }) {
@@ -129,6 +130,30 @@ export abstract class TenderService {
         }
 
         await db.update(tenders).set(updatePayload).where(eq(tenders.id, id));
+
+        // Notifications
+        if (status === "REVEAL") {
+            const tenderInfo = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+            const allBids = await db.query.bids.findMany({
+                where: (b, { eq }) => eq(b.tenderId, id)
+            });
+            
+            for (const bid of allBids) {
+                const members = await db.query.organizationMembers.findMany({
+                    where: (m, { eq, and }) => and(eq(m.organizationId, bid.organizationId), eq(m.status, "ACTIVE"))
+                });
+                
+                for (const member of members) {
+                    await NotificationService.create({
+                        userId: member.userId,
+                        title: "Fase Reveal Dibuka!",
+                        message: `Tender ${tenderInfo?.code} telah memasuki fase REVEAL. Segera decrypt dokumen penawaran Anda!`,
+                        type: "INFO",
+                        link: `/tenders/${id}`
+                    });
+                }
+            }
+        }
     }
 
     static async addField(tenderId: string, data: TenderModel.addFieldInput) {
@@ -248,6 +273,34 @@ export abstract class TenderService {
                 updatedAt: now,
             }).where(eq(tenders.id, tenderId));
         });
+
+        // E. Send Notifications
+        try {
+            for (const bid of payload.bids) {
+                const bidRecord = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bid.bidId) });
+                if (!bidRecord) continue;
+                
+                const members = await db.query.organizationMembers.findMany({
+                    where: (m, { eq, and }) => and(eq(m.organizationId, bidRecord.organizationId), eq(m.status, "ACTIVE"))
+                });
+                
+                const isWinner = bid.bidId === payload.winningBidId;
+                
+                for (const member of members) {
+                    await NotificationService.create({
+                        userId: member.userId,
+                        title: isWinner ? "Selamat! Anda Memenangkan Tender" : "Pengumuman Hasil Tender",
+                        message: isWinner 
+                            ? `Organisasi Anda terpilih sebagai pemenang untuk tender ${tender.code} dengan skor akhir ${payload.finalScore}.`
+                            : `Tender ${tender.code} telah selesai. Sayang sekali, organisasi Anda belum berhasil kali ini.`,
+                        type: isWinner ? "SUCCESS" : "INFO",
+                        link: `/tenders/${tenderId}`
+                    });
+                }
+            }
+        } catch (error) {
+            console.error("Failed to send finalization notifications:", error);
+        }
 
         return { success: true };
     }

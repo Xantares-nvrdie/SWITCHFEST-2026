@@ -4,6 +4,7 @@ import { bidCrypto, bidReveals, bids, encryptedBids } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import type { BidModel } from "./model";
 import { contract } from "@/lib/web3";
+import { NotificationService } from "../notifications/service";
 
 export abstract class BidService {
     static async getBidsForUser(userId: string) {
@@ -105,6 +106,25 @@ export abstract class BidService {
         } catch (error) {
             console.error("Relayer failed to commit bid to blockchain:", error);
             // We might want to revert or flag the bid, but for now we just log it
+        }
+
+        try {
+            const members = await db.query.organizationMembers.findMany({
+                where: (m, { eq, and }) => and(eq(m.organizationId, data.organizationId), eq(m.status, "ACTIVE"))
+            });
+            const tenderInfo = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, tenderId) });
+            
+            for (const member of members) {
+                await NotificationService.create({
+                    userId: member.userId,
+                    title: "Penawaran Terkirim",
+                    message: `Dokumen penawaran Anda untuk tender ${tenderInfo?.code} berhasil dikirim secara enkripsi.`,
+                    type: "SUCCESS",
+                    link: `/tenders/${tenderId}`
+                });
+            }
+        } catch (err) {
+            console.error("Failed to send bid notification", err);
         }
 
         return { id: bidId, commitmentHash: data.commitmentHash };
