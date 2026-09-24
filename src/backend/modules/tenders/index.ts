@@ -82,6 +82,16 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 createdBy: user.id,
             });
 
+            await AuditLogService.log({
+                userId: user.id,
+                organizationId: body.organizationId,
+                tenderId: result.id,
+                action: "CREATE_TENDER",
+                entityType: "tenders",
+                entityId: result.id,
+                description: `Procurement Officer membuat draft tender baru berjudul "${body.title}"`,
+            });
+
             set.status = 201;
             return { message: "Tender created successfully", data: result };
         },
@@ -124,6 +134,17 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             }
 
             await TenderService.updateStatus(params.id, body.status);
+            
+            await AuditLogService.log({
+                userId: user.id,
+                organizationId: tender.organizationId,
+                tenderId: params.id,
+                action: "UPDATE_TENDER_STATUS",
+                entityType: "tenders",
+                entityId: params.id,
+                description: `Status tender diubah menjadi ${body.status}`,
+            });
+
             return { message: `Tender status updated to ${body.status}` };
         },
         {
