@@ -12,7 +12,6 @@ export default function ProfilePage() {
 
     const [name, setName] = useState("");
     const [image, setImage] = useState("");
-    const [walletAddress, setWalletAddress] = useState("");
 
     const [isLoading, setIsLoading] = useState(true);
     const [isSaving, setIsSaving] = useState(false);
@@ -23,17 +22,7 @@ export default function ProfilePage() {
         if (session?.user) {
             setName(session.user.name || "");
             setImage(session.user.image || "");
-            
-            // Fetch wallet address
-            fetch("/api/profile/wallet")
-                .then((r) => r.json())
-                .then((data) => {
-                    if (data.walletAddress) {
-                        setWalletAddress(data.walletAddress);
-                    }
-                })
-                .catch(console.error)
-                .finally(() => setIsLoading(false));
+            setIsLoading(false);
         } else {
             setIsLoading(false);
         }
@@ -62,13 +51,6 @@ export default function ProfilePage() {
             await authClient.updateUser({
                 name,
                 image: image || undefined,
-            });
-
-            // Update wallet data
-            await fetch("/api/profile/wallet", {
-                method: "POST",
-                headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ walletAddress }),
             });
 
             // Trigger hard reload to refresh navbar session context
@@ -202,26 +184,6 @@ export default function ProfilePage() {
                                 />
                             </div>
                         </div>
-                    </div>
-                </div>
-
-                <hr className="border-[var(--border)]" />
-
-                <div className="grid gap-6">
-                    <div className="space-y-1">
-                        <h3 className="font-semibold text-[17px] text-[var(--text-primary)]">Koneksi Blockchain</h3>
-                        <p className="text-[13px] text-[var(--text-secondary)]">Tautkan alamat EVM untuk berinteraksi dengan Smart Contract.</p>
-                    </div>
-
-                    <div className="space-y-2">
-                        <label className="text-[13px] font-medium text-[var(--text-primary)]">EVM Wallet Address (Opsional)</label>
-                        <input
-                            type="text"
-                            value={walletAddress}
-                            onChange={(e) => setWalletAddress(e.target.value)}
-                            className="w-full px-3 py-2.5 bg-[var(--surface)] border border-[var(--border)] rounded-lg text-[14px] focus:ring-2 focus:ring-[var(--accent)] focus:border-[var(--accent)] font-mono transition-all outline-none"
-                            placeholder="0x..."
-                        />
                     </div>
                 </div>
 
