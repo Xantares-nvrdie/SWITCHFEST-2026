@@ -43,7 +43,10 @@ export default function BidsHistoryPage() {
     useEffect(() => {
         if (!session?.user) return;
         fetch("/api/bids/me")
-            .then((res) => res.json())
+            .then(async (r) => {
+                if (!r.ok) return [];
+                return await r.json();
+            })
             .then((data) => {
                 setBids(data);
             })

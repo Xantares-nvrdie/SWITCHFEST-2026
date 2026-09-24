@@ -157,9 +157,18 @@ export default function TenderDetailPage() {
         if (!tenderId) return;
         
         Promise.all([
-            fetch(`/api/tenders/${tenderId}`).then((r) => r.json()),
-            session?.user ? fetch("/api/organizations/me").then((r) => r.json()) : Promise.resolve([]),
-            fetch(`/api/bids/tender/${tenderId}`).then((r) => r.json()),
+            fetch(`/api/tenders/${tenderId}`).then(async (r) => {
+                if (!r.ok) return { error: true };
+                return await r.json();
+            }),
+            session?.user ? fetch("/api/organizations/me").then(async (r) => {
+                if (!r.ok) return [];
+                return await r.json();
+            }) : Promise.resolve([]),
+            fetch(`/api/bids/tender/${tenderId}`).then(async (r) => {
+                if (!r.ok) return [];
+                return await r.json();
+            }),
         ])
         .then(([tenderData, orgsData, bidsData]) => {
             if (Array.isArray(bidsData)) {

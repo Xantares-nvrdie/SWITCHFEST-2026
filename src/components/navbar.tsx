@@ -33,7 +33,10 @@ export default function Navbar() {
     useEffect(() => {
         if (session?.user) {
             fetch("/api/organizations/me")
-                .then((r) => r.json())
+                .then(async (r) => {
+                    if (!r.ok) return [];
+                    return await r.json();
+                })
                 .then((data) => {
                     const eligible = data.some(
                         (o: any) =>

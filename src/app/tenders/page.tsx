@@ -60,7 +60,10 @@ export default function TendersPage() {
         }
 
         fetch("/api/tenders")
-            .then((res) => res.json())
+            .then(async (r) => {
+                if (!r.ok) return [];
+                return await r.json();
+            })
             .then((data) => {
                 const mapped: TenderItem[] = data.map((t: any) => ({
                     id: t.id,

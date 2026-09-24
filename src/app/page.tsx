@@ -18,7 +18,10 @@ export default function HomePage() {
 
     useEffect(() => {
         fetch("/api/tenders")
-            .then((r) => r.json())
+            .then(async (r) => {
+                if (!r.ok) return [];
+                return await r.json();
+            })
             .then((tenders: any[]) => {
                 setStats({
                     totalTenders: tenders.length,
