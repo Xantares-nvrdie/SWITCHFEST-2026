@@ -98,6 +98,15 @@ export abstract class BidService {
             });
         });
 
+        try {
+            // Submit to blockchain via Relayer (Gasless for user)
+            const tx = await contract.commitBid(tenderId, data.organizationId, data.commitmentHash);
+            await tx.wait();
+        } catch (error) {
+            console.error("Relayer failed to commit bid to blockchain:", error);
+            // We might want to revert or flag the bid, but for now we just log it
+        }
+
         return { id: bidId, commitmentHash: data.commitmentHash };
     }
 

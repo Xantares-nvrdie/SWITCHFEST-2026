@@ -305,26 +305,7 @@ export default function TenderDetailPage() {
             const { ciphertextHex, ivHex, payloadHash } = await encryptBidPayload(processedFormData, vendorKey);
             const commitmentHash = await calculateCommitmentHash(tenderId, selectedOrgId, processedFormData, bidSalt);
 
-            // B. Web3 Smart Contract Commit
-            // @ts-ignore
-            if (!window.ethereum) {
-                alert("Please install MetaMask to submit a bid.");
-                setSubmittingBid(false);
-                return;
-            }
-            
-            // @ts-ignore
-            await window.ethereum.request({ method: 'eth_requestAccounts' });
-            // @ts-ignore
-            const provider = new ethers.BrowserProvider(window.ethereum);
-            const signer = await provider.getSigner();
-            const contractAddress = process.env.NEXT_PUBLIC_CONTRACT_ADDRESS || "0x8e0dce737aC922f30bc2fc30d9930657029b6553";
-            const contract = new ethers.Contract(contractAddress, TenderSealABI, signer);
-            
-            const scTx = await contract.commitBid(tenderId, selectedOrgId, commitmentHash);
-            await scTx.wait();
-
-            // C. Submit to Backend
+            // C. Submit to Backend (Backend will act as relayer to blockchain)
             const res = await fetch(`/api/bids/tender/${tenderId}`, {
                 method: "POST",
                 headers: { "Content-Type": "application/json" },

@@ -18,12 +18,14 @@ interface TenderItem {
     title: string;
     description: string;
     category: string;
+    organizationId: string;
     organizationName: string;
     status: "DRAFT" | "OPEN" | "CLOSED" | "REVEAL" | "SCORING" | "COMPLETED";
     commitDeadline: string;
     revealWindowHours: number;
     participantCount: number;
     sealedBidsCount: number;
+    participantOrgIds: string[];
 }
 
 export default function TendersPage() {
@@ -33,12 +35,15 @@ export default function TendersPage() {
     const [searchQuery, setSearchQuery] = useState<string>("");
     const [loading, setLoading] = useState(true);
     const [canCreateTender, setCanCreateTender] = useState(false);
+    const [activeTab, setActiveTab] = useState<"my" | "all">("all");
+    const [myOrgIds, setMyOrgIds] = useState<string[]>([]);
 
     useEffect(() => {
         if (session?.user) {
             fetch("/api/organizations/me")
                 .then((r) => r.json())
                 .then((data) => {
+                    setMyOrgIds(data.map((o: any) => o.id));
                     const eligible = data.some(
                         (o: any) =>
                             o.memberStatus === "ACTIVE" &&
@@ -46,6 +51,10 @@ export default function TendersPage() {
                             (o.isVerified || o.verificationStatus === "APPROVED")
                     );
                     setCanCreateTender(eligible);
+                    
+                    if (data.length > 0) {
+                        setActiveTab("my");
+                    }
                 })
                 .catch(() => {});
         }
@@ -59,12 +68,14 @@ export default function TendersPage() {
                     title: t.title,
                     description: t.description || "",
                     category: t.category || "Umum",
+                    organizationId: t.organization?.id || "",
                     organizationName: t.organization?.name || "Organisasi",
                     status: t.status,
                     commitDeadline: t.commitDeadline,
                     revealWindowHours: t.revealWindowHours,
                     participantCount: t.participants?.length || 0,
                     sealedBidsCount: t.bids?.length || 0,
+                    participantOrgIds: t.participants?.map((p: any) => p.organizationId) || [],
                 }));
                 setTenders(mapped);
             })
@@ -73,6 +84,9 @@ export default function TendersPage() {
     }, []);
 
     const filteredTenders = tenders.filter((t) => {
+        const isMine = myOrgIds.includes(t.organizationId) || t.participantOrgIds.some((id) => myOrgIds.includes(id));
+        if (activeTab === "my" && !isMine) return false;
+
         const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
         const matchesSearch =
             t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
@@ -118,6 +132,30 @@ export default function TendersPage() {
                         Buat Tender Baru
                     </Link>
                 )}
+            </div>
+
+            {/* Tabs */}
+            <div className="flex items-center gap-2 border-b border-[var(--border)] pb-3">
+                <button
+                    onClick={() => setActiveTab("my")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                        activeTab === "my"
+                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                    }`}
+                >
+                    Tender Saya
+                </button>
+                <button
+                    onClick={() => setActiveTab("all")}
+                    className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
+                        activeTab === "all"
+                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
+                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                    }`}
+                >
+                    Semua Tender
+                </button>
             </div>
 
             {/* Filter dan Pencarian */}
