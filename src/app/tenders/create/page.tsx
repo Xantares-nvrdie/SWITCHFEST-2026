@@ -115,19 +115,19 @@ const SCORING_META: Record<ScoringType, { label: string; icon: React.ReactNode; 
         label: "Nilai Terendah Terbaik",
         icon: <TrendingDown className="w-3.5 h-3.5" />,
         color: "text-[var(--accent)]",
-        desc: "Nilai terkecil (mis. harga, hari) mendapat skor tertinggi",
+        desc: "Dihitung otomatis (Smart Z-Score). Angka terendah di bawah rata-rata pasar mendapat skor tertinggi.",
     },
     HIGHEST_VALUE: {
         label: "Nilai Tertinggi Terbaik",
         icon: <TrendingUp className="w-3.5 h-3.5" />,
         color: "text-[var(--accent)]",
-        desc: "Nilai terbesar (mis. garansi, uptime) mendapat skor tertinggi",
+        desc: "Dihitung otomatis (Smart Z-Score). Angka tertinggi di atas rata-rata pasar mendapat skor tertinggi.",
     },
     MANUAL: {
         label: "Penilaian Manual",
         icon: <ClipboardList className="w-3.5 h-3.5" />,
         color: "text-[var(--text-secondary)]",
-        desc: "Evaluator memberi nilai berdasarkan panduan yang ditetapkan",
+        desc: "Evaluator memberi nilai secara objektif berdasarkan panduan kriteria.",
     },
 };
 

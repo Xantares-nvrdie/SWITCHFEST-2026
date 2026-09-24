@@ -555,25 +555,35 @@ export default function TenderDetailPage() {
                 if (c.scoringType === "MANUAL") {
                     score = manualScores[bid.id]?.[c.id] || 0;
                     score = Math.min(Math.max(score, 0), Number(c.maxScore));
-                } else if (c.scoringType === "LOWEST_PRICE") {
+                } else if (c.scoringType === "LOWEST_PRICE" || c.scoringType === "HIGHEST_VALUE") {
                     const allVals = validBids.map(b => {
                         const bPayload = b.reveal?.revealedPayload || {};
                         const vStr = String(bPayload[fieldKey] || "0").replace(/[^0-9.-]+/g, "");
                         return Number(vStr);
                     }).filter(v => v > 0);
-                    const minVal = allVals.length ? Math.min(...allVals) : 0;
-                    if (val > 0 && minVal > 0) {
-                        score = (minVal / val) * Number(c.maxScore);
-                    }
-                } else if (c.scoringType === "HIGHEST_VALUE") {
-                    const allVals = validBids.map(b => {
-                        const bPayload = b.reveal?.revealedPayload || {};
-                        const vStr = String(bPayload[fieldKey] || "0").replace(/[^0-9.-]+/g, "");
-                        return Number(vStr);
-                    }).filter(v => v > 0);
-                    const maxVal = allVals.length ? Math.max(...allVals) : 0;
-                    if (val > 0 && maxVal > 0) {
-                        score = (val / maxVal) * Number(c.maxScore);
+                    
+                    if (allVals.length > 0 && val > 0) {
+                        const mean = allVals.reduce((a, b) => a + b, 0) / allVals.length;
+                        // Avoid division by zero if all values are the same
+                        const variance = allVals.reduce((a, b) => a + Math.pow(b - mean, 2), 0) / allVals.length;
+                        const stdDev = Math.sqrt(variance);
+                        
+                        let zScore = 0;
+                        if (stdDev > 0) {
+                            zScore = (val - mean) / stdDev;
+                        }
+                        
+                        // Map Z-Score to 0-100 scale (Mean 50, Std multiplier 20)
+                        let normalizedScore = 50;
+                        if (c.scoringType === "LOWEST_PRICE") {
+                            normalizedScore = 50 - (zScore * 20);
+                        } else {
+                            normalizedScore = 50 + (zScore * 20);
+                        }
+                        
+                        // Scale to maxScore and clamp between 0 and maxScore
+                        const scaledToMax = (normalizedScore / 100) * Number(c.maxScore);
+                        score = Math.min(Math.max(scaledToMax, 0), Number(c.maxScore));
                     }
                 }
 
