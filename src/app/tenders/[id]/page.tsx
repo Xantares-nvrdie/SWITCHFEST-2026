@@ -74,7 +74,6 @@ export default function TenderDetailPage() {
     // Vendor Organization Selection
     const [userOrgs, setUserOrgs] = useState<OrgOption[]>([]);
     const [selectedOrgId, setSelectedOrgId] = useState<string>("");
-    const [userWallet, setUserWallet] = useState<string | null>(null);
 
     // Active Tab state
     const [activeTab, setActiveTab] = useState<"overview" | "encrypt" | "reveal" | "scoring" | "audit">("overview");
@@ -161,12 +160,8 @@ export default function TenderDetailPage() {
             fetch(`/api/tenders/${tenderId}`).then((r) => r.json()),
             session?.user ? fetch("/api/organizations/me").then((r) => r.json()) : Promise.resolve([]),
             fetch(`/api/bids/tender/${tenderId}`).then((r) => r.json()),
-            session?.user ? fetch("/api/profile/wallet").then((r) => r.json()) : Promise.resolve({}),
         ])
-        .then(([tenderData, orgsData, bidsData, walletData]) => {
-            if (walletData?.walletAddress) {
-                setUserWallet(walletData.walletAddress);
-            }
+        .then(([tenderData, orgsData, bidsData]) => {
             if (Array.isArray(bidsData)) {
                 setAllBids(bidsData);
             }
@@ -742,21 +737,7 @@ export default function TenderDetailPage() {
                             </div>
                         </div>
                         
-                        {!userWallet ? (
-                            <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-200 text-amber-700 text-sm flex flex-col gap-3">
-                                <div className="flex items-center gap-2 font-semibold">
-                                    <AlertCircle className="w-4 h-4" /> Perhatian: EVM Wallet Belum Tertaut
-                                </div>
-                                <p className="text-[13px]">
-                                    Karena penawaran akan dikunci di dalam *Smart Contract* Blockchain, Anda wajib menautkan alamat dompet (Wallet Address) pada profil Anda sebelum dapat mengajukan penawaran.
-                                </p>
-                                <div>
-                                    <Link href="/profile" className="inline-flex items-center gap-1.5 px-4 py-2 bg-amber-500 text-white rounded-lg font-medium text-xs hover:bg-amber-600 transition-colors">
-                                        Pergi ke Profil Saya
-                                    </Link>
-                                </div>
-                            </div>
-                        ) : (submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
+                        {(submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
                             <div className="space-y-6">
                                 <div className="p-5 rounded-2xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] flex flex-col items-center justify-center text-center gap-3">
                                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
