@@ -660,11 +660,21 @@ export default function TenderDetailPage() {
                         )}
                     </div>
 
-                    <div className="flex items-center gap-2">
-                        <span className="text-xs text-[var(--text-tertiary)]">Commit Deadline:</span>
-                        <span className="text-xs font-bold text-amber-600 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-200">
-                            {new Date(tender.commitDeadline).toLocaleString('id-ID')}
-                        </span>
+                    <div className="flex flex-col gap-2">
+                        <div className="flex items-center gap-2">
+                            <span className="text-xs text-[var(--text-tertiary)] w-28">Commit Deadline:</span>
+                            <span className="text-xs font-bold text-amber-600 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-200">
+                                {new Date(tender.commitDeadline).toLocaleString('id-ID')}
+                            </span>
+                        </div>
+                        {tender.revealDeadline && (
+                            <div className="flex items-center gap-2">
+                                <span className="text-xs text-[var(--text-tertiary)] w-28">Reveal Deadline:</span>
+                                <span className="text-xs font-bold text-purple-600 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-200">
+                                    {new Date(tender.revealDeadline).toLocaleString('id-ID')}
+                                </span>
+                            </div>
+                        )}
                     </div>
                 </div>
             </div>

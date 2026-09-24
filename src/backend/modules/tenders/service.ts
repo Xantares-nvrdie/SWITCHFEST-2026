@@ -174,8 +174,8 @@ export abstract class TenderService {
         });
 
         if (!tender) throw new Error("Tender not found");
-        if (tender.status !== "CLOSED") {
-            throw new Error("Tender can only be finalized if its status is CLOSED");
+        if (tender.status !== "SCORING") {
+            throw new Error("Tender can only be finalized if its status is SCORING");
         }
 
         const now = new Date();
