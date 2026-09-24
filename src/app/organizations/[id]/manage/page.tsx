@@ -58,6 +58,8 @@ interface Organization {
     phone?: string;
     address?: string;
     walletAddress?: string;
+    verificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
+    rejectionReason?: string;
 }
 
 const roleMeta: Record<OrgRole, { label: string; icon: React.ElementType; color: string; bg: string }> = {
@@ -276,6 +278,23 @@ export default function OrgManagePage() {
                 </div>
             </div>
 
+            {/* Rejection Banner */}
+            {org.verificationStatus === "REJECTED" && (
+                <div className="card border-red-200 bg-red-50/50 p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                    <div className="space-y-1">
+                        <h3 className="text-[14px] font-bold text-red-700">Pendaftaran Organisasi Ditolak</h3>
+                        <p className="text-[13px] text-red-600/90 leading-relaxed">
+                            Organisasi ini telah ditolak oleh Admin Sistem dengan alasan: <br />
+                            <span className="font-semibold">{org.rejectionReason || "Tidak ada alasan spesifik."}</span>
+                        </p>
+                        <p className="text-[12px] text-red-600/70 pt-1">
+                            Anda tidak dapat mengubah profil atau mengelola organisasi yang ditolak.
+                        </p>
+                    </div>
+                </div>
+            )}
+
             {/* Tabs */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-light)] w-fit">
                 {([["overview", Building2, "Profil Organisasi"], ["members", Users, "Anggota Tim"], ["invites", Key, "Kode Undangan"]] as const).map(([tab, Icon, label]) => {
@@ -307,12 +326,12 @@ export default function OrgManagePage() {
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nama Organisasi *</label>
-                                <input required type="text" value={formData.name || ""} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} disabled={!isAdmin} />
+                                <input required type="text" value={formData.name || ""} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Tipe *</label>
                                 <div className="relative">
-                                    <select value={formData.type || "BUYER"} onChange={e => setFormData(p => ({ ...p, type: e.target.value as any }))} className={selectClass} disabled={!isAdmin}>
+                                    <select value={formData.type || "BUYER"} onChange={e => setFormData(p => ({ ...p, type: e.target.value as any }))} className={selectClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"}>
                                         <option value="BUYER">BUYER (Pembeli/Panitia)</option>
                                         <option value="VENDOR">VENDOR (Penyedia)</option>
                                         <option value="BOTH">BOTH (Keduanya)</option>
@@ -322,31 +341,31 @@ export default function OrgManagePage() {
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nama Legal (PT/CV)</label>
-                                <input type="text" value={formData.legalName || ""} onChange={e => setFormData(p => ({ ...p, legalName: e.target.value }))} className={inputClass} disabled={!isAdmin} />
+                                <input type="text" value={formData.legalName || ""} onChange={e => setFormData(p => ({ ...p, legalName: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">NPWP / NIB</label>
-                                <input type="text" value={formData.registrationNumber || ""} onChange={e => setFormData(p => ({ ...p, registrationNumber: e.target.value }))} className={inputClass} disabled={!isAdmin} />
+                                <input type="text" value={formData.registrationNumber || ""} onChange={e => setFormData(p => ({ ...p, registrationNumber: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Email Perusahaan</label>
-                                <input type="email" value={formData.email || ""} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} className={inputClass} disabled={!isAdmin} />
+                                <input type="email" value={formData.email || ""} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nomor Telepon</label>
-                                <input type="text" value={formData.phone || ""} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} className={inputClass} disabled={!isAdmin} />
+                                <input type="text" value={formData.phone || ""} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Alamat Lengkap</label>
-                                <textarea rows={3} value={formData.address || ""} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} resize-none`} disabled={!isAdmin} />
+                                <textarea rows={3} value={formData.address || ""} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} resize-none`} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">EVM Wallet Address (opsional)</label>
-                                <input type="text" value={formData.walletAddress || ""} onChange={e => setFormData(p => ({ ...p, walletAddress: e.target.value }))} className={`${inputClass} font-mono`} placeholder="0x..." disabled={!isAdmin} />
+                                <input type="text" value={formData.walletAddress || ""} onChange={e => setFormData(p => ({ ...p, walletAddress: e.target.value }))} className={`${inputClass} font-mono`} placeholder="0x..." disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                         </div>
 
-                        {isAdmin && (
+                        {isAdmin && org.verificationStatus !== "REJECTED" && (
                             <div className="flex justify-end pt-4 border-t border-[var(--border)]">
                                 <button type="submit" disabled={isUpdating} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all disabled:opacity-50">
                                     {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
@@ -397,7 +416,7 @@ export default function OrgManagePage() {
                                     </div>
 
                                     {/* Admin actions */}
-                                    {isAdmin && !isSelf && (
+                                    {isAdmin && !isSelf && org.verificationStatus !== "REJECTED" && (
                                         <div className="flex items-center gap-3 shrink-0">
                                             {/* Role selector */}
                                             <div className="relative">
@@ -440,7 +459,7 @@ export default function OrgManagePage() {
             {activeTab === "invites" && isAdmin && (
                 <div className="space-y-6">
                     {/* Generate new code */}
-                    {!showInviteForm ? (
+                    {!showInviteForm && org.verificationStatus !== "REJECTED" ? (
                         <button
                             onClick={() => setShowInviteForm(true)}
                             className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-all shadow-sm"
@@ -448,7 +467,7 @@ export default function OrgManagePage() {
                             <Plus className="w-4 h-4" />
                             Buat Kode Undangan Baru
                         </button>
-                    ) : (
+                    ) : org.verificationStatus !== "REJECTED" ? (
                         <div className="card p-6 space-y-5 border-l-4 border-l-[var(--accent)]">
                             <h3 className="font-bold text-[var(--text-primary)] text-[16px] flex items-center gap-2">
                                 <Key className="w-5 h-5 text-[var(--accent)]" />
@@ -563,7 +582,7 @@ export default function OrgManagePage() {
                                         </div>
 
                                         {/* Revoke */}
-                                        {inv.isActive && (
+                                        {inv.isActive && org.verificationStatus !== "REJECTED" && (
                                             <button onClick={() => handleRevoke(inv.id)}
                                                 className="p-2 rounded-lg transition-all text-[var(--text-tertiary)] border border-transparent hover:border-red-200 hover:text-red-600 hover:bg-red-50"
                                                 title="Cabut kode">
