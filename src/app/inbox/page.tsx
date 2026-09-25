@@ -62,7 +62,7 @@ export default function InboxPage() {
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
             <Navbar />
             <div className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 mt-4">
-                <div className="flex items-center justify-between mb-8">
+                <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
                         <h1 className="text-2xl font-bold text-[var(--text-primary)] flex items-center gap-2">
                             <Bell className="w-6 h-6 text-[var(--accent)]" />
