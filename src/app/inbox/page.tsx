@@ -4,7 +4,6 @@ import { useState, useEffect } from "react";
 import { authClient } from "@/lib/auth-client";
 import { Bell, CheckCheck, Loader2, Info, CheckCircle2, AlertTriangle, ExternalLink } from "lucide-react";
 import Link from "next/link";
-import Navbar from "@/components/navbar";
 
 export default function InboxPage() {
     const { data: session } = authClient.useSession();
@@ -60,7 +59,6 @@ export default function InboxPage() {
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex flex-col">
-            <Navbar />
             <div className="flex-1 max-w-4xl w-full mx-auto p-4 sm:p-6 lg:p-8 mt-4">
                 <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-8">
                     <div>
