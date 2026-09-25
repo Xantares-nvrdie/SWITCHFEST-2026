@@ -287,7 +287,7 @@ export default function TenderDetailPage() {
                     const arrayBuffer = await value.arrayBuffer();
                     const ciphertext = await crypto.subtle.encrypt({ name: "AES-GCM", iv: fileIv }, fileKey, arrayBuffer);
                     
-                    const path = `bids/${tenderId}/${crypto.randomUUID()}_${value.name}.enc`;
+                    const path = `bids/${tenderId}/${crypto.randomUUID()}.enc`;
                     const { data, error } = await supabase.storage.from('tender-documents').upload(path, ciphertext, {
                         contentType: 'application/octet-stream'
                     });
