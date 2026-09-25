@@ -415,36 +415,42 @@ export default function CreateTenderPage() {
             const tenderId = data?.id;
 
             if (tenderId) {
+                const promises = [];
                 for (let i = 0; i < form.fields.length; i++) {
                     const f = form.fields[i];
-                    await fetch(`/api/tenders/${tenderId}/fields`, {
-                        method: "POST",
-                        headers: { "Content-Type": "application/json" },
-                        body: JSON.stringify({
-                            name: f.name,
-                            key: f.key || slugify(f.name),
-                            type: f.type,
-                            required: f.required,
-                            options: f.options || undefined,
-                            sortOrder: i,
-                        }),
-                    });
-                    // 1 field → 1 criterion (only if scored)
-                    if (f.scored && f.weight > 0) {
-                        await fetch(`/api/tenders/${tenderId}/criteria`, {
+                    promises.push(
+                        fetch(`/api/tenders/${tenderId}/fields`, {
                             method: "POST",
                             headers: { "Content-Type": "application/json" },
                             body: JSON.stringify({
                                 name: f.name,
-                                description: f.evaluatorGuide,
-                                weight: f.weight,
-                                maxScore: 100,
-                                scoringType: f.scoringType,
+                                key: f.key || slugify(f.name),
+                                type: f.type,
+                                required: f.required,
+                                options: f.options || undefined,
                                 sortOrder: i,
                             }),
-                        });
+                        })
+                    );
+                    // 1 field → 1 criterion (only if scored)
+                    if (f.scored && f.weight > 0) {
+                        promises.push(
+                            fetch(`/api/tenders/${tenderId}/criteria`, {
+                                method: "POST",
+                                headers: { "Content-Type": "application/json" },
+                                body: JSON.stringify({
+                                    name: f.name,
+                                    description: f.evaluatorGuide,
+                                    weight: f.weight,
+                                    maxScore: 100,
+                                    scoringType: f.scoringType,
+                                    sortOrder: i,
+                                }),
+                            })
+                        );
                     }
                 }
+                await Promise.all(promises);
             }
 
             setSuccessMessage("Tender berhasil dibuat!");
