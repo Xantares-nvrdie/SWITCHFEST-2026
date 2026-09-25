@@ -4,6 +4,7 @@ import { useState, useCallback, useRef, useEffect } from "react";
 import { useRouter } from "next/navigation";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
+import { supabase } from "@/lib/supabase";
 import {
     ArrowLeft,
     ArrowRight,
@@ -68,6 +69,7 @@ interface TenderFormData {
     code: string;
     category: string;
     description: string;
+    attachments: { name: string; url: string; file?: File }[];
     commitDeadline: string;
     revealWindowHours: number;
     fields: BidField[];
@@ -300,6 +302,7 @@ export default function CreateTenderPage() {
         code: generateCode(),
         category: "Hardware & IT",
         description: "",
+        attachments: [],
         commitDeadline: new Date(Date.now() + 7 * 24 * 60 * 60 * 1000).toISOString().slice(0, 16),
         revealWindowHours: 48,
         fields: [],
@@ -390,6 +393,24 @@ export default function CreateTenderPage() {
         }
         setErrorMessage(null);
         setLoading(true);
+
+        const uploadedAttachments = [...form.attachments];
+        for (let i = 0; i < uploadedAttachments.length; i++) {
+            const att = uploadedAttachments[i];
+            if (att.file) {
+                const ext = att.file.name.split('.').pop();
+                const path = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
+                const { data, error } = await supabase.storage.from("tender-public-docs").upload(path, att.file);
+                if (error) {
+                    setErrorMessage(`Gagal upload file ${att.name}: ${error.message}`);
+                    setLoading(false);
+                    return;
+                }
+                const { data: publicUrlData } = supabase.storage.from("tender-public-docs").getPublicUrl(path);
+                uploadedAttachments[i] = { name: att.name, url: publicUrlData.publicUrl };
+            }
+        }
+
         try {
             const res = await fetch("/api/tenders", {
                 method: "POST",
@@ -399,6 +420,7 @@ export default function CreateTenderPage() {
                     code: form.code,
                     title: form.title,
                     description: form.description,
+                    attachments: uploadedAttachments,
                     category: form.category,
                     commitDeadline: new Date(form.commitDeadline).toISOString(),
                     revealWindowHours: form.revealWindowHours,
@@ -728,6 +750,32 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
                     <label className="text-xs font-semibold text-[var(--text-secondary)]">Deskripsi Tender</label>
                     <textarea rows={4} value={form.description} onChange={(e) => setForm((p) => ({ ...p, description: e.target.value }))} placeholder="Jelaskan latar belakang kebutuhan, ruang lingkup, dan ketentuan tender..."
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-emerald-500/60 resize-none" />
+                </div>
+                <div className="space-y-3">
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Lampiran (Opsional)</label>
+                    <div className="space-y-2">
+                        {form.attachments.map((att, idx) => (
+                            <div key={idx} className="flex items-center justify-between px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm">
+                                <span className="truncate flex-1 text-[var(--text-secondary)]">{att.name}</span>
+                                <button type="button" onClick={() => {
+                                    const newAtt = [...form.attachments];
+                                    newAtt.splice(idx, 1);
+                                    setForm(p => ({ ...p, attachments: newAtt }));
+                                }} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-4 h-4" /></button>
+                            </div>
+                        ))}
+                        <label className="flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-[var(--border-strong)] rounded-xl bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors cursor-pointer text-sm">
+                            <FileUp className="w-4 h-4" />
+                            <span>Pilih File PDF/DOC</span>
+                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => {
+                                if (e.target.files && e.target.files[0]) {
+                                    const file = e.target.files[0];
+                                    setForm(p => ({ ...p, attachments: [...p.attachments, { name: file.name, url: "", file }] }));
+                                }
+                                e.target.value = "";
+                            }} />
+                        </label>
+                    </div>
                 </div>
                 <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">

@@ -21,6 +21,7 @@ export abstract class TenderService {
             code: data.code,
             title: data.title,
             description: data.description,
+            attachments: data.attachments || [],
             category: data.category,
             status: "DRAFT",
             commitDeadline: commitDeadlineDate,

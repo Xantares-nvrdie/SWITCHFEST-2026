@@ -34,7 +34,9 @@ import {
     Save,
     Check,
     AlertCircle,
-    RefreshCw
+    RefreshCw,
+    FileText,
+    FileUp
 } from "lucide-react";
 
 interface TenderData {
@@ -42,6 +44,7 @@ interface TenderData {
     code: string;
     title: string;
     description: string;
+    attachments?: { name: string; url: string }[];
     category: string;
     status: string;
     commitDeadline: string;
@@ -715,6 +718,21 @@ export default function TenderDetailPage() {
                 <div className="space-y-6">
                     <div className="card p-6 rounded-2xl border-[var(--border)] text-sm text-[var(--text-secondary)] leading-relaxed whitespace-pre-wrap">
                         {tender.description}
+                        {tender.attachments && tender.attachments.length > 0 && (
+                            <div className="mt-6 border-t border-[var(--border)] pt-4">
+                                <h4 className="text-xs font-bold text-[var(--text-primary)] mb-3 flex items-center gap-2">
+                                    <FileText className="w-4 h-4 text-[var(--text-tertiary)]" /> Dokumen Lampiran
+                                </h4>
+                                <div className="flex flex-col gap-2">
+                                    {tender.attachments.map((att: any, idx: number) => (
+                                        <a key={idx} href={att.url} target="_blank" rel="noopener noreferrer" className="flex items-center gap-2 px-4 py-2 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] hover:border-[var(--accent)] text-[var(--text-secondary)] hover:text-[var(--accent)] transition-colors w-fit text-xs font-medium">
+                                            <FileUp className="w-3.5 h-3.5" />
+                                            {att.name}
+                                        </a>
+                                    ))}
+                                </div>
+                            </div>
+                        )}
                     </div>
                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                         <div className="card p-6 rounded-2xl border-[var(--border)]">

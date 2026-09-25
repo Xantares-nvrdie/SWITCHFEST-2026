@@ -7,6 +7,7 @@ export namespace TenderModel {
         code: t.String({ minLength: 3 }),
         title: t.String({ minLength: 3 }),
         description: t.Optional(t.String()),
+        attachments: t.Optional(t.Array(t.Any())),
         category: t.Optional(t.String()),
         commitDeadline: t.String({ description: "ISO 8601 Timestamp string" }),
         revealWindowHours: t.Optional(t.Number({ default: 48 })),

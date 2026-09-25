@@ -1,4 +1,4 @@
-import { integer, pgTable, text, timestamp, varchar, real } from "drizzle-orm/pg-core";
+import { integer, pgTable, text, timestamp, varchar, real, jsonb } from "drizzle-orm/pg-core";
 import { tenderStatusEnum } from "./enums";
 import { organizations } from "./organizations";
 import { user } from "./auth";
@@ -14,6 +14,7 @@ export const tenders = pgTable("tenders", {
     code: varchar("code", { length: 50 }).notNull().unique(),
     title: varchar("title", { length: 255 }).notNull(),
     description: text("description"),
+    attachments: jsonb("attachments").default([]).notNull(),
     category: varchar("category", { length: 100 }),
     status: tenderStatusEnum("status").default("DRAFT").notNull(),
     commitDeadline: timestamp("commit_deadline", { withTimezone: true }).notNull(),
