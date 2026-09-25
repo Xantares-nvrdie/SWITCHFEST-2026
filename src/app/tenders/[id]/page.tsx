@@ -884,6 +884,44 @@ export default function TenderDetailPage() {
                                             className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors"
                                             rows={3}
                                         />
+                                    ) : f.type.toLowerCase() === 'select' ? (
+                                        <select
+                                            value={formData[f.key] || ""}
+                                            onChange={(e) => setFormData(p => ({ ...p, [f.key]: e.target.value }))}
+                                            className="w-full px-4 py-2.5 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] focus:outline-none focus:border-[var(--accent)] transition-colors appearance-none cursor-pointer"
+                                        >
+                                            <option value="" disabled>Pilih salah satu...</option>
+                                            {f.options?.map((opt: string) => (
+                                                <option key={opt} value={opt}>{opt}</option>
+                                            ))}
+                                        </select>
+                                    ) : f.type.toLowerCase() === 'multi-select' ? (
+                                        <div className="flex flex-wrap gap-2 pt-1">
+                                            {f.options?.map((opt: string) => {
+                                                const currentArr: string[] = Array.isArray(formData[f.key]) ? formData[f.key] : [];
+                                                const isSelected = currentArr.includes(opt);
+                                                return (
+                                                    <label key={opt} className={`flex items-center gap-2 px-3 py-2 rounded-xl border text-sm cursor-pointer transition-colors ${isSelected ? 'bg-[var(--accent-light)] border-teal-200 text-[var(--accent)]' : 'bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-secondary)] hover:border-[var(--accent)] hover:text-[var(--text-primary)]'}`}>
+                                                        <input 
+                                                            type="checkbox" 
+                                                            className="hidden" 
+                                                            checked={isSelected}
+                                                            onChange={(e) => {
+                                                                if (e.target.checked) {
+                                                                    setFormData(p => ({ ...p, [f.key]: [...currentArr, opt] }));
+                                                                } else {
+                                                                    setFormData(p => ({ ...p, [f.key]: currentArr.filter(x => x !== opt) }));
+                                                                }
+                                                            }}
+                                                        />
+                                                        <div className={`w-4 h-4 rounded flex items-center justify-center border ${isSelected ? 'border-[var(--accent)] bg-[var(--accent)]' : 'border-slate-400'}`}>
+                                                            {isSelected && <Check className="w-3 h-3 text-white" />}
+                                                        </div>
+                                                        <span className="font-medium">{opt}</span>
+                                                    </label>
+                                                );
+                                            })}
+                                        </div>
                                     ) : f.type.toLowerCase() === 'file' ? (
                                         <div>
                                             <input
@@ -1003,9 +1041,38 @@ export default function TenderDetailPage() {
                                         {revealResult.message}
                                     </div>
                                     {revealResult.isValid && !!revealResult.decryptedPayload && (
-                                        <pre className="text-[10px] bg-[var(--surface)] p-3 rounded-lg overflow-x-auto text-[var(--text-secondary)]">
-                                            {JSON.stringify(revealResult.decryptedPayload, null, 2)}
-                                        </pre>
+                                        <div className="mt-4 p-4 bg-white rounded-xl border border-teal-100 flex flex-col gap-4">
+                                            <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider border-b border-teal-100 pb-2 mb-2">Isi Penawaran Anda</h4>
+                                            {tender.fields?.map((f: any) => {
+                                                const val = (revealResult.decryptedPayload as any)[f.key];
+                                                return (
+                                                    <div key={f.key} className="space-y-1">
+                                                        <span className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">{f.name}</span>
+                                                        {f.type.toLowerCase() === 'file' ? (
+                                                            <div>
+                                                                {val ? (
+                                                                    val.includes("_isEncryptedFile") ? (
+                                                                        <button onClick={() => handleDownloadEncryptedFile(val)} className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--text-primary)] flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-[var(--accent-light)] border border-teal-200 transition-colors">
+                                                                            <Lock className="w-3.5 h-3.5" /> Unduh Dokumen Anda
+                                                                        </button>
+                                                                    ) : (
+                                                                        <span className="text-xs font-mono text-slate-700 whitespace-pre-wrap">{String(val || '-')}</span>
+                                                                    )
+                                                                ) : (
+                                                                    <span className="text-xs text-[var(--text-tertiary)]">Tidak ada file</span>
+                                                                )}
+                                                            </div>
+                                                        ) : (
+                                                            <p className="text-sm text-teal-900 whitespace-pre-wrap">
+                                                                {f.type.toLowerCase() === 'currency' ? `Rp ${Number(val || 0).toLocaleString('id-ID')}` : 
+                                                                 Array.isArray(val) ? val.join(', ') : 
+                                                                 String(val || "-")}
+                                                            </p>
+                                                        )}
+                                                    </div>
+                                                );
+                                            })}
+                                        </div>
                                     )}
                                 </div>
                             )}
