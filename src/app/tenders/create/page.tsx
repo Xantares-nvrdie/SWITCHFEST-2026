@@ -106,8 +106,8 @@ const FIELD_TYPE_META: Record<FieldType, { label: string; icon: React.ReactNode;
     text:     { label: "Teks",           icon: <Type className="w-3.5 h-3.5" />,        color: "text-blue-400"    },
     number:   { label: "Angka",          icon: <Hash className="w-3.5 h-3.5" />,        color: "text-violet-400"  },
     file:     { label: "File / Dokumen", icon: <FileUp className="w-3.5 h-3.5" />,      color: "text-amber-600"   },
-    select:   { label: "Pilihan Tunggal",icon: <ToggleLeft className="w-3.5 h-3.5" />,  color: "text-[var(--accent)]"    },
-    "multi-select": { label: "Pilihan Ganda", icon: <ListChecks className="w-3.5 h-3.5" />, color: "text-pink-400" },
+    select:   { label: "Dropdown (Pilih 1)", icon: <ToggleLeft className="w-3.5 h-3.5" />,  color: "text-[var(--accent)]"    },
+    "multi-select": { label: "Checkbox (Pilih Banyak)", icon: <ListChecks className="w-3.5 h-3.5" />, color: "text-pink-400" },
 };
 
 const SCORING_META: Record<ScoringType, { label: string; icon: React.ReactNode; color: string; desc: string }> = {
