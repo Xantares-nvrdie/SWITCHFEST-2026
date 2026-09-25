@@ -1,4 +1,4 @@
-import { boolean, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { boolean, pgTable, text, timestamp, varchar, index } from "drizzle-orm/pg-core";
 import { user } from "./auth";
 import { relations } from "drizzle-orm";
 
@@ -11,7 +11,10 @@ export const notifications = pgTable("notifications", {
     link: varchar("link", { length: 255 }), // Optional link to redirect when clicked
     isRead: boolean("is_read").default(false).notNull(),
     createdAt: timestamp("created_at").defaultNow().notNull(),
-});
+}, (t) => ({
+    userIdIdx: index("idx_notifications_user_id").on(t.userId),
+    createdAtIdx: index("idx_notifications_created_at").on(t.createdAt),
+}));
 
 export const notificationsRelations = relations(notifications, ({ one }) => ({
     user: one(user, {
