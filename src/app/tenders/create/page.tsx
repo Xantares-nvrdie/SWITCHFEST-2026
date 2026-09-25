@@ -400,7 +400,10 @@ export default function CreateTenderPage() {
             if (att.file) {
                 const ext = att.file.name.split('.').pop();
                 const path = `${Date.now()}_${Math.random().toString(36).substring(7)}.${ext}`;
-                const { data, error } = await supabase.storage.from("tender-public-docs").upload(path, att.file);
+                const { data, error } = await supabase.storage.from("tender-public-docs").upload(path, att.file, {
+                    contentType: att.file.type || 'application/pdf',
+                    upsert: false
+                });
                 if (error) {
                     setErrorMessage(`Gagal upload file ${att.name}: ${error.message}`);
                     setLoading(false);

@@ -697,9 +697,11 @@ export default function TenderDetailPage() {
                 <button onClick={() => setActiveTab("overview")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "overview" ? "border-emerald-400 text-[var(--accent)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <Layers className="w-4 h-4" /> Detail Tender
                 </button>
-                <button onClick={() => setActiveTab("encrypt")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "encrypt" ? "border-cyan-400 text-[var(--accent)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
-                    <Lock className="w-4 h-4" /> Submit Bid (Encrypt)
-                </button>
+                {tender.status === 'OPEN' && (
+                    <button onClick={() => setActiveTab("encrypt")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "encrypt" ? "border-cyan-400 text-[var(--accent)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
+                        <Lock className="w-4 h-4" /> Submit Bid (Encrypt)
+                    </button>
+                )}
                 <button onClick={() => setActiveTab("reveal")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "reveal" ? "border-purple-400 text-[var(--text-secondary)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <KeyRound className="w-4 h-4" /> Commit-Reveal
                 </button>
@@ -785,7 +787,11 @@ export default function TenderDetailPage() {
                             </div>
                         </div>
                         
-                        {(submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
+                        {tender.status !== 'OPEN' ? (
+                            <div className="p-8 text-center text-[var(--text-secondary)] bg-[var(--surface-secondary)] rounded-xl border border-[var(--border)]">
+                                Penerimaan penawaran sedang ditutup (Status: {tender.status}). Anda hanya bisa submit saat status tender OPEN.
+                            </div>
+                        ) : (submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
                             <div className="space-y-6">
                                 <div className="p-5 rounded-2xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] flex flex-col items-center justify-center text-center gap-3">
                                     <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
