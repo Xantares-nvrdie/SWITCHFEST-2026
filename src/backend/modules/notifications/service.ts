@@ -4,11 +4,12 @@ import { desc, eq, and } from "drizzle-orm";
 
 export class NotificationService {
     static async getUserNotifications(userId: string) {
-        return await db.query.notifications.findMany({
-            where: (n, { eq }) => eq(n.userId, userId),
-            orderBy: [desc(notifications.createdAt)],
-            limit: 50,
-        });
+        return await db
+            .select()
+            .from(notifications)
+            .where(eq(notifications.userId, userId))
+            .orderBy(desc(notifications.createdAt))
+            .limit(50);
     }
 
     static async markAsRead(notificationId: string, userId: string) {

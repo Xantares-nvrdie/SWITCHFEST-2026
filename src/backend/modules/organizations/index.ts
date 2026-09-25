@@ -31,15 +31,20 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
                 return { message: "Unauthorized" };
             }
 
-            const memberships = await db.query.organizationMembers.findMany({
-                where: (m, { eq }) => eq(m.userId, user.id),
-                with: { organization: true },
-            });
+            const memberships = await db
+                .select({
+                    organization: organizations,
+                    memberRole: organizationMembers.role,
+                    memberStatus: organizationMembers.status,
+                })
+                .from(organizationMembers)
+                .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
+                .where(eq(organizationMembers.userId, user.id));
 
             return memberships.map((m) => ({
                 ...m.organization,
-                memberRole: m.role,
-                memberStatus: m.status,
+                memberRole: m.memberRole,
+                memberStatus: m.memberStatus,
             }));
         },
         {

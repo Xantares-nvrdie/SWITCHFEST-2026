@@ -1,4 +1,4 @@
-import { bigint, boolean, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
+import { bigint, boolean, index, pgTable, text, timestamp, varchar } from "drizzle-orm/pg-core";
 
 export const user = pgTable("user", {
     id: text("id").primaryKey(),
@@ -35,7 +35,10 @@ export const session = pgTable("session", {
         .notNull()
         .references(() => user.id, { onDelete: "cascade" }),
     impersonatedBy: text("impersonated_by"),
-});
+}, (table) => ({
+    userIdIdx: index("session_user_id_idx").on(table.userId),
+    tokenIdx: index("session_token_idx").on(table.token),
+}));
 
 export const account = pgTable("account", {
     id: text("id").primaryKey(),

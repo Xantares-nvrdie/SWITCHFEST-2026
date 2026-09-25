@@ -1,6 +1,6 @@
 import { db } from "@/db";
 import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions } from "@/db/schema";
-import { eq } from "drizzle-orm";
+import { eq, sql } from "drizzle-orm";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
 import { NotificationService } from "../notifications/service";
@@ -33,55 +33,75 @@ export abstract class TenderService {
         return { id: tenderId };
     }
 
-    private static async evaluateAndUpdateStatus<T extends { id: string, status: string, commitDeadline: Date, revealDeadline: Date | null }>(tender: T): Promise<T> {
+    static async performBulkStatusUpdates() {
+        const now = new Date();
+        try {
+            // Bulk update to REVEAL
+            await db.execute(sql`
+                UPDATE tenders 
+                SET status = 'REVEAL', closed_at = ${now}, updated_at = ${now}
+                WHERE status = 'OPEN' AND commit_deadline < ${now}
+            `);
+
+            // Bulk update to SCORING
+            await db.execute(sql`
+                UPDATE tenders 
+                SET status = 'SCORING', updated_at = ${now}
+                WHERE status = 'REVEAL' AND reveal_deadline < ${now}
+            `);
+        } catch (error) {
+            console.error("Bulk lazy update failed:", error);
+        }
+    }
+
+    private static evaluateStatusInMemory<T extends { status: string, commitDeadline: Date | string, revealDeadline: Date | string | null }>(tender: T): T {
         if (!tender) return tender;
         const now = new Date();
-        let updatePayload: any = null;
-
-        if (tender.status === "OPEN" && tender.commitDeadline < now) {
-            updatePayload = { status: "REVEAL", closedAt: now, updatedAt: now };
-        } else if (tender.status === "REVEAL" && tender.revealDeadline && tender.revealDeadline < now) {
-            updatePayload = { status: "SCORING", updatedAt: now };
+        const commitDate = new Date(tender.commitDeadline);
+        const revealDate = tender.revealDeadline ? new Date(tender.revealDeadline) : null;
+        
+        let newStatus = tender.status;
+        if (tender.status === "OPEN" && commitDate < now) {
+            newStatus = "REVEAL";
+        } else if (tender.status === "REVEAL" && revealDate && revealDate < now) {
+            newStatus = "SCORING";
         }
-
-        if (updatePayload) {
-            // Fire and forget db update
-            db.update(tenders).set(updatePayload).where(eq(tenders.id, tender.id)).catch(err => console.error("Lazy update failed:", err));
-            return { ...tender, ...updatePayload };
+        
+        if (newStatus !== tender.status) {
+            return { ...tender, status: newStatus };
         }
         return tender;
     }
 
     static async getAll() {
-        const results = await db.query.tenders.findMany({
-            columns: {
-                id: true,
-                code: true,
-                title: true,
-                description: true,
-                category: true,
-                status: true,
-                commitDeadline: true,
-                revealDeadline: true,
-                revealWindowHours: true,
-                createdAt: true,
-                organizationId: true,
-            },
-            with: {
-                organization: {
-                    columns: { id: true, name: true }
-                },
-                participants: {
-                    columns: { organizationId: true }
-                },
-                bids: {
-                    columns: { id: true } // just fetch id for counting length
-                },
-            },
-            orderBy: (tenders, { desc }) => [desc(tenders.createdAt)],
-        });
+        // Fire and forget bulk updates to prevent pool starvation
+        TenderService.performBulkStatusUpdates().catch(console.error);
+
+        const results = await db.execute(sql`
+            SELECT 
+                t.id, t.code, t.title, t.description, t.category, t.status, 
+                t.commit_deadline as "commitDeadline", t.reveal_deadline as "revealDeadline", 
+                t.reveal_window_hours as "revealWindowHours", t.created_at as "createdAt", 
+                t.organization_id as "organizationId",
+                json_build_object('id', o.id, 'name', o.name) as organization,
+                COALESCE((
+                    SELECT json_agg(json_build_object('organizationId', p.organization_id)) 
+                    FROM tender_participants p 
+                    WHERE p.tender_id = t.id
+                ), '[]'::json) as participants,
+                COALESCE((
+                    SELECT json_agg(json_build_object('id', b.id)) 
+                    FROM bids b 
+                    WHERE b.tender_id = t.id
+                ), '[]'::json) as bids
+            FROM tenders t
+            LEFT JOIN organizations o ON t.organization_id = o.id
+            ORDER BY t.created_at DESC
+        `);
         
-        return Promise.all(results.map(t => TenderService.evaluateAndUpdateStatus(t as any)));
+        // node-postgres returns rows array
+        const rows = (results as any).rows || results;
+        return rows.map((t: any) => TenderService.evaluateStatusInMemory(t));
     }
 
     static async getById(id: string) {
@@ -94,7 +114,10 @@ export abstract class TenderService {
         });
 
         if (!tender) return null;
-        tender = await TenderService.evaluateAndUpdateStatus(tender);
+        
+        // Ensure accurate status
+        await TenderService.performBulkStatusUpdates().catch(console.error);
+        tender = TenderService.evaluateStatusInMemory(tender as any);
 
         const [fields, criteria, participants] = await Promise.all([
             db.query.tenderFields.findMany({
