@@ -37,6 +37,8 @@ export default function TendersPage() {
     const [canCreateTender, setCanCreateTender] = useState(false);
     const [activeTab, setActiveTab] = useState<"my" | "all">("all");
     const [myOrgIds, setMyOrgIds] = useState<string[]>([]);
+    const [page, setPage] = useState(1);
+    const [totalPages, setTotalPages] = useState(1);
 
     useEffect(() => {
         if (session?.user) {
@@ -57,12 +59,16 @@ export default function TendersPage() {
     }, [session?.user]);
 
     useEffect(() => {
-        fetch("/api/tenders")
+        setLoading(true);
+        fetch(`/api/tenders?page=${page}&limit=12`)
             .then(async (r) => {
-                if (!r.ok) return [];
+                if (!r.ok) return { data: [], meta: { totalPages: 1 } };
                 return await r.json();
             })
-            .then((data) => {
+            .then((json) => {
+                const data = json.data || json; // fallback for backwards compatibility
+                const meta = json.meta || { totalPages: 1 };
+                
                 const mapped: TenderItem[] = data.map((t: any) => ({
                     id: t.id,
                     code: t.code,
@@ -79,10 +85,11 @@ export default function TendersPage() {
                     participantOrgIds: t.participants?.map((p: any) => p.organizationId) || [],
                 }));
                 setTenders(mapped);
+                setTotalPages(meta.totalPages || 1);
             })
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, []);
+    }, [page]);
 
     const filteredTenders = tenders.filter((t) => {
         const isMine = myOrgIds.includes(t.organizationId) || t.participantOrgIds.some((id) => myOrgIds.includes(id));
@@ -263,6 +270,29 @@ export default function TendersPage() {
                             </div>
                         </Link>
                     ))}
+                </div>
+            )}
+
+            {/* Pagination Controls */}
+            {!loading && totalPages > 1 && (
+                <div className="flex justify-center items-center gap-2 pt-6">
+                    <button
+                        onClick={() => setPage((p) => Math.max(1, p - 1))}
+                        disabled={page === 1}
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] transition-colors"
+                    >
+                        Sebelumnya
+                    </button>
+                    <span className="text-[13px] text-[var(--text-tertiary)] mx-2">
+                        Halaman {page} dari {totalPages}
+                    </span>
+                    <button
+                        onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
+                        disabled={page === totalPages}
+                        className="px-3 py-1.5 rounded-md text-[13px] font-medium bg-white border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-50 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] transition-colors"
+                    >
+                        Selanjutnya
+                    </button>
                 </div>
             )}
         </div>

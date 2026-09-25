@@ -73,9 +73,11 @@ export abstract class TenderService {
         return tender;
     }
 
-    static async getAll() {
+    static async getAll(page = 1, limit = 20) {
         // Fire and forget bulk updates to prevent pool starvation
         TenderService.performBulkStatusUpdates().catch(console.error);
+
+        const offset = (page - 1) * limit;
 
         const results = await db.execute(sql`
             SELECT 
@@ -97,11 +99,26 @@ export abstract class TenderService {
             FROM tenders t
             LEFT JOIN organizations o ON t.organization_id = o.id
             ORDER BY t.created_at DESC
+            LIMIT ${limit} OFFSET ${offset}
         `);
         
+        const countResult = await db.execute(sql`SELECT count(*) from tenders`);
+        const rowsCount = (countResult as any).rows || countResult;
+        const total = parseInt(rowsCount[0]?.count || "0", 10);
+
         // node-postgres returns rows array
         const rows = (results as any).rows || results;
-        return rows.map((t: any) => TenderService.evaluateStatusInMemory(t));
+        const mappedData = rows.map((t: any) => TenderService.evaluateStatusInMemory(t));
+
+        return {
+            data: mappedData,
+            meta: {
+                page,
+                limit,
+                total,
+                totalPages: Math.ceil(total / limit)
+            }
+        };
     }
 
     static async getById(id: string) {

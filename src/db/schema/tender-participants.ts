@@ -1,4 +1,4 @@
-import { boolean, integer, jsonb, pgTable, text, timestamp, unique, varchar } from "drizzle-orm/pg-core";
+import { boolean, integer, jsonb, pgTable, text, timestamp, unique, varchar, index } from "drizzle-orm/pg-core";
 import { tenderParticipantStatusEnum } from "./enums";
 import { tenders } from "./tenders";
 import { organizations } from "./organizations";
@@ -25,6 +25,8 @@ export const tenderParticipants = pgTable(
     (t) => [
         // Satu organisasi tidak boleh terdaftar dua kali pada tender yang sama
         unique("uq_tender_participants_tender_org").on(t.tenderId, t.organizationId),
+        index("idx_tender_parts_tender_id").on(t.tenderId),
+        index("idx_tender_parts_org_id").on(t.organizationId),
     ],
 );
 

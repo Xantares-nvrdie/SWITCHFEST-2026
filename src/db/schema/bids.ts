@@ -1,4 +1,4 @@
-import { jsonb, pgTable, text, timestamp, unique } from "drizzle-orm/pg-core";
+import { jsonb, pgTable, text, timestamp, unique, index } from "drizzle-orm/pg-core";
 import { bidStatusEnum } from "./enums";
 import { tenders } from "./tenders";
 import { organizations } from "./organizations";
@@ -33,6 +33,8 @@ export const bids = pgTable(
     (t) => [
         // Satu vendor hanya boleh submit satu bid per tender
         unique("uq_bids_tender_org").on(t.tenderId, t.organizationId),
+        index("idx_bids_tender_id").on(t.tenderId),
+        index("idx_bids_org_id").on(t.organizationId),
     ],
 );
 

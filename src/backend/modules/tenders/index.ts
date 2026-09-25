@@ -11,13 +11,19 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
 
     .get(
         "/",
-        async () => {
-            return await TenderService.getAll();
+        async ({ query }) => {
+            const page = query.page ? parseInt(query.page as string, 10) : 1;
+            const limit = query.limit ? parseInt(query.limit as string, 10) : 20;
+            return await TenderService.getAll(page, limit);
         },
         {
+            query: t.Object({
+                page: t.Optional(t.String()),
+                limit: t.Optional(t.String())
+            }),
             detail: {
                 summary: "Get all tenders",
-                description: "Mengambil daftar seluruh tender di sistem.",
+                description: "Mengambil daftar seluruh tender di sistem dengan pagination.",
             },
         },
     )
