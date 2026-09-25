@@ -51,10 +51,6 @@ export default function TendersPage() {
                             (o.isVerified || o.verificationStatus === "APPROVED")
                     );
                     setCanCreateTender(eligible);
-                    
-                    if (data.length > 0) {
-                        setActiveTab("my");
-                    }
                 })
                 .catch(() => {});
         }
