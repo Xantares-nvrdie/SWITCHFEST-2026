@@ -27,7 +27,27 @@ export abstract class AuditLogService {
     }
 
     static async getAll() {
-        return db.select().from(auditLogs);
+        const logs = await db.query.auditLogs.findMany({
+            with: {
+                user: true,
+                organization: true,
+            },
+            orderBy: (al, { desc }) => [desc(al.createdAt)],
+            limit: 100, // For performance, just show latest 100 on the public page
+        });
+        
+        // Map to match frontend expected interface
+        return logs.map(log => ({
+            id: log.id,
+            action: log.action,
+            entityType: log.entityType,
+            entityId: log.entityId,
+            description: log.description,
+            userEmail: log.user?.email || null,
+            ipAddress: log.ipAddress,
+            metadata: log.metadata,
+            createdAt: log.createdAt,
+        }));
     }
 
     static async getByTenderId(tenderId: string) {

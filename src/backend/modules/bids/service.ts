@@ -99,14 +99,10 @@ export abstract class BidService {
             });
         });
 
-        try {
-            // Submit to blockchain via Relayer (Gasless for user)
-            const tx = await contract.commitBid(tenderId, data.organizationId, data.commitmentHash);
-            await tx.wait();
-        } catch (error) {
-            console.error("Relayer failed to commit bid to blockchain:", error);
-            // We might want to revert or flag the bid, but for now we just log it
-        }
+        // Submit to blockchain via Relayer (Gasless for user) - Fire and forget
+        contract.commitBid(tenderId, data.organizationId, data.commitmentHash)
+            .then((tx: any) => tx.wait())
+            .catch((error: any) => console.error("Relayer failed to commit bid to blockchain:", error));
 
         try {
             const members = await db.query.organizationMembers.findMany({
@@ -186,17 +182,15 @@ export abstract class BidService {
         });
 
         if (isValid) {
-            // Attest reveal on Smart Contract (Relayer signs this)
-            try {
-                // Find tenderId for this bid
-                const bidRecord = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bidId) });
-                if (bidRecord) {
-                    const tx = await contract.attestReveal(bidRecord.tenderId, bidRecord.organizationId);
-                    await tx.wait();
-                }
-            } catch (err) {
-                console.error("Failed to attest reveal on smart contract:", err);
-            }
+            // Attest reveal on Smart Contract (Relayer signs this) - Fire and forget
+            db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bidId) })
+                .then((bidRecord: any) => {
+                    if (bidRecord) {
+                        return contract.attestReveal(bidRecord.tenderId, bidRecord.organizationId);
+                    }
+                })
+                .then((tx: any) => tx && tx.wait())
+                .catch((err: any) => console.error("Failed to attest reveal on smart contract:", err));
         }
 
         return {

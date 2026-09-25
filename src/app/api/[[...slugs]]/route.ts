@@ -12,6 +12,8 @@ import auditLogsModule from "@/backend/modules/audit-logs";
 import notificationsModule from "@/backend/modules/notifications";
 import betterAuthView from "@/backend/utils/better-auth";
 import { AuthDocs } from "@/backend/utils/better-auth/docs";
+import { cron } from "@elysiajs/cron";
+import { TenderService } from "@/backend/modules/tenders/service";
 
 const authDocs = await AuthDocs();
 
@@ -47,7 +49,6 @@ export const app = new Elysia({ prefix: "/api" })
 
     /* AUTH */
     .all("/auth/*", betterAuthView, { detail: { hide: true } })
-
     /* FEATURE MODULES */
     .use(baseRoute)
     .use(organizationsModule)
@@ -59,7 +60,20 @@ export const app = new Elysia({ prefix: "/api" })
     .use(bidsModule)
     .use(procurementModule)
     .use(auditLogsModule)
-    .use(notificationsModule);
+    .use(notificationsModule)
+    .use(
+        cron({
+            name: "tender-status-updater",
+            pattern: "*/1 * * * *", // Every minute
+            async run() {
+                try {
+                    await TenderService.performBulkStatusUpdates();
+                } catch (e) {
+                    console.error("Cron tender-status-updater failed:", e);
+                }
+            }
+        })
+    );
 
 
 export type app = typeof app;

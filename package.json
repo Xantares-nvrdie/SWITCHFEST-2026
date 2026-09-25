@@ -15,6 +15,7 @@
         "test": "bun test ./tests"
     },
     "dependencies": {
+        "@elysiajs/cron": "^1.4.2",
         "@elysiajs/openapi": "^1.4.11",
         "@supabase/supabase-js": "^2.117.1",
         "better-auth": "^1.4.7",

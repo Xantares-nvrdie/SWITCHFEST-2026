@@ -175,7 +175,8 @@ export abstract class TenderService {
                     const { provider, relayerWallet, contract } = await import("@/lib/web3");
                     const nonce = await provider.getTransactionCount(relayerWallet.address, "latest");
                     const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000), { nonce });
-                    await tx.wait();
+                    // Fire and forget mining wait
+                    tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
                 } catch (err: any) {
                     console.error("Failed to create tender on smart contract:", err);
                     console.error("Error details:", err.message, err.stack);

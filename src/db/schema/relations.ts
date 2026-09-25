@@ -137,3 +137,23 @@ export const bidRevealsRelations = relations(bidReveals, ({ one }) => ({
     }),
 }));
 
+import { auditLogs } from "./audit-logs";
+export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
+    user: one(user, {
+        fields: [auditLogs.userId],
+        references: [user.id],
+    }),
+    organization: one(organizations, {
+        fields: [auditLogs.organizationId],
+        references: [organizations.id],
+    }),
+    tender: one(tenders, {
+        fields: [auditLogs.tenderId],
+        references: [tenders.id],
+    }),
+    bid: one(bids, {
+        fields: [auditLogs.bidId],
+        references: [bids.id],
+    }),
+}));
+
