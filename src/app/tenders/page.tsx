@@ -58,7 +58,9 @@ export default function TendersPage() {
                 })
                 .catch(() => {});
         }
+    }, [session?.user]);
 
+    useEffect(() => {
         fetch("/api/tenders")
             .then(async (r) => {
                 if (!r.ok) return [];
