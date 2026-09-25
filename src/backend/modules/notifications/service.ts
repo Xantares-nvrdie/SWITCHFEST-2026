@@ -43,4 +43,20 @@ export class NotificationService {
         });
         return { id };
     }
+
+    static async createMany(data: Array<{ userId: string, title: string, message: string, type: "INFO" | "SUCCESS" | "WARNING", link?: string }>) {
+        if (data.length === 0) return { count: 0 };
+        const now = new Date();
+        const payload = data.map(item => ({
+            id: crypto.randomUUID(),
+            userId: item.userId,
+            title: item.title,
+            message: item.message,
+            type: item.type,
+            link: item.link,
+            createdAt: now,
+        }));
+        await db.insert(notifications).values(payload);
+        return { count: payload.length };
+    }
 }

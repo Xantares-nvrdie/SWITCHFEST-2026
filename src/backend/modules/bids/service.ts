@@ -114,15 +114,15 @@ export abstract class BidService {
             });
             const tenderInfo = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, tenderId) });
             
-            for (const member of members) {
-                await NotificationService.create({
-                    userId: member.userId,
-                    title: "Penawaran Terkirim",
-                    message: `Dokumen penawaran Anda untuk tender ${tenderInfo?.code} berhasil dikirim secara enkripsi.`,
-                    type: "SUCCESS",
-                    link: `/tenders/${tenderId}`
-                });
-            }
+            const notificationsPayload = members.map(member => ({
+                userId: member.userId,
+                title: "Penawaran Terkirim",
+                message: `Dokumen penawaran Anda untuk tender ${tenderInfo?.code} berhasil dikirim secara enkripsi.`,
+                type: "SUCCESS" as const,
+                link: `/tenders/${tenderId}`
+            }));
+            
+            await NotificationService.createMany(notificationsPayload);
         } catch (err) {
             console.error("Failed to send bid notification", err);
         }

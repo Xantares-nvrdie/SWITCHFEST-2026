@@ -54,15 +54,34 @@ export abstract class TenderService {
 
     static async getAll() {
         const results = await db.query.tenders.findMany({
+            columns: {
+                id: true,
+                code: true,
+                title: true,
+                description: true,
+                category: true,
+                status: true,
+                commitDeadline: true,
+                revealDeadline: true,
+                revealWindowHours: true,
+                createdAt: true,
+                organizationId: true,
+            },
             with: {
-                organization: true,
-                participants: true,
-                bids: true,
+                organization: {
+                    columns: { id: true, name: true }
+                },
+                participants: {
+                    columns: { organizationId: true }
+                },
+                bids: {
+                    columns: { id: true } // just fetch id for counting length
+                },
             },
             orderBy: (tenders, { desc }) => [desc(tenders.createdAt)],
         });
         
-        return Promise.all(results.map(t => TenderService.evaluateAndUpdateStatus(t)));
+        return Promise.all(results.map(t => TenderService.evaluateAndUpdateStatus(t as any)));
     }
 
     static async getById(id: string) {
@@ -77,20 +96,20 @@ export abstract class TenderService {
         if (!tender) return null;
         tender = await TenderService.evaluateAndUpdateStatus(tender);
 
-        const fields = await db.query.tenderFields.findMany({
-            where: (f, { eq }) => eq(f.tenderId, id),
-        });
-
-        const criteria = await db.query.tenderCriteria.findMany({
-            where: (c, { eq }) => eq(c.tenderId, id),
-        });
-
-        const participants = await db.query.tenderParticipants.findMany({
-            where: (p, { eq }) => eq(p.tenderId, id),
-            with: {
-                organization: true,
-            },
-        });
+        const [fields, criteria, participants] = await Promise.all([
+            db.query.tenderFields.findMany({
+                where: (f, { eq }) => eq(f.tenderId, id),
+            }),
+            db.query.tenderCriteria.findMany({
+                where: (c, { eq }) => eq(c.tenderId, id),
+            }),
+            db.query.tenderParticipants.findMany({
+                where: (p, { eq }) => eq(p.tenderId, id),
+                with: {
+                    organization: true,
+                },
+            })
+        ]);
 
         return {
             ...tender,
@@ -138,20 +157,21 @@ export abstract class TenderService {
                 where: (b, { eq }) => eq(b.tenderId, id)
             });
             
-            for (const bid of allBids) {
+            const orgIds = allBids.map(b => b.organizationId);
+            if (orgIds.length > 0) {
                 const members = await db.query.organizationMembers.findMany({
-                    where: (m, { eq, and }) => and(eq(m.organizationId, bid.organizationId), eq(m.status, "ACTIVE"))
+                    where: (m, { inArray, eq, and }) => and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE"))
                 });
                 
-                for (const member of members) {
-                    await NotificationService.create({
-                        userId: member.userId,
-                        title: "Fase Reveal Dibuka!",
-                        message: `Tender ${tenderInfo?.code} telah memasuki fase REVEAL. Segera decrypt dokumen penawaran Anda!`,
-                        type: "INFO",
-                        link: `/tenders/${id}`
-                    });
-                }
+                const notificationsPayload = members.map(member => ({
+                    userId: member.userId,
+                    title: "Fase Reveal Dibuka!",
+                    message: `Tender ${tenderInfo?.code} telah memasuki fase REVEAL. Segera decrypt dokumen penawaran Anda!`,
+                    type: "INFO" as const,
+                    link: `/tenders/${id}`
+                }));
+                
+                await NotificationService.createMany(notificationsPayload);
             }
         }
     }
@@ -208,9 +228,10 @@ export abstract class TenderService {
         // 1. Transaction to save all scores, results, and mock blockchain
         await db.transaction(async (tx) => {
             // A. Save Scores for each bid
+            const scoreValues = [];
             for (const bid of payload.bids) {
                 for (const score of bid.criteriaScores) {
-                    await tx.insert(bidScores).values({
+                    scoreValues.push({
                         id: crypto.randomUUID(),
                         bidId: bid.bidId,
                         criterionId: score.criterionId,
@@ -221,6 +242,9 @@ export abstract class TenderService {
                         updatedAt: now,
                     });
                 }
+            }
+            if (scoreValues.length > 0) {
+                await tx.insert(bidScores).values(scoreValues);
             }
 
             // B. Send Final Result to Smart Contract
@@ -276,26 +300,41 @@ export abstract class TenderService {
 
         // E. Send Notifications
         try {
-            for (const bid of payload.bids) {
-                const bidRecord = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bid.bidId) });
-                if (!bidRecord) continue;
-                
-                const members = await db.query.organizationMembers.findMany({
-                    where: (m, { eq, and }) => and(eq(m.organizationId, bidRecord.organizationId), eq(m.status, "ACTIVE"))
+            const bidIds = payload.bids.map(b => b.bidId);
+            if (bidIds.length > 0) {
+                const allBids = await db.query.bids.findMany({
+                    where: (b, { inArray }) => inArray(b.id, bidIds)
                 });
+                const orgIds = allBids.map(b => b.organizationId);
                 
-                const isWinner = bid.bidId === payload.winningBidId;
-                
-                for (const member of members) {
-                    await NotificationService.create({
-                        userId: member.userId,
-                        title: isWinner ? "Selamat! Anda Memenangkan Tender" : "Pengumuman Hasil Tender",
-                        message: isWinner 
-                            ? `Organisasi Anda terpilih sebagai pemenang untuk tender ${tender.code} dengan skor akhir ${payload.finalScore}.`
-                            : `Tender ${tender.code} telah selesai. Sayang sekali, organisasi Anda belum berhasil kali ini.`,
-                        type: isWinner ? "SUCCESS" : "INFO",
-                        link: `/tenders/${tenderId}`
+                if (orgIds.length > 0) {
+                    const members = await db.query.organizationMembers.findMany({
+                        where: (m, { inArray, eq, and }) => and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE"))
                     });
+                    
+                    const orgToMembers = new Map<string, typeof members>();
+                    members.forEach(m => {
+                        if (!orgToMembers.has(m.organizationId)) orgToMembers.set(m.organizationId, []);
+                        orgToMembers.get(m.organizationId)!.push(m);
+                    });
+
+                    const notificationsPayload = [];
+                    for (const bid of allBids) {
+                        const isWinner = bid.id === payload.winningBidId;
+                        const orgMembers = orgToMembers.get(bid.organizationId) || [];
+                        for (const member of orgMembers) {
+                            notificationsPayload.push({
+                                userId: member.userId,
+                                title: isWinner ? "Selamat! Anda Memenangkan Tender" : "Pengumuman Hasil Tender",
+                                message: isWinner 
+                                    ? `Organisasi Anda terpilih sebagai pemenang untuk tender ${tender.code} dengan skor akhir ${payload.finalScore}.`
+                                    : `Tender ${tender.code} telah selesai. Sayang sekali, organisasi Anda belum berhasil kali ini.`,
+                                type: (isWinner ? "SUCCESS" : "INFO") as "SUCCESS" | "INFO",
+                                link: `/tenders/${tenderId}`
+                            });
+                        }
+                    }
+                    await NotificationService.createMany(notificationsPayload);
                 }
             }
         } catch (error) {
@@ -306,43 +345,36 @@ export abstract class TenderService {
     }
 
     static async getAuditData(tenderId: string) {
-        const tender = await db.query.tenders.findFirst({
-            where: (t, { eq }) => eq(t.id, tenderId),
-        });
+        const [tender, result, tx, allBids] = await Promise.all([
+            db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, tenderId),
+            }),
+            db.query.tenderResults.findFirst({
+                where: (tr, { eq }) => eq(tr.tenderId, tenderId),
+            }),
+            db.query.blockchainTransactions.findFirst({
+                where: (t, { eq }) => eq(t.tenderId, tenderId),
+            }),
+            db.query.bids.findMany({
+                where: (b, { eq }) => eq(b.tenderId, tenderId),
+                with: {
+                    organization: true,
+                    reveal: true,
+                }
+            })
+        ]);
 
         if (!tender || tender.status !== "COMPLETED") {
             throw new Error("Tender is not completed yet or not found");
         }
 
-        const result = await db.query.tenderResults.findFirst({
-            where: (tr, { eq }) => eq(tr.tenderId, tenderId),
-        });
-
-        const tx = await db.query.blockchainTransactions.findFirst({
-            where: (t, { eq }) => eq(t.tenderId, tenderId),
-        });
-
-        // Fetch scores manually
-        const allBids = await db.query.bids.findMany({
-            where: (b, { eq }) => eq(b.tenderId, tenderId),
-            with: {
-                organization: true,
-                reveal: true,
-            }
-        });
-
         const bidIds = allBids.map(b => b.id);
         
-        let allScores = [];
+        let allScores: any[] = [];
         if (bidIds.length > 0) {
-            // Using raw select for IN clause workaround if inArray is not imported
-            // We can just query all and filter, or fetch one by one
-            for (const bId of bidIds) {
-                const scores = await db.query.bidScores.findMany({
-                    where: (s, { eq }) => eq(s.bidId, bId)
-                });
-                allScores.push(...scores);
-            }
+            allScores = await db.query.bidScores.findMany({
+                where: (s, { inArray }) => inArray(s.bidId, bidIds)
+            });
         }
 
         return {
