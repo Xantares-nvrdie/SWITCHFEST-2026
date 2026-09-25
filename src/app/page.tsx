@@ -22,9 +22,10 @@ export default function HomePage() {
                 if (!r.ok) return [];
                 return await r.json();
             })
-            .then((tenders: any[]) => {
+            .then((json: any) => {
+                const tenders = Array.isArray(json) ? json : (json.data || []);
                 setStats({
-                    totalTenders: tenders.length,
+                    totalTenders: json.meta?.total || tenders.length,
                     openTenders: tenders.filter((t: any) => t.status === "OPEN").length,
                     totalBids: tenders.reduce((acc: number, t: any) => acc + (t.bids?.length || 0), 0),
                 });
