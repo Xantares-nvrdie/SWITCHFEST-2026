@@ -57,6 +57,22 @@ export abstract class BidService {
         const encryptedBidId = crypto.randomUUID();
         const now = new Date();
 
+        const tender = await db.query.tenders.findFirst({
+            where: (t, { eq }) => eq(t.id, tenderId)
+        });
+
+        if (!tender) {
+            throw new Error("Tender not found");
+        }
+
+        if (tender.status !== "OPEN") {
+            throw new Error(`Cannot submit bid: Tender is currently ${tender.status}, not OPEN.`);
+        }
+
+        if (tender.commitDeadline && now > tender.commitDeadline) {
+            throw new Error("Tender submission deadline has passed");
+        }
+
         // Calculate payload hash using node:crypto
         const payloadHash = createHash("sha256").update(data.encryptedPayload).digest("hex");
 
