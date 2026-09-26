@@ -1,7 +1,8 @@
 "use client";
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
+import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
 import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
@@ -17,8 +18,18 @@ export default function HomePage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
-    const { scrollYProgress } = useScroll();
-    const y = useTransform(scrollYProgress, [0, 1], ["0%", "50%"]);
+    
+    // Hero scroll
+    const { scrollYProgress: heroScroll } = useScroll();
+    const y = useTransform(heroScroll, [0, 1], ["0%", "50%"]);
+
+    // Horizontal scroll section
+    const targetRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress } = useScroll({
+        target: targetRef,
+        offset: ["start start", "end end"]
+    });
+    const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"]);
 
     useEffect(() => {
         fetch("/api/tenders")
@@ -52,7 +63,7 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex flex-col gap-32 pb-32 overflow-hidden w-full max-w-[1440px] mx-auto px-6">
+        <div className="flex flex-col gap-32 pb-32 overflow-x-clip w-full max-w-[1440px] mx-auto px-6">
             {/* Immersive Hero Section */}
             <section className="relative min-h-[85vh] flex items-center justify-between pt-10">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[rgba(16,185,129,0.05)] via-transparent to-transparent pointer-events-none" />
@@ -101,6 +112,78 @@ export default function HomePage() {
                 >
                     <CryptoVaultScene />
                 </motion.div>
+            </section>
+
+            {/* Horizontal Scroll Feature Section */}
+            <section ref={targetRef} className="relative h-[400vh]">
+                <div className="sticky top-0 h-[100vh] flex flex-col justify-center overflow-hidden bg-[var(--background)] z-10">
+                    <div className="absolute top-12 left-6 md:left-16 z-20">
+                        <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Kapasitas Platform</h2>
+                        <p className="text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl">Infrastruktur yang dirancang untuk menangani pengadaan tingkat institusi.</p>
+                    </div>
+
+                    <motion.div style={{ x }} className="flex w-[400%] h-full items-center pt-24">
+                        {/* Card 1 */}
+                        <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
+                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
+                                <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <Image src="/assets/Edmond Dantes Photo.jpg" alt="Efisiensi Tim" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                </div>
+                                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Fokus pada Keputusan</h3>
+                                    <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        Sistem mengotomatisasi pencatatan dan keamanan data agar tim pengadaan Anda dapat memfokuskan waktu pada evaluasi kualitas vendor, bukan administrasi teknis.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 2 */}
+                        <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
+                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
+                                <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <Image src="/assets/Mining Photo from Pexels.jpg" alt="Skala Industri" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                </div>
+                                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Infrastruktur Kelas Berat</h3>
+                                    <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        Dirancang untuk pengadaan skala industri. Sistem sanggup memproses tender dengan ribuan baris rincian teknis tanpa penurunan kecepatan respons.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 3 */}
+                        <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
+                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
+                                <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <Image src="/assets/Office Photo 7750129.jpg" alt="Kolaborasi Transparan" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                </div>
+                                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Ruang Kontrol Terpusat</h3>
+                                    <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        Semua anggota komite memantau status secara serentak dari satu sumber data. Tidak ada dokumen tertinggal atau informasi asimetris.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+
+                        {/* Card 4 */}
+                        <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
+                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group bg-[var(--text-primary)] border-none">
+                                <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <Image src="/assets/Working Photo from Pexels.jpg" alt="Evaluasi Akurat" fill className="object-cover opacity-80 mix-blend-overlay transition-transform duration-700 group-hover:scale-105" />
+                                </div>
+                                <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
+                                    <h3 className="font-display text-[32px] font-bold text-white mb-4">Verifikasi Otentik</h3>
+                                    <p className="text-[18px] text-[var(--surface-secondary)] leading-relaxed">
+                                        Jejak hash kriptografis mencegah manipulasi pasca-batas waktu. Anda mengevaluasi data otentik yang dapat dibuktikan kebenarannya melalui smart contract.
+                                    </p>
+                                </div>
+                            </div>
+                        </div>
+                    </motion.div>
+                </div>
             </section>
 
             {/* Live Stats Bento Grid */}
