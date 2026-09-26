@@ -208,7 +208,12 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 };
             }
 
-            await TenderService.updateStatus(params.id, body.status);
+            try {
+                await TenderService.updateStatus(params.id, body.status);
+            } catch (err: any) {
+                set.status = 400;
+                return { message: err.message || "Gagal mengubah status tender" };
+            }
 
             await AuditLogService.log({
                 userId: user.id,

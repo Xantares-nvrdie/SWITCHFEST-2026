@@ -366,17 +366,26 @@ export abstract class TenderService {
                     );
                     tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
                 } catch (err: any) {
-                    if (
+                    const isAlreadyExists =
                         err.reason === "Tender already exists" ||
-                        (err.message && err.message.includes("Tender already exists"))
-                    ) {
-                        console.warn("Tender already exists on blockchain, continuing with status update.");
+                        (err.message && err.message.includes("Tender already exists"));
+
+                    // require(false) tanpa message = kontrak revert — paling sering karena
+                    // tender sudah terdaftar di blockchain sebelumnya. Lanjutkan saja.
+                    const isCallException =
+                        err.code === "CALL_EXCEPTION" ||
+                        err.reason === "require(false)";
+
+                    if (isAlreadyExists || isCallException) {
+                        console.warn(
+                            isAlreadyExists
+                                ? "Tender already exists on blockchain, continuing."
+                                : `Smart contract revert (${err.reason ?? err.code}) — kemungkinan tender sudah terdaftar. Melanjutkan update status.`,
+                        );
                     } else {
-                        console.error("Failed to create tender on smart contract:", err);
-                        console.error("Error details:", err.message, err.stack);
+                        console.error("Failed to create tender on smart contract:", err.code, err.reason);
                         throw new Error(
-                            "Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik. Detail: " +
-                                (err.message || ""),
+                            "Gagal mendaftarkan tender ke Blockchain: " + (err.reason || err.shortMessage || err.message || "unknown error"),
                         );
                     }
                 }
