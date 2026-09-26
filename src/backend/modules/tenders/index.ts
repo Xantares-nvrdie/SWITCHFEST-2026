@@ -142,11 +142,13 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             try {
                 await TenderService.update(params.id, body);
                 
-                await AuditLogService.create({
-                    tenderId: params.id,
-                    organizationId: tender.organizationId,
+                await AuditLogService.log({
                     userId: user.id,
+                    organizationId: tender.organizationId,
+                    tenderId: params.id,
                     action: "UPDATE_TENDER",
+                    entityType: "tenders",
+                    entityId: params.id,
                     description: `Data tender diperbarui`,
                 });
                 

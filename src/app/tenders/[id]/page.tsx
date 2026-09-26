@@ -201,7 +201,7 @@ export default function TenderDetailPage() {
             if (res.ok) {
                 alert("Tender berhasil diperbarui!");
                 setIsEditingTender(false);
-                fetchData();
+                window.location.reload();
             } else {
                 const err = await res.json();
                 alert(err.message || "Gagal memperbarui tender");
