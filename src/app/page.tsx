@@ -147,7 +147,7 @@ export default function HomePage() {
                         <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                             <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
                                 <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
-                                    <Image src="/assets/Edmond Dantes Photo.jpg" alt="Efisiensi Tim" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <Image src="/assets/Edmond%20Dantes%20Photo.jpg" alt="Efisiensi Tim" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
                                     <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Fokus pada Keputusan</h3>
@@ -162,7 +162,7 @@ export default function HomePage() {
                         <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                             <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
                                 <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
-                                    <Image src="/assets/Mining Photo from Pexels.jpg" alt="Skala Industri" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <Image src="/assets/Mining%20Photo%20from%20Pexels.jpg" alt="Skala Industri" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
                                     <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Infrastruktur Kelas Berat</h3>
@@ -177,7 +177,7 @@ export default function HomePage() {
                         <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                             <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
                                 <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
-                                    <Image src="/assets/Office Photo 7750129.jpg" alt="Kolaborasi Transparan" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
+                                    <Image src="/assets/Office%20Photo%207750129.jpg" alt="Kolaborasi Transparan" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
                                     <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Ruang Kontrol Terpusat</h3>
@@ -190,13 +190,13 @@ export default function HomePage() {
 
                         {/* Card 4 */}
                         <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
-                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group bg-[var(--text-primary)] border-none">
+                            <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
                                 <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
-                                    <Image src="/assets/Working Photo from Pexels.jpg" alt="Evaluasi Akurat" fill className="object-cover opacity-80 mix-blend-overlay transition-transform duration-700 group-hover:scale-105" />
+                                    <Image src="/assets/Working%20Photo%20from%20Pexels.jpg" alt="Evaluasi Akurat" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                    <h3 className="font-display text-[32px] font-bold text-white mb-4">Verifikasi Otentik</h3>
-                                    <p className="text-[18px] text-[var(--surface-secondary)] leading-relaxed">
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Verifikasi Otentik</h3>
+                                    <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
                                         Jejak hash kriptografis mencegah manipulasi pasca-batas waktu. Anda mengevaluasi data otentik yang dapat dibuktikan kebenarannya melalui smart contract.
                                     </p>
                                 </div>

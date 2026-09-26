@@ -74,7 +74,7 @@ export default function OrganizationsPage() {
         });
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>

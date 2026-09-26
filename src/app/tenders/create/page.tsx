@@ -490,7 +490,7 @@ export default function CreateTenderPage() {
     // ─────────────────────────────────────────────────────────────────────────
 
     return (
-        <div className="max-w-5xl mx-auto space-y-6 pb-16">
+        <div className="max-w-5xl mx-auto space-y-6 pb-16 px-4 md:px-8 lg:px-12 w-full">
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div>

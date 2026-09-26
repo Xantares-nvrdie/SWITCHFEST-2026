@@ -253,7 +253,7 @@ export default function OrgManagePage() {
     );
 
     return (
-        <div className="space-y-8 pb-16">
+        <div className="space-y-8 pb-16 max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
@@ -278,7 +278,7 @@ export default function OrgManagePage() {
 
             {/* Rejection Banner */}
             {org.verificationStatus === "REJECTED" && (
-                <div className="card border-red-200 bg-red-500/10/50 p-4 flex items-start gap-3">
+                <div className="card border-red-500/20 bg-red-500/10 p-4 flex items-start gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                         <h3 className="text-[14px] font-bold text-red-700">Pendaftaran Organisasi Ditolak</h3>
@@ -312,7 +312,7 @@ export default function OrgManagePage() {
 
             {/* ── Overview / Profile Tab ── */}
             {activeTab === "overview" && (
-                <div className="card max-w-3xl">
+                <div className="card">
                     <div className="px-6 py-5 border-b border-[var(--border)]">
                         <h2 className="text-[16px] font-bold text-[var(--text-primary)] flex items-center gap-2">
                             <Building2 className="w-5 h-5 text-[var(--text-tertiary)]" />

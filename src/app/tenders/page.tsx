@@ -130,7 +130,7 @@ export default function TendersPage() {
     };
 
     return (
-        <div className="space-y-8 max-w-[1440px] mx-auto px-2">
+        <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Judul Halaman */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4">
                 <div>
