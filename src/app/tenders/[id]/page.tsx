@@ -128,6 +128,7 @@ export default function TenderDetailPage() {
     const [isFinalizing, setIsFinalizing] = useState(false);
     const [auditData, setAuditData] = useState<any>(null);
     const [loadingAuditData, setLoadingAuditData] = useState(false);
+    const [isPublishing, setIsPublishing] = useState(false);
 
     // Load draft scores from localStorage
     useEffect(() => {
@@ -717,8 +718,10 @@ export default function TenderDetailPage() {
                         {isCreator && tender.status === 'DRAFT' && (
                             <div className="mt-4 flex items-center gap-3">
                                 <button
+                                    disabled={isPublishing}
                                     onClick={async () => {
                                         if (!confirm("Anda yakin ingin mempublikasikan Tender ini ke Blockchain? Aksi ini tidak dapat dibatalkan!")) return;
+                                        setIsPublishing(true);
                                         try {
                                             const res = await fetch(`/api/tenders/${tender.id}/status`, {
                                                 method: "PATCH",
@@ -726,19 +729,24 @@ export default function TenderDetailPage() {
                                                 body: JSON.stringify({ status: "OPEN" })
                                             });
                                             if (res.ok) {
-                                                alert("Tender berhasil dibuka dan didaftarkan ke Blockchain!");
-                                                window.location.reload();
+                                                setTender({ ...tender, status: "OPEN" });
                                             } else {
                                                 const err = await res.json();
                                                 alert(err.message || "Gagal mengubah status tender");
                                             }
                                         } catch (e: any) {
                                             alert("Error jaringan: " + e.message);
+                                        } finally {
+                                            setIsPublishing(false);
                                         }
                                     }}
-                                    className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2"
                                 >
-                                    <ShieldCheck className="w-4 h-4" /> Publikasikan (Set OPEN)
+                                    {isPublishing ? (
+                                        <><RefreshCw className="w-4 h-4 animate-spin" /> Mempublikasikan...</>
+                                    ) : (
+                                        <><ShieldCheck className="w-4 h-4" /> Publikasikan (Set OPEN)</>
+                                    )}
                                 </button>
                                 <button
                                     onClick={() => router.push(`/tenders/${tender.id}/edit`)}
