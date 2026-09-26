@@ -29,11 +29,11 @@ interface OrgTypeOption {
     value: OrgType;
     label: string;
     subtitle: string;
-    icon: React.ElementType;
+    icon: React.ElementType<{ className?: string }>;
     colorClass: string;
     bgClass: string;
     borderClass: string;
-    roles: { icon: React.ElementType; label: string; colorClass: string }[];
+    roles: { icon: React.ElementType<{ className?: string }>; label: string; colorClass: string }[];
     description: string;
 }
 

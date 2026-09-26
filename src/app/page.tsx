@@ -32,16 +32,6 @@ export default function HomePage() {
     });
     const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"]);
 
-    // Parallax testimonials
-    const parallaxRef = useRef<HTMLDivElement>(null);
-    const { scrollYProgress: parallaxScroll } = useScroll({
-        target: parallaxRef,
-        offset: ["start end", "end start"]
-    });
-    const y1 = useTransform(parallaxScroll, [0, 1], [100, -300]);
-    const y2 = useTransform(parallaxScroll, [0, 1], [300, -100]);
-    const y3 = useTransform(parallaxScroll, [0, 1], [50, -400]);
-
     useEffect(() => {
         fetch("/api/tenders")
             .then(async (r) => {
