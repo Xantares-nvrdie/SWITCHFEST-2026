@@ -97,14 +97,14 @@ export default function OrganizationsPage() {
                 <div className="flex items-center gap-3">
                     <Link
                         href="/join-organization"
-                        className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--accent)] font-semibold text-sm hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-semibold text-sm hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
                     >
                         <Key className="w-4 h-4" />
                         Join via Kode
                     </Link>
                     <Link
                         href="/setup-organization"
-                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] shadow-md shadow-[var(--border)] font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                     >
                         <PlusCircle className="w-4 h-4" />
                         Buat Organisasi Baru
@@ -118,8 +118,8 @@ export default function OrganizationsPage() {
                     onClick={() => setActiveTab("my")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "my"
-                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
-                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 border border-transparent"
                     }`}
                 >
                     Organisasi Saya ({myOrgs.length})
@@ -128,8 +128,8 @@ export default function OrganizationsPage() {
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "all"
-                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
-                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 border border-transparent"
                     }`}
                 >
                     Semua Organisasi ({allOrgs.length})
@@ -184,7 +184,7 @@ export default function OrganizationsPage() {
                         return (
                             <div
                                 key={org.id}
-                                className="card card-hover p-6 rounded-2xl border-[var(--border)] flex flex-col justify-between space-y-4 relative"
+                                className="bento-card p-6 flex flex-col justify-between space-y-4 relative"
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -192,10 +192,10 @@ export default function OrganizationsPage() {
                                             <span
                                                 className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
                                                     org.type === "BUYER"
-                                                        ? "bg-[var(--accent-light)] text-[var(--accent)] border-teal-200"
+                                                        ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-blue-50 text-[var(--accent)] border-blue-200"
-                                                        : "bg-indigo-500/20 text-indigo-300 border-blue-200"
+                                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                                        : "bg-purple-500/10 text-purple-400 border-purple-500/30"
                                                 }`}
                                             >
                                                 {org.type}
@@ -203,7 +203,7 @@ export default function OrganizationsPage() {
 
                                             {/* Verification status badge */}
                                             {isApproved && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Approved
                                                 </span>
                                             )}
@@ -257,7 +257,7 @@ export default function OrganizationsPage() {
                                             href={`/organizations/${org.id}/manage`}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                                                 memberRole === "ORGANIZATION_ADMIN" 
-                                                    ? "bg-[var(--accent-light)] hover:opacity-90 text-[var(--accent)] border border-teal-200"
+                                                    ? "bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                                                     : "bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
                                             }`}
                                         >
@@ -268,7 +268,7 @@ export default function OrganizationsPage() {
                                             )}
                                         </Link>
                                     ) : (
-                                        <span className="text-[11px] text-[var(--text-tertiary)] italic">Bukan Anggota</span>
+                                        <span className="text-[11px] text-[var(--text-tertiary)] font-mono uppercase opacity-50 tracking-wider">Bukan Anggota</span>
                                     )}
                                 </div>
                             </div>

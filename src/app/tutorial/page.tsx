@@ -79,7 +79,7 @@ export default function TutorialPage() {
                                 </div>
 
                                 <div className="space-y-4">
-                                    <div className="card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
+                                    <div className="bento-card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                                         <div className="w-12 h-12 rounded-2xl bg-blue-500/10 flex items-center justify-center shrink-0 border border-blue-500/20">
                                             <Hash className="w-6 h-6 text-blue-400" />
                                         </div>
@@ -91,7 +91,7 @@ export default function TutorialPage() {
                                         </div>
                                     </div>
 
-                                    <div className="card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
+                                    <div className="bento-card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                                         <div className="w-12 h-12 rounded-2xl bg-amber-500/10 flex items-center justify-center shrink-0 border border-amber-500/20">
                                             <EyeOff className="w-6 h-6 text-amber-400" />
                                         </div>
@@ -103,7 +103,7 @@ export default function TutorialPage() {
                                         </div>
                                     </div>
 
-                                    <div className="card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
+                                    <div className="bento-card p-6 border-[var(--border)] flex flex-col sm:flex-row gap-5 hover:bg-[var(--surface-secondary)]/50 transition-colors">
                                         <div className="w-12 h-12 rounded-2xl bg-emerald-500/10 flex items-center justify-center shrink-0 border border-emerald-500/20">
                                             <Server className="w-6 h-6 text-emerald-400" />
                                         </div>
@@ -186,7 +186,7 @@ export default function TutorialPage() {
                                     </p>
                                 </div>
 
-                                <div className="card p-8 border-amber-500/30 bg-amber-500/5 relative overflow-hidden">
+                                <div className="bento-card p-8 border-amber-500/30 bg-amber-500/5 relative overflow-hidden">
                                     <div className="absolute -right-10 -bottom-10 opacity-10">
                                         <Key className="w-48 h-48 text-amber-500" />
                                     </div>
@@ -208,7 +208,7 @@ export default function TutorialPage() {
 
                                 <div className="space-y-4">
                                     <h3 className="font-bold text-[var(--text-primary)] text-lg">Peringatan Kehilangan PIN</h3>
-                                    <div className="card border-red-500/30 bg-red-500/10 p-5">
+                                    <div className="bento-card border-red-500/30 bg-red-500/10 p-5">
                                         <p className="text-red-200 text-sm leading-relaxed">
                                             <strong>PERHATIAN:</strong> Karena TenderSeal menganut prinsip Zero-Knowledge, <strong>kami tidak bisa memulihkan PIN Anda jika lupa.</strong> Jika Anda kehilangan PIN, penawaran Anda tidak akan pernah bisa dibuka di fase Reveal, dan Bid Anda otomatis akan didiskualifikasi (Gugur). Simpan PIN Anda secara aman!
                                         </p>

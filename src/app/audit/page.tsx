@@ -72,7 +72,7 @@ export default function AuditPage() {
             </div>
 
             {/* Search Bar */}
-            <div className="card p-4 rounded-2xl border-[var(--border)]">
+            <div className="bento-card p-4">
                 <div className="relative w-full md:w-96">
                     <Search className="w-4 h-4 text-[var(--text-tertiary)] absolute left-3.5 top-1/2 -translate-y-1/2" />
                     <input
@@ -86,7 +86,7 @@ export default function AuditPage() {
             </div>
 
             {/* Audit Log Timeline */}
-            <div className="card p-6 rounded-2xl border-[var(--border)] space-y-4">
+            <div className="bento-card p-6 space-y-4">
                 <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
                     <History className="w-4 h-4 text-amber-600" /> Log Aktivitas Sistem (Database & IP Inet)
                 </h3>
