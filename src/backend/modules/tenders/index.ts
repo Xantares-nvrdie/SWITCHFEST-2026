@@ -157,6 +157,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             }
         },
         {
+            auth: true,
             body: TenderModel.updateBody,
             detail: {
                 summary: "Update tender",
