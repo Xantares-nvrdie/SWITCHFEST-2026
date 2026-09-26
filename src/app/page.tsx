@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
-import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye } from "lucide-react";
+import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye, FileText, Upload, Users, Rocket } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import { CryptoVaultScene } from "@/components/crypto-vault";
 
@@ -18,6 +18,7 @@ export default function HomePage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
+    const [activeStep, setActiveStep] = useState(0);
     
     // Hero scroll
     const { scrollYProgress: heroScroll } = useScroll();
@@ -280,6 +281,95 @@ export default function HomePage() {
                     ))}
                 </div>
             </section>
+
+            {/* Tutorial: Alur Pembuatan Tender - Interactive Accordion */}
+            <section className="space-y-12">
+                <div className="max-w-2xl">
+                    <motion.h2 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight"
+                    >
+                        Protokol Inisiasi
+                    </motion.h2>
+                    <motion.p 
+                        initial={{ opacity: 0, y: 20 }}
+                        whileInView={{ opacity: 1, y: 0 }}
+                        viewport={{ once: true }}
+                        transition={{ delay: 0.1 }}
+                        className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium leading-relaxed"
+                    >
+                        Empat tahap deterministik untuk merilis pengadaan ke jaringan. Sorot pada panel untuk melihat detail proses.
+                    </motion.p>
+                </div>
+
+                <div className="flex flex-col md:flex-row h-[800px] md:h-[500px] gap-4 w-full cursor-pointer">
+                    {[
+                        { id: "01", title: "Konfigurasi Base", desc: "Tentukan ruang lingkup teknis, jadwal kriptografis untuk fase komitmen, dan jendela waktu presisi untuk pembukaan harga.", icon: FileText, accent: "rgba(16,185,129,0.2)" },
+                        { id: "02", title: "Enkripsi Dokumen", desc: "Lampirkan Kerangka Acuan Kerja. Sistem akan melakukan hashing secara lokal untuk menjamin integritas file sebelum dikirim.", icon: Upload, accent: "rgba(59,130,246,0.2)" },
+                        { id: "03", title: "Distribusi Akses", desc: "Otorisasi vendor terdaftar. Kunci publik mereka dienkripsi ke dalam sesi tender, memastikan hanya entitas sah yang dapat berpartisipasi.", icon: Users, accent: "rgba(245,158,11,0.2)" },
+                        { id: "04", title: "Injeksi Kontrak", desc: "Smart contract mengambil alih otoritas waktu. Sistem secara absolut akan menolak paket penawaran sedetik setelah batas waktu.", icon: Rocket, accent: "rgba(139,92,246,0.2)" },
+                    ].map((item, i) => (
+                        <motion.div 
+                            key={i}
+                            onHoverStart={() => setActiveStep(i)}
+                            onClick={() => setActiveStep(i)}
+                            animate={{ 
+                                flex: activeStep === i ? 4 : 1,
+                                opacity: activeStep === i ? 1 : 0.5
+                            }}
+                            transition={{ duration: 0.6, ease: [0.16, 1, 0.3, 1] }}
+                            className={`relative rounded-[2rem] overflow-hidden border p-6 md:p-8 flex flex-col justify-end transition-colors ${
+                                activeStep === i 
+                                    ? "bg-[var(--surface)] border-[var(--border)]" 
+                                    : "bg-transparent border-[var(--border)]/30 hover:border-[var(--border)]"
+                            }`}
+                        >
+                            {/* Decorative glowing orb when active */}
+                            {activeStep === i && (
+                                <motion.div 
+                                    initial={{ opacity: 0 }}
+                                    animate={{ opacity: 1 }}
+                                    className="absolute -top-32 -right-32 w-96 h-96 rounded-full blur-[100px] pointer-events-none"
+                                    style={{ backgroundColor: item.accent }}
+                                />
+                            )}
+
+                            <div className="absolute top-6 left-6 md:top-8 md:left-8">
+                                <div className={`w-12 h-12 rounded-2xl flex items-center justify-center transition-all duration-500 ${activeStep === i ? 'bg-[var(--surface-secondary)] scale-110' : 'bg-transparent scale-100'}`}>
+                                    <item.icon className={`w-6 h-6 transition-colors duration-500 ${activeStep === i ? 'text-[var(--text-primary)]' : 'text-[var(--text-tertiary)]'}`} />
+                                </div>
+                            </div>
+
+                            <div className="absolute top-6 right-6 md:top-8 md:right-8 font-display text-5xl md:text-8xl font-bold transition-all duration-700" style={{ color: activeStep === i ? 'var(--surface-secondary)' : 'var(--border)' }}>
+                                {item.id}
+                            </div>
+                            
+                            <div className="mt-auto relative z-10 w-full min-w-[200px]">
+                                <motion.div 
+                                    animate={{ 
+                                        rotate: activeStep === i ? 0 : 0, 
+                                        // Optional: on very small un-active states, we could rotate text, but flex handles it if we keep it simple
+                                    }}
+                                    className="origin-bottom-left"
+                                >
+                                    <h3 className={`font-display font-bold transition-all duration-500 whitespace-nowrap ${activeStep === i ? 'text-[32px] text-[var(--text-primary)] mb-4' : 'text-[20px] text-[var(--text-secondary)] md:-rotate-90 md:translate-y-[-100px] md:origin-bottom-left'}`}>
+                                        {item.title}
+                                    </h3>
+                                    
+                                    <div className={`overflow-hidden transition-all duration-700 ease-in-out ${activeStep === i ? 'max-h-[200px] opacity-100' : 'max-h-0 opacity-0'}`}>
+                                        <p className="text-[16px] text-[var(--text-secondary)] leading-relaxed max-w-md">
+                                            {item.desc}
+                                        </p>
+                                    </div>
+                                </motion.div>
+                            </div>
+                        </motion.div>
+                    ))}
+                </div>
+            </section>
         </div>
     );
 }
+
