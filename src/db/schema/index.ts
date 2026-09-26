@@ -24,5 +24,8 @@ export * from "./procurement";
 export * from "./audit-logs";
 export * from "./notifications";
 
+// Support Tickets
+export * from "./support-tickets";
+
 // Drizzle relations (required for with:{} eager loading)
 export * from "./relations";

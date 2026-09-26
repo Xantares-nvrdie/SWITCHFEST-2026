@@ -55,9 +55,9 @@ export default function TutorialPage() {
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 blur-[50px] pointer-events-none" />
                         <h3 className="font-bold text-[var(--text-primary)] mb-2 relative z-10">Butuh Bantuan Lain?</h3>
                         <p className="text-[13px] text-[var(--text-tertiary)] mb-5 relative z-10">Tim support teknis kami siap membantu jika Anda mengalami kendala operasional.</p>
-                        <button className="w-full py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform relative z-10">
+                        <Link href="/support" className="w-full py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform relative z-10 flex items-center justify-center">
                             Hubungi Support
-                        </button>
+                        </Link>
                     </div>
                 </div>
 
