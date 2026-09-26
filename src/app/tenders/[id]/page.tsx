@@ -1471,18 +1471,19 @@ export default function TenderDetailPage() {
                                             }} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     ))}
-                                    <label className="flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-[var(--border-strong)] rounded-xl bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors cursor-pointer text-sm">
-                                        <FileUp className="w-4 h-4" />
-                                        <span>Pilih File PDF/DOC</span>
-                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => {
-                                            if (e.target.files && e.target.files[0]) {
-                                                const file = e.target.files[0];
-                                                const atts = editTenderData.attachments || [];
-                                                setEditTenderData({ ...editTenderData, attachments: [...atts, { name: file.name, url: "", file }] });
-                                            }
-                                            e.target.value = "";
-                                        }} />
-                                    </label>
+                                    {(!editTenderData.attachments || editTenderData.attachments.length === 0) && (
+                                        <label className="flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-[var(--border-strong)] rounded-xl bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors cursor-pointer text-sm">
+                                            <FileUp className="w-4 h-4" />
+                                            <span>Pilih File PDF/DOC</span>
+                                            <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => {
+                                                if (e.target.files && e.target.files[0]) {
+                                                    const file = e.target.files[0];
+                                                    setEditTenderData({ ...editTenderData, attachments: [{ name: file.name, url: "", file }] });
+                                                }
+                                                e.target.value = "";
+                                            }} />
+                                        </label>
+                                    )}
                                 </div>
                             </div>
                         </div>
