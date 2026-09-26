@@ -456,7 +456,7 @@ export default function OrgManagePage() {
                     {!showInviteForm && org.verificationStatus !== "REJECTED" ? (
                         <button
                             onClick={() => setShowInviteForm(true)}
-                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-all shadow-sm"
+                            className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-all shadow-sm"
                         >
                             <Plus className="w-4 h-4" />
                             Buat Kode Undangan Baru
@@ -549,7 +549,7 @@ export default function OrgManagePage() {
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 flex-wrap mb-2">
                                                 <code
-                                                    className={`text-[16px] font-mono font-bold tracking-widest ${inv.isActive ? "text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}>
+                                                    className={`text-[16px] font-mono font-bold tracking-widest ${inv.isActive ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
                                                     {inv.code}
                                                 </code>
                                                 {inv.isActive && <CopyButton text={inv.code} />}

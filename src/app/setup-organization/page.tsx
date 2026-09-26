@@ -252,7 +252,7 @@ export default function SetupOrganizationPage() {
                                 type="button"
                                 disabled={!selectedType}
                                 onClick={() => setStep(2)}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-4"
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-4"
                             >
                                 Lanjutkan
                             </button>
@@ -402,8 +402,8 @@ export default function SetupOrganizationPage() {
                             </div>
 
                             {/* Info box */}
-                            <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[12px] bg-blue-50 border border-blue-100 text-blue-800">
-                                <ShieldCheck className="w-4 h-4 text-blue-600 shrink-0 mt-0.5" />
+                            <div className="flex items-start gap-2.5 rounded-md px-3 py-2.5 text-[12px] bg-[var(--surface-secondary)] border border-[var(--border-strong)] text-[var(--text-primary)]">
+                                <ShieldCheck className="w-4 h-4 text-[var(--text-primary)] shrink-0 mt-0.5" />
                                 <span className="leading-relaxed">
                                     Anda akan otomatis menjadi <span className="font-bold">Organization Admin</span>. Setelah organisasi dibuat, Anda bisa mengundang anggota dan memberikan hak akses.
                                 </span>
@@ -413,7 +413,7 @@ export default function SetupOrganizationPage() {
                                 id="create-org-submit"
                                 type="submit"
                                 disabled={isLoading || !name.trim()}
-                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
+                                className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed mt-2"
                             >
                                 {isLoading ? (
                                     <>

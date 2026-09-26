@@ -98,7 +98,7 @@ export default function RegisterPage() {
         router.refresh();
     };
 
-    const inputClass = "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
+    const inputClass = "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
 
     return (
         <div className="w-full max-w-sm">

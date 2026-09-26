@@ -53,7 +53,7 @@ export default function JoinOrganizationPage() {
         }
     };
 
-    const inputClass = "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
+    const inputClass = "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
@@ -109,7 +109,7 @@ export default function JoinOrganizationPage() {
                                             value={code}
                                             onChange={(e) => setCode(e.target.value.toUpperCase())}
                                             placeholder="TS-XXXXXX"
-                                            className={`${inputClass} font-mono font-bold tracking-widest text-blue-700 uppercase`}
+                                            className={`${inputClass} font-mono font-bold tracking-widest text-[var(--text-primary)] uppercase`}
                                         />
                                     </div>
                                 </div>
@@ -118,7 +118,7 @@ export default function JoinOrganizationPage() {
                                     id="join-org-submit"
                                     type="submit"
                                     disabled={isLoading || !code.trim()}
-                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                                    className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                                 >
                                     {isLoading ? (
                                         <>
