@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions } from "@/db/schema";
+import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions, tenderParticipants, organizationMembers } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
@@ -48,17 +48,18 @@ export abstract class TenderService {
             if (updatedToReveal.rows.length > 0) {
                 // Notifikasi ke partisipan (vendor) bahwa fase reveal dimulai
                 for (const tender of updatedToReveal.rows as any[]) {
-                    const participants = await db.query.tenderParticipants.findMany({
-                        where: eq(schema.tenderParticipants.tenderId, tender.id),
-                        with: { user: true }
-                    });
+                    // Fetch all users belonging to the participating organizations
+                    const membersToNotify = await db.select({ userId: organizationMembers.userId })
+                        .from(tenderParticipants)
+                        .innerJoin(organizationMembers, eq(tenderParticipants.organizationId, organizationMembers.organizationId))
+                        .where(eq(tenderParticipants.tenderId, tender.id));
                     
-                    if (participants.length > 0) {
-                        const notificationsPayload = participants.map(p => ({
-                            userId: p.userId,
+                    if (membersToNotify.length > 0) {
+                        const notificationsPayload = membersToNotify.map(m => ({
+                            userId: m.userId,
                             title: "Fase Reveal Dimulai!",
                             message: `Waktu commit untuk tender "${tender.title}" telah berakhir. Segera lakukan Dekripsi (Reveal) penawaran Anda sebelum Reveal Deadline berakhir!`,
-                            type: "TENDER_UPDATE",
+                            type: "INFO" as const,
                             link: `/tenders/${tender.id}`
                         }));
                         await NotificationService.createMany(notificationsPayload);
@@ -81,7 +82,7 @@ export abstract class TenderService {
                         userId: tender.creator_id,
                         title: "Fase Scoring Terbuka",
                         message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
-                        type: "TENDER_UPDATE",
+                        type: "INFO",
                         link: `/tenders/${tender.id}`
                     });
                 }

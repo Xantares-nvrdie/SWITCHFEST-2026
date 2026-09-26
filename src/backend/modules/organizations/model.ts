@@ -9,7 +9,6 @@ export namespace OrganizationModel {
         email: t.Optional(t.String({ format: "email" })),
         phone: t.Optional(t.String()),
         address: t.Optional(t.String()),
-        walletAddress: t.Optional(t.String()),
     });
 
     export const updateBody = t.Object({
@@ -20,7 +19,6 @@ export namespace OrganizationModel {
         email: t.Optional(t.String({ format: "email" })),
         phone: t.Optional(t.String()),
         address: t.Optional(t.String()),
-        walletAddress: t.Optional(t.String()),
         isActive: t.Optional(t.Boolean()),
     });
 

@@ -57,7 +57,6 @@ interface Organization {
     registrationNumber?: string;
     phone?: string;
     address?: string;
-    walletAddress?: string;
     verificationStatus?: "PENDING" | "APPROVED" | "REJECTED";
     rejectionReason?: string;
 }
@@ -170,14 +169,13 @@ export default function OrgManagePage() {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
                 body: JSON.stringify({
-                    name: formData.name,
-                    type: formData.type,
-                    legalName: formData.legalName,
-                    registrationNumber: formData.registrationNumber,
-                    email: formData.email,
-                    phone: formData.phone,
-                    address: formData.address,
-                    walletAddress: formData.walletAddress,
+                    name: formData.name ?? undefined,
+                    type: formData.type ?? undefined,
+                    legalName: formData.legalName ?? undefined,
+                    registrationNumber: formData.registrationNumber ?? undefined,
+                    email: formData.email ?? undefined,
+                    phone: formData.phone ?? undefined,
+                    address: formData.address ?? undefined,
                 }),
             });
             if (res.ok) {
@@ -358,10 +356,6 @@ export default function OrgManagePage() {
                             <div className="space-y-1.5 md:col-span-2">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Alamat Lengkap</label>
                                 <textarea rows={3} value={formData.address || ""} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} resize-none`} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
-                            </div>
-                            <div className="space-y-1.5 md:col-span-2">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">EVM Wallet Address (opsional)</label>
-                                <input type="text" value={formData.walletAddress || ""} onChange={e => setFormData(p => ({ ...p, walletAddress: e.target.value }))} className={`${inputClass} font-mono`} placeholder="0x..." disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
                             </div>
                         </div>
 
