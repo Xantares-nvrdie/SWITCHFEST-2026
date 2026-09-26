@@ -4,7 +4,7 @@ import { useState, useEffect, useRef } from "react";
 import Link from "next/link";
 import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
-import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye, FileText, Upload, Users, Rocket } from "lucide-react";
+import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye, FileText, Upload, Users, Rocket, Plus, Minus } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
 import HomeFooter from "@/components/home-footer";
 
@@ -19,6 +19,7 @@ export default function HomePage() {
     const [loading, setLoading] = useState(true);
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [activeStep, setActiveStep] = useState(0);
+    const [openFaqIndex, setOpenFaqIndex] = useState<number | null>(null);
     
     // Hero scroll
     const { scrollYProgress: heroScroll } = useScroll();
@@ -64,8 +65,9 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex flex-col gap-32 pb-32 overflow-x-clip w-full max-w-[1920px] mx-auto px-6">
-            {/* Immersive Hero Section */}
+        <main className="flex flex-col w-full">
+            <div className="flex flex-col gap-32 overflow-x-clip w-full max-w-[1920px] mx-auto px-6">
+                {/* Immersive Hero Section */}
             <section className="relative min-h-[85vh] flex items-center justify-between pt-10">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[rgba(16,185,129,0.05)] via-transparent to-transparent pointer-events-none" />
                 
@@ -483,8 +485,64 @@ export default function HomePage() {
                 </div>
             </section>
 
+            {/* FAQ Section */}
+            <section className="pt-32 pb-16 border-t border-[var(--border)]">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-16 md:gap-24">
+                    {/* Left Column (FAQ List) */}
+                    <div className="lg:col-span-8 flex flex-col">
+                        {[
+                            { q: "Bagaimana cara sistem mengenkripsi penawaran?", a: "Sistem mengenkripsi penawaran Anda langsung di browser menggunakan AES-256-GCM. Kunci dekripsi tetap berada di pihak Anda dan tidak pernah dikirim ke server sebelum waktu buka penawaran (reveal phase)." },
+                            { q: "Apakah panitia bisa melihat harga sebelum batas waktu?", a: "Sama sekali tidak. Tanpa Kunci Dekripsi yang Anda kirimkan pada fase reveal, panitia maupun administrator sistem tidak memiliki kemampuan teknis untuk membaca dokumen penawaran Anda." },
+                            { q: "Bagaimana jika saya lupa Kunci Dekripsi saya?", a: "Karena arsitektur zero-knowledge, kami tidak menyimpan salinan kunci Anda. Jika Anda kehilangan kunci tersebut, penawaran Anda tidak dapat dibuka (void) dan Anda harus membuat penawaran baru (jika masih dalam masa pengiriman)." },
+                            { q: "Apakah TenderSeal menggunakan cryptocurrency?", a: "Tidak. Kami menggunakan teknologi smart contract (blockchain) murni sebagai ledger terdesentralisasi untuk mencatat log audit secara permanen, tanpa melibatkan transaksi mata uang kripto." },
+                            { q: "Apakah sistem ini mematuhi standar regulasi pengadaan?", a: "Ya. Sistem kami memperkuat transparansi dan auditabilitas secara matematis, sangat sejalan dengan prinsip dasar pengadaan dan standar keamanan data elektronik." }
+                        ].map((faq, i) => (
+                            <div key={i} className="border-b border-[var(--border-light)] first:border-t">
+                                <button 
+                                    onClick={() => setOpenFaqIndex(openFaqIndex === i ? null : i)}
+                                    className="w-full py-8 flex items-center justify-between text-left group"
+                                >
+                                    <div className="flex items-center gap-6 md:gap-12 w-full pr-8">
+                                        <span className="text-[14px] font-medium text-[var(--text-tertiary)] w-6 shrink-0">0{i + 1}.</span>
+                                        <span className="text-[18px] md:text-[22px] font-medium text-[var(--text-primary)] group-hover:text-[var(--accent)] transition-colors">{faq.q}</span>
+                                    </div>
+                                    <span className="text-[var(--text-tertiary)] group-hover:text-[var(--accent)] transition-colors shrink-0">
+                                        {openFaqIndex === i ? <Minus className="w-5 h-5" /> : <Plus className="w-5 h-5" />}
+                                    </span>
+                                </button>
+                                <motion.div 
+                                    initial={false}
+                                    animate={{ height: openFaqIndex === i ? "auto" : 0, opacity: openFaqIndex === i ? 1 : 0 }}
+                                    className="overflow-hidden"
+                                >
+                                    <p className="pb-8 pl-12 md:pl-24 pr-6 text-[16px] text-[var(--text-secondary)] leading-relaxed font-medium">
+                                        {faq.a}
+                                    </p>
+                                </motion.div>
+                            </div>
+                        ))}
+                    </div>
+
+                    {/* Right Column (Sticky CTA) */}
+                    <div className="lg:col-span-4 relative">
+                        <div className="sticky top-32 space-y-6">
+                            <p className="text-[13px] font-bold tracking-widest uppercase text-[var(--text-tertiary)]">FAQ</p>
+                            <h2 className="font-display text-[40px] md:text-[48px] font-bold text-[var(--text-primary)] tracking-tight leading-tight">Masih ada pertanyaan?</h2>
+                            <p className="text-[18px] text-[var(--text-secondary)] font-medium leading-relaxed">
+                                Punya pertanyaan teknis spesifik? Kami dengan senang hati akan menjawabnya. Jangan ragu untuk menghubungi tim teknis kami.
+                            </p>
+                            <div className="pt-6">
+                                <Link href="/support" className="btn-primary px-8 py-4 text-[16px] rounded-full">
+                                    Hubungi Kami
+                                </Link>
+                            </div>
+                        </div>
+                    </div>
+                </div>
+            </section>
+            </div>
             <HomeFooter />
-        </div>
+        </main>
     );
 }
 

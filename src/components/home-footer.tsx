@@ -1,78 +1,75 @@
 "use client";
 
-import { motion } from "framer-motion";
 import Link from "next/link";
-import { ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
 
 export default function HomeFooter() {
     return (
-        <section className="w-full max-w-[1920px] mx-auto px-4 md:px-8 mt-10 mb-8">
-            <div className="relative w-full rounded-[40px] overflow-hidden border border-[var(--border)] bg-[var(--surface-secondary)]/30 backdrop-blur-3xl shadow-2xl group">
-                
-                {/* Organic Glowing Orbs (Fluid/Not Rigid) */}
-                <div className="absolute -top-32 -left-32 w-[500px] h-[500px] bg-emerald-500/10 blur-[120px] rounded-full pointer-events-none group-hover:bg-emerald-500/20 transition-colors duration-1000" />
-                <div className="absolute -bottom-32 -right-32 w-[500px] h-[500px] bg-blue-500/10 blur-[120px] rounded-full pointer-events-none group-hover:bg-blue-500/20 transition-colors duration-1000" />
-                <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[150px] rounded-full pointer-events-none" />
+        <footer className="w-full bg-[var(--surface)] border-t border-[var(--border)] pt-16 md:pt-24 pb-8 mt-16 relative z-10">
+            <div className="max-w-[1920px] mx-auto px-6 md:px-12 lg:px-24">
+                <div className="grid grid-cols-1 lg:grid-cols-12 gap-12 lg:gap-8">
+                    
+                    {/* Left: Giant Logo */}
+                    <div className="lg:col-span-5 flex flex-col justify-between">
+                        <h2 className="font-display text-[64px] md:text-[100px] lg:text-[120px] font-bold text-[var(--text-primary)] leading-[0.9] tracking-tighter">
+                            Tender<br/>Seal.
+                        </h2>
+                        <div className="mt-16 text-[13px] text-[var(--text-tertiary)] font-medium">
+                            &copy; {new Date().getFullYear()} TenderSeal
+                        </div>
+                    </div>
 
-                {/* Grid Pattern overlay for tech feel */}
-                <div className="absolute inset-0 bg-[url('https://grainy-gradients.vercel.app/noise.svg')] opacity-[0.03] mix-blend-overlay pointer-events-none" />
-                
-                <div className="relative z-10 px-6 py-20 md:py-32 flex flex-col items-center text-center">
-                    
-                    {/* Floating Pill Badge */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        className="inline-flex items-center gap-2 px-5 py-2.5 rounded-full border border-white/10 bg-white/5 backdrop-blur-md mb-8 shadow-xl"
-                    >
-                        <Sparkles className="w-4 h-4 text-emerald-400" />
-                        <span className="text-[11px] font-bold uppercase tracking-[0.2em] text-emerald-100">
-                            Masa Depan E-Procurement
-                        </span>
-                    </motion.div>
-                    
-                    {/* Fluid Typography */}
-                    <motion.h2 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.1 }}
-                        className="font-display text-[40px] sm:text-[56px] md:text-[80px] font-bold tracking-tighter text-white leading-[1.05] mb-8 max-w-5xl"
-                    >
-                        Hentikan Praktik Curang. <br className="hidden md:block" />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-br from-emerald-300 via-teal-200 to-blue-400">
-                            Mulai Pengadaan Terpercaya.
-                        </span>
-                    </motion.h2>
-                    
-                    <motion.p 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.2 }}
-                        className="text-[18px] md:text-[22px] text-emerald-50/60 max-w-2xl mb-14 leading-relaxed font-light"
-                    >
-                        Amankan triliunan aset perusahaan dengan jejak audit blockchain yang tidak dapat dimutasi dan diintervensi oleh siapa pun.
-                    </motion.p>
+                    {/* Right: Columns */}
+                    <div className="lg:col-span-7 grid grid-cols-1 sm:grid-cols-3 gap-12">
+                        
+                        {/* Col 1 */}
+                        <div>
+                            <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-6">Sitemap</h3>
+                            <ul className="flex flex-col gap-4 text-[14px] text-[var(--text-secondary)] font-medium">
+                                <li><Link href="/" className="hover:text-[var(--text-primary)] transition-colors">Beranda</Link></li>
+                                <li><Link href="/tenders" className="hover:text-[var(--text-primary)] transition-colors">Tender</Link></li>
+                                <li><Link href="/organizations" className="hover:text-[var(--text-primary)] transition-colors">Organisasi</Link></li>
+                                <li><Link href="/audit" className="hover:text-[var(--text-primary)] transition-colors">Jejak Audit</Link></li>
+                                <li><Link href="/support" className="hover:text-[var(--text-primary)] transition-colors">Pusat Bantuan</Link></li>
+                            </ul>
+                        </div>
 
-                    {/* Smooth Pill Buttons */}
-                    <motion.div 
-                        initial={{ opacity: 0, y: 20 }}
-                        whileInView={{ opacity: 1, y: 0 }}
-                        viewport={{ once: true }}
-                        transition={{ delay: 0.3 }}
-                        className="flex flex-col sm:flex-row items-center gap-5"
-                    >
-                        <Link href="/setup-organization" className="w-full sm:w-auto px-8 py-4 rounded-full bg-white text-black font-bold text-[15px] hover:scale-105 active:scale-95 transition-all flex items-center justify-center gap-2 shadow-[0_0_40px_rgba(255,255,255,0.2)]">
-                            Mulai Implementasi <ArrowRight className="w-5 h-5" />
-                        </Link>
-                        <Link href="/tenders" className="w-full sm:w-auto px-8 py-4 rounded-full border border-white/10 bg-white/5 backdrop-blur-md text-white font-bold text-[15px] hover:bg-white/10 transition-all flex items-center justify-center gap-2">
-                            Eksplorasi Sistem <Shield className="w-5 h-5" />
-                        </Link>
-                    </motion.div>
+                        {/* Col 2 */}
+                        <div className="flex flex-col gap-8">
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Kontak</h3>
+                                <p className="text-[14px] text-[var(--text-secondary)] font-medium leading-relaxed">
+                                    Sudirman Central Business District<br/>
+                                    Jakarta 12190<br/>
+                                    Indonesia
+                                </p>
+                            </div>
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Telepon</h3>
+                                <p className="text-[14px] text-[var(--text-secondary)] font-medium">+62 811 0000 000</p>
+                            </div>
+                            <div>
+                                <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Email</h3>
+                                <p className="text-[14px] text-[var(--text-secondary)] font-medium">hello@tenderseal.com</p>
+                            </div>
+                        </div>
+
+                        {/* Col 3 */}
+                        <div>
+                            <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Tentang Kami</h3>
+                            <p className="text-[14px] text-[var(--text-secondary)] font-medium leading-relaxed mb-8">
+                                Mengamankan setiap proses pengadaan Anda. Sistem dengan keamanan kriptografis dan transparansi blockchain. Kami siap membantu pertanyaan teknis Anda!
+                            </p>
+                            <h3 className="text-[13px] font-bold text-[var(--text-primary)] uppercase tracking-wider mb-4">Sosial Media</h3>
+                            <div className="flex flex-col gap-3 text-[14px] font-medium text-[var(--text-secondary)]">
+                                <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">LinkedIn</Link>
+                                <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">Instagram</Link>
+                                <Link href="#" className="hover:text-[var(--text-primary)] transition-colors">YouTube</Link>
+                            </div>
+                        </div>
+
+                    </div>
                 </div>
             </div>
-        </section>
+        </footer>
     );
 }

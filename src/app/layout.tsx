@@ -3,6 +3,7 @@ import { Inter, Space_Grotesk } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import SmoothScroll from "@/components/smooth-scroll";
+import GlobalFooter from "@/components/global-footer";
 
 const inter = Inter({
     subsets: ["latin"],
@@ -34,19 +35,7 @@ export default function RootLayout({
                     <div className="flex flex-col min-h-screen">
                         <Navbar />
                         <main className="flex-1 w-full flex flex-col">{children}</main>
-                        <footer className="border-t border-[var(--border)] py-8 text-center text-sm text-[var(--text-tertiary)]">
-                            <div className="max-w-[1920px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
-                                <div className="flex items-center gap-2">
-                                    <span className="font-display font-semibold text-[var(--text-primary)]">TenderSeal</span>
-                                    <span>© 2026</span>
-                                </div>
-                                <div className="flex items-center gap-4 text-[var(--text-tertiary)]">
-                                    <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">Security Protocol</span>
-                                    <span>·</span>
-                                    <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">Audit Logs</span>
-                                </div>
-                            </div>
-                        </footer>
+                        <GlobalFooter />
                     </div>
                 </SmoothScroll>
             </body>
