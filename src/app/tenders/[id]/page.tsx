@@ -1267,20 +1267,20 @@ export default function TenderDetailPage() {
                 <div className="space-y-6">
                     <div className="card p-6 rounded-2xl border-[var(--border)]">
                         {tender.status === "TIED" && (
-                            <section className="mb-6 rounded-xl border border-amber-500/30 bg-amber-50 p-4" aria-labelledby="tie-resolution-heading">
-                                <h3 id="tie-resolution-heading" className="text-sm font-bold text-amber-900">
+                            <section className="mb-6 rounded-xl border border-amber-500/30 bg-amber-500/10 p-5" aria-labelledby="tie-resolution-heading">
+                                <h3 id="tie-resolution-heading" className="text-sm font-bold text-amber-600">
                                     Skor tetap seri setelah seluruh tie-breaker diterapkan
                                 </h3>
-                                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                                <p className="mt-1 text-xs leading-relaxed text-[var(--text-secondary)]">
                                     Pilih salah satu kandidat seri dan catat alasan keputusan. Alasan serta bukti evaluasi akan di-hash dan dicatat ke blockchain.
                                 </p>
-                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                <div className="mt-5 grid gap-4 sm:grid-cols-2">
                                     <label className="grid gap-1.5 text-xs font-semibold text-[var(--text-primary)]">
                                         Kandidat pemenang
                                         <select
                                             value={tieWinnerId}
                                             onChange={(event) => setTieWinnerId(event.target.value)}
-                                            className="min-h-10 rounded-lg border border-amber-500/30 bg-[var(--surface-secondary)] px-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                            className="min-h-[42px] rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 text-sm text-[var(--text-primary)] focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors"
                                         >
                                             <option value="">Pilih kandidat</option>
                                             {tiedCandidates.map((bid: any) => (
@@ -1296,7 +1296,7 @@ export default function TenderDetailPage() {
                                             minLength={10}
                                             rows={3}
                                             placeholder="Contoh: klarifikasi pemenuhan SLA pada dokumen pendukung..."
-                                            className="rounded-lg border border-amber-500/30 bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                            className="rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] px-3 py-2.5 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:border-amber-500 focus:outline-none focus:ring-1 focus:ring-amber-500 transition-colors resize-none"
                                         />
                                     </label>
                                 </div>
