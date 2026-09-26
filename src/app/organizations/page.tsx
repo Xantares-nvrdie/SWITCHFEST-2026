@@ -208,8 +208,8 @@ export default function OrganizationsPage() {
                                                 </span>
                                             )}
                                             {isPending && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center gap-1">
-                                                    <ShieldCheck className="w-3 h-3" /> Pending Admin Approval
+                                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
+                                                    <ShieldCheck className="w-3 h-3 text-amber-500/80" /> Pending Admin Approval
                                                 </span>
                                             )}
                                             {isRejected && (

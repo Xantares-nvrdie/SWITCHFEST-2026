@@ -1158,7 +1158,7 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
                     <ArrowLeft className="w-3.5 h-3.5" /> Kembali
                 </button>
                 <button type="button" onClick={onSubmit} disabled={loading || !weightOk}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[14px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[var(--text-primary)] text-[var(--background)] shadow-md shadow-[var(--border)] font-semibold text-[14px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                     {loading ? (
                         <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Membuat Tender...</>
                     ) : (
@@ -1292,7 +1292,7 @@ function StepNav({ onBack, onNext, nextDisabled, nextLabel }: { onBack: () => vo
                 <ArrowLeft className="w-3.5 h-3.5" /> Kembali
             </button>
             <button type="button" onClick={onNext} disabled={nextDisabled}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] shadow-md shadow-[var(--border)] font-semibold text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                 {nextLabel || "Lanjut"} <ArrowRight className="w-3.5 h-3.5" />
             </button>
         </div>
