@@ -1,5 +1,6 @@
 import { Elysia, t } from "elysia";
 import { NotificationService } from "./service";
+import { TenderService } from "../tenders/service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 
 export const notificationsModule = new Elysia({ prefix: "/notifications" })
@@ -11,6 +12,7 @@ export const notificationsModule = new Elysia({ prefix: "/notifications" })
                 set.status = 401;
                 return { message: "Unauthorized" };
             }
+            await TenderService.performBulkStatusUpdates().catch(console.error);
             return await NotificationService.getUserNotifications(user.id);
         },
         {

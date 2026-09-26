@@ -118,16 +118,25 @@ export abstract class TenderService {
             `);
 
             if (updatedToReveal.rows.length > 0) {
+                console.log(`[BulkUpdate] ${updatedToReveal.rows.length} tender(s) transitioned to REVEAL`);
                 // Notifikasi ke partisipan (vendor) bahwa fase reveal dimulai
                 for (const tender of updatedToReveal.rows as any[]) {
-                    // Fetch all users belonging to organizations that have submitted a bid
-                    const membersToNotifyQuery = await db.select({ userId: organizationMembers.userId })
-                        .from(bids)
-                        .innerJoin(organizationMembers, eq(bids.organizationId, organizationMembers.organizationId))
-                        .where(eq(bids.tenderId, tender.id));
+                    const creatorId = tender.created_by || tender.createdBy;
+
+                    // Fetch all users belonging to organizations that have submitted a bid OR joined as participant
+                    const [bidMembers, participantMembers] = await Promise.all([
+                        db.select({ userId: organizationMembers.userId })
+                            .from(bids)
+                            .innerJoin(organizationMembers, eq(bids.organizationId, organizationMembers.organizationId))
+                            .where(eq(bids.tenderId, tender.id)),
+                        db.select({ userId: organizationMembers.userId })
+                            .from(tenderParticipants)
+                            .innerJoin(organizationMembers, eq(tenderParticipants.organizationId, organizationMembers.organizationId))
+                            .where(eq(tenderParticipants.tenderId, tender.id))
+                    ]);
                     
                     // Remove duplicate user IDs
-                    const uniqueUserIds = [...new Set(membersToNotifyQuery.map(m => m.userId))];
+                    const uniqueUserIds = [...new Set([...bidMembers, ...participantMembers].map(m => m.userId))];
                     
                     if (uniqueUserIds.length > 0) {
                         const notificationsPayload = uniqueUserIds.map(userId => ({
@@ -138,17 +147,19 @@ export abstract class TenderService {
                             link: `/tenders/${tender.id}`
                         }));
                         await NotificationService.createMany(notificationsPayload);
+                        console.log(`[BulkUpdate] Sent reveal notification to ${uniqueUserIds.length} user(s) for tender ${tender.id}`);
                     }
                     
                     // Notifikasi juga untuk panitia pembuat tender
-                    if (tender.created_by) {
+                    if (creatorId) {
                         await NotificationService.create({
-                            userId: tender.created_by,
+                            userId: creatorId,
                             title: "Fase Reveal Dimulai",
                             message: `Waktu pengumpulan (commit) untuk tender "${tender.title}" telah berakhir. Saat ini vendor sedang melakukan dekripsi penawaran mereka.`,
                             type: "INFO",
                             link: `/tenders/${tender.id}`
                         });
+                        console.log(`[BulkUpdate] Sent reveal notification to creator ${creatorId} for tender ${tender.id}`);
                     }
                 }
             }
@@ -162,15 +173,20 @@ export abstract class TenderService {
             `);
 
             if (updatedToScoring.rows.length > 0) {
+                console.log(`[BulkUpdate] ${updatedToScoring.rows.length} tender(s) transitioned to SCORING`);
                 // Notifikasi ke panitia (creator) bahwa fase scoring dimulai
                 for (const tender of updatedToScoring.rows as any[]) {
-                    await NotificationService.create({
-                        userId: tender.created_by,
-                        title: "Fase Scoring Terbuka",
-                        message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
-                        type: "INFO",
-                        link: `/tenders/${tender.id}`
-                    });
+                    const creatorId = tender.created_by || tender.createdBy;
+                    if (creatorId) {
+                        await NotificationService.create({
+                            userId: creatorId,
+                            title: "Fase Scoring Terbuka",
+                            message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
+                            type: "INFO",
+                            link: `/tenders/${tender.id}`
+                        });
+                        console.log(`[BulkUpdate] Sent scoring notification to creator ${creatorId} for tender ${tender.id}`);
+                    }
                 }
             }
         } catch (error) {
