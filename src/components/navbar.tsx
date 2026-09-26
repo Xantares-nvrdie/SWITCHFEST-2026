@@ -18,12 +18,15 @@ import {
     ShieldCheck,
     ClipboardList,
     BookOpen,
+    Menu,
+    X,
 } from "lucide-react";
 
 export default function Navbar() {
     const router = useRouter();
     const pathname = usePathname();
     const { data: session, isPending } = useSession();
+    const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false);
 
     const handleLogout = async () => {
         await signOut();
@@ -164,7 +167,57 @@ export default function Navbar() {
                         </div>
                     )}
                 </div>
+                
+                {/* Hamburger Menu (Mobile) */}
+                <div className="md:hidden flex items-center ml-4">
+                    <button
+                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                        className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                    >
+                        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                    </button>
+                </div>
             </div>
+
+            {/* Mobile Dropdown Menu */}
+            {isMobileMenuOpen && (
+                <div className="md:hidden border-t border-[var(--border-light)] bg-[var(--background)]/95 backdrop-blur-md absolute w-full max-h-[calc(100vh-64px)] overflow-y-auto shadow-xl">
+                    <nav className="flex flex-col p-4 space-y-2">
+                        {canCreateTender && (
+                            <Link
+                                href="/tenders/create"
+                                onClick={() => setIsMobileMenuOpen(false)}
+                                className={`px-4 py-3 rounded-xl text-[14px] font-semibold transition-all flex items-center gap-3 ${
+                                    pathname === "/tenders/create"
+                                        ? "bg-[var(--accent)] text-white"
+                                        : "bg-[var(--accent)]/10 text-[var(--accent)]"
+                                }`}
+                            >
+                                <PlusCircle className="w-5 h-5" />
+                                Buat Tender
+                            </Link>
+                        )}
+                        {navItems.map((item) => {
+                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                            return (
+                                <Link
+                                    key={item.href}
+                                    href={item.href}
+                                    onClick={() => setIsMobileMenuOpen(false)}
+                                    className={`px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 ${
+                                        isActive
+                                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] font-semibold"
+                                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
+                                    }`}
+                                >
+                                    <item.icon className="w-5 h-5" />
+                                    {item.label}
+                                </Link>
+                            );
+                        })}
+                    </nav>
+                </div>
+            )}
         </header>
     );
 }
