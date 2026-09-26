@@ -364,7 +364,7 @@ export abstract class TenderService {
                         tieBreakPolicyHash,
                         { nonce },
                     );
-                    tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
+                    await tx.wait();
                 } catch (err: any) {
                     const isAlreadyExists =
                         err.reason === "Tender already exists" ||
