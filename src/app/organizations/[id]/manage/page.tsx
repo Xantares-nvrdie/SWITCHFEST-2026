@@ -62,10 +62,10 @@ interface Organization {
 }
 
 const roleMeta: Record<OrgRole, { label: string; icon: any; color: string; bg: string }> = {
-    ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-amber-600", bg: "bg-amber-500/10 border-amber-500/20" },
-    PROCUREMENT_OFFICER: { label: "Procurement Officer", icon: Briefcase, color: "text-[var(--accent)]", bg: "bg-teal-500/10 border-teal-500/20" },
-    AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-blue-500/10 border-blue-500/20" },
-    MEMBER: { label: "Member", icon: User, color: "text-[var(--text-tertiary)]", bg: "bg-[var(--surface-secondary)] border-[var(--border)]" },
+    ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-[var(--text-primary)]", bg: "bg-[var(--surface-secondary)] border-[var(--text-primary)]" },
+    PROCUREMENT_OFFICER: { label: "Procurement", icon: Briefcase, color: "text-[var(--text-secondary)]", bg: "bg-[var(--surface)] border-[var(--border-strong)]" },
+    AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-[var(--surface)] border-[var(--border)]" },
+    MEMBER: { label: "Member", icon: User, color: "text-[var(--text-tertiary)]", bg: "bg-transparent border-[var(--border-light)]" },
 };
 
 function RoleBadge({ role }: { role: OrgRole }) {
@@ -73,7 +73,7 @@ function RoleBadge({ role }: { role: OrgRole }) {
     const Icon = m.icon;
     return (
         <span
-            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-full text-[11px] font-semibold border ${m.bg} ${m.color}`}
+            className={`inline-flex items-center gap-1.5 px-2.5 py-0.5 rounded-md font-mono text-[11px] font-medium border ${m.bg} ${m.color}`}
         >
             <Icon className={`w-3 h-3 ${m.color}`} />
             {m.label}
@@ -270,7 +270,7 @@ export default function OrgManagePage() {
                         <p className="text-[13px] text-[var(--text-tertiary)] flex items-center gap-1.5">
                             <Users className="w-4 h-4" />
                             {members.length} anggota
-                            {isAdmin && <span className="ml-3 px-2 py-0.5 rounded-md bg-amber-50 text-amber-700 text-[11px] font-bold flex items-center gap-1 border border-amber-200"><Crown className="w-3 h-3" /> Admin</span>}
+                            {isAdmin && <span className="ml-3 px-2 py-0.5 rounded-md bg-[var(--surface-secondary)] text-[var(--text-primary)] text-[11px] font-mono font-medium flex items-center gap-1.5 border border-[var(--text-primary)]"><Crown className="w-3 h-3" /> Admin</span>}
                         </p>
                     </div>
                 </div>

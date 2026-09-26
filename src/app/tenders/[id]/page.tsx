@@ -793,9 +793,10 @@ export default function TenderDetailPage() {
                             <span className="text-xs font-mono font-bold px-2.5 py-1 rounded-md bg-[var(--surface-secondary)] text-[var(--accent)] border border-[var(--border)]">
                                 {tender.code}
                             </span>
-                            <span className={`text-xs font-semibold px-2.5 py-1 rounded-full ${tender.status === 'OPEN' ? 'bg-[var(--accent-light)] text-[var(--accent)]' : 'bg-amber-50 text-amber-600'}`}>
+                            <div className={`flex items-center gap-2 text-[10px] font-bold uppercase tracking-widest px-3 py-1.5 rounded-md border ${tender.status === 'OPEN' ? 'border-[var(--accent)] bg-[var(--accent)]/10 text-[var(--accent)]' : 'border-[var(--border)] bg-[var(--surface)] text-[var(--text-secondary)]'}`}>
+                                <span className={`w-1.5 h-1.5 rounded-full ${tender.status === 'OPEN' ? 'bg-[var(--accent)] animate-pulse' : 'bg-[var(--text-tertiary)]'}`} />
                                 {tender.status}
-                            </span>
+                            </div>
                         </div>
                         <h1 className="text-2xl sm:text-3xl font-extrabold text-[var(--text-primary)] tracking-tight mt-2">
                             {tender.title}
@@ -829,7 +830,7 @@ export default function TenderDetailPage() {
                                             setIsPublishing(false);
                                         }
                                     }}
-                                    className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 disabled:opacity-50 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2"
+                                    className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 disabled:opacity-50 text-[var(--background)] text-xs font-bold rounded-lg transition-all flex items-center gap-2"
                                 >
                                     {isPublishing ? (
                                         <><RefreshCw className="w-4 h-4 animate-spin" /> Mempublikasikan...</>
@@ -851,14 +852,14 @@ export default function TenderDetailPage() {
                     <div className="flex flex-col gap-2">
                         <div className="flex items-center gap-2">
                             <span className="text-xs text-[var(--text-tertiary)] w-28">Commit Deadline:</span>
-                            <span className="text-xs font-bold text-amber-600 px-3 py-1.5 rounded-xl bg-amber-500/10 border border-amber-200">
+                            <span className="text-[12px] font-mono font-medium text-[var(--text-primary)] px-3 py-1.5 rounded-md bg-[var(--surface-secondary)] border border-[var(--border)]">
                                 {new Date(tender.commitDeadline).toLocaleString('id-ID')}
                             </span>
                         </div>
                         {tender.revealDeadline && (
                             <div className="flex items-center gap-2">
                                 <span className="text-xs text-[var(--text-tertiary)] w-28">Reveal Deadline:</span>
-                                <span className="text-xs font-bold text-purple-600 px-3 py-1.5 rounded-xl bg-purple-500/10 border border-purple-200">
+                                <span className="text-[12px] font-mono font-medium text-[var(--text-primary)] px-3 py-1.5 rounded-md bg-[var(--surface-secondary)] border border-[var(--border)]">
                                     {new Date(tender.revealDeadline).toLocaleString('id-ID')}
                                 </span>
                             </div>

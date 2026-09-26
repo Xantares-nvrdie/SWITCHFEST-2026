@@ -649,19 +649,19 @@ function StepIndicator({ current }: { current: number }) {
             {STEPS.map((s, i) => (
                 <div key={s.id} className="flex items-center flex-1">
                     <div className="flex flex-col items-center gap-1.5 flex-1">
-                        <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
-                            current > s.id ? "bg-emerald-500 border-emerald-500 text-[var(--surface)]"
-                            : current === s.id ? "bg-[var(--surface-secondary)] border-[var(--accent)] text-[var(--text-primary)] ring-1 ring-[var(--accent)]"
+                        <div className={`w-9 h-9 rounded-md flex items-center justify-center border-2 transition-all duration-300 ${
+                            current > s.id ? "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--surface)]"
+                            : current === s.id ? "bg-[var(--surface-secondary)] border-[var(--text-primary)] text-[var(--text-primary)]"
                             : "bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-tertiary)]"
                         }`}>
                             {current > s.id ? <Check className="w-4 h-4" /> : s.icon}
                         </div>
-                        <span className={`text-[10px] font-bold tracking-wide uppercase transition-colors ${
-                            current === s.id ? "text-[var(--accent)]" : current > s.id ? "text-emerald-600" : "text-[var(--text-tertiary)]"
+                        <span className={`text-[10px] font-bold font-mono tracking-wide uppercase transition-colors ${
+                            current === s.id ? "text-[var(--text-primary)]" : current > s.id ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"
                         }`}>{s.label}</span>
                     </div>
                     {i < STEPS.length - 1 && (
-                        <div className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-emerald-500" : "bg-[var(--surface-secondary)]"}`} />
+                        <div className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-[var(--text-primary)]" : "bg-[var(--surface-secondary)]"}`} />
                     )}
                 </div>
             ))}
@@ -937,7 +937,7 @@ function StepFieldsAndScoring({
                         </p>
                     </div>
                     <button type="button" onClick={onAdd}
-                        className="flex items-center gap-1.5 px-3 py-2 rounded-xl bg-blue-50 hover:bg-blue-50 text-[var(--accent)] text-xs font-semibold border border-blue-200 transition-colors">
+                        className="flex items-center gap-1.5 px-3 py-2 rounded-md bg-[var(--surface-secondary)] hover:bg-[var(--border)] text-[var(--text-primary)] text-[11px] font-mono font-medium border border-[var(--border)] transition-colors">
                         <PlusCircle className="w-3.5 h-3.5" /> Tambah Field
                     </button>
                 </div>
@@ -969,8 +969,8 @@ function StepFieldsAndScoring({
 
             {/* Empty state */}
             {fields.length === 0 && (
-                <div onClick={onAdd} className="card rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-blue-200 transition-colors border-dashed">
-                    <div className="w-12 h-12 rounded-2xl bg-blue-50 flex items-center justify-center text-[var(--accent)]"><PlusCircle className="w-6 h-6" /></div>
+                <div onClick={onAdd} className="card rounded-2xl p-10 flex flex-col items-center gap-3 cursor-pointer hover:border-[var(--border-strong)] transition-colors border-dashed">
+                    <div className="w-12 h-12 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center justify-center text-[var(--text-secondary)]"><PlusCircle className="w-6 h-6" /></div>
                     <p className="text-sm font-semibold text-[var(--text-secondary)]">Belum ada field</p>
                     <p className="text-xs text-[var(--text-tertiary)] text-center">Klik untuk menambah field pertama, atau kembali untuk memilih template</p>
                 </div>
@@ -1019,10 +1019,10 @@ function StepFieldsAndScoring({
                                                 <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Wajib Diisi</label>
                                                 <div className="flex items-center gap-2 h-[38px]">
                                                     <button type="button" onClick={() => onUpdate(idx, "required", !field.required)}
-                                                        className={`relative w-10 h-5 rounded-full transition-colors ${field.required ? "bg-emerald-500" : "bg-[var(--border)]"}`}>
-                                                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--surface-secondary)] shadow transition-all ${field.required ? "left-5" : "left-0.5"}`} />
+                                                        className={`relative w-10 h-5 rounded-full transition-colors border ${field.required ? "bg-[var(--text-primary)] border-[var(--text-primary)]" : "bg-[var(--surface)] border-[var(--border-strong)]"}`}>
+                                                        <span className={`absolute top-0.5 w-3.5 h-3.5 rounded-full shadow transition-all ${field.required ? "left-[22px] bg-[var(--surface)]" : "left-[3px] bg-[var(--text-tertiary)]"}`} />
                                                     </button>
-                                                    <span className={`text-xs font-semibold ${field.required ? "text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}>
+                                                    <span className={`text-xs font-semibold ${field.required ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
                                                         {field.required ? "Wajib" : "Opsional"}
                                                     </span>
                                                 </div>
@@ -1052,7 +1052,7 @@ function StepFieldsAndScoring({
                             </div>
 
                             {/* ── Scoring Section ── */}
-                            <div className={`border-t transition-colors ${field.scored ? "border-purple-500/20 bg-purple-500/5" : "border-[var(--border)] bg-[var(--surface-secondary)]/30"}`}>
+                            <div className={`border-t transition-colors ${field.scored ? "border-[var(--text-primary)] bg-[var(--surface-secondary)]" : "border-[var(--border)] bg-[var(--surface)]"}`}>
                                 <div className="px-4 py-3">
                                     <div className="flex items-center justify-between mb-3">
                                         <div className="flex items-center gap-2">
@@ -1077,15 +1077,15 @@ function StepFieldsAndScoring({
                                                 <div className="relative">
                                                     <input type="number" min={0} max={100} value={field.weight === 0 ? "" : field.weight}
                                                         onChange={(e) => onUpdate(idx, "weight", e.target.value === "" ? 0 : parseInt(e.target.value, 10))}
-                                                        className="w-full px-3 py-2 pr-7 rounded-lg bg-purple-50 border border-purple-500/30 text-sm font-bold text-[var(--text-secondary)] focus:outline-none focus:border-purple-500/60" />
-                                                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-purple-500/50" />
+                                                        className="w-full px-3 py-2 pr-7 rounded-md bg-[var(--surface)] border border-[var(--border)] text-sm font-mono font-medium text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-primary)]" />
+                                                    <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-[var(--text-tertiary)]" />
                                                 </div>
                                             </div>
                                             {/* Scoring Type */}
                                             <div className="sm:col-span-4 space-y-1">
                                                 <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Metode Scoring</label>
                                                 <select value={field.scoringType} onChange={(e) => onUpdate(idx, "scoringType", e.target.value as ScoringType)}
-                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-purple-500/20 text-xs text-[var(--text-primary)] focus:outline-none focus:border-purple-500/40">
+                                                    className="w-full px-3 py-2 rounded-md bg-[var(--surface)] border border-[var(--border)] text-xs font-mono text-[var(--text-primary)] focus:outline-none focus:border-[var(--text-primary)]">
                                                     {(Object.keys(SCORING_META) as ScoringType[]).map((t) => (
                                                         <option key={t} value={t}>{SCORING_META[t].label}</option>
                                                     ))}
@@ -1098,7 +1098,7 @@ function StepFieldsAndScoring({
                                             <div className="sm:col-span-5 space-y-1">
                                                 <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Panduan Evaluator</label>
                                                 <input type="text" value={field.evaluatorGuide} onChange={(e) => onUpdate(idx, "evaluatorGuide", e.target.value)} placeholder="Panduan singkat untuk evaluator..."
-                                                    className="w-full px-3 py-2 rounded-lg bg-[var(--surface)] border border-purple-500/20 text-xs text-[var(--text-secondary)] placeholder:text-slate-700 focus:outline-none focus:border-purple-500/40" />
+                                                    className="w-full px-3 py-2 rounded-md bg-[var(--surface)] border border-[var(--border)] text-xs font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-[var(--text-primary)]" />
                                             </div>
                                         </div>
                                     )}
@@ -1186,14 +1186,14 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
                     })}
                 </div>
                 {scoredFields.length > 0 && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)]" : "bg-red-500/10 border border-red-200 text-red-500"}`}>
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-md font-mono text-xs font-medium border ${weightOk ? "bg-[var(--surface-secondary)] border-[var(--text-primary)] text-[var(--text-primary)]" : "bg-[var(--surface-secondary)] border-red-500 text-red-500"}`}>
                         {weightOk ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                         Total Bobot: {totalWeight}% {weightOk ? "— Valid ✓" : "— Harus tepat 100%"}
                     </div>
                 )}
             </div>
 
-            <div className="flex gap-3 p-4 rounded-xl bg-blue-500/5 border border-blue-500/20 text-blue-300 text-xs">
+            <div className="flex gap-3 p-4 rounded-md bg-[var(--surface-secondary)] border border-[var(--border-strong)] text-[var(--text-primary)] text-xs">
                 <Info className="w-4 h-4 shrink-0 mt-0.5" />
                 <p>Setelah dibuat, tender berstatus <strong>DRAFT</strong> dan perlu diaktifkan ke <strong>OPEN</strong> untuk menerima penawaran vendor.</p>
             </div>
@@ -1203,7 +1203,7 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
                     <ArrowLeft className="w-3.5 h-3.5" /> Kembali
                 </button>
                 <button type="button" onClick={onSubmit} disabled={loading || !weightOk}
-                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[14px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                    className="flex-1 flex items-center justify-center gap-2 px-6 py-3 rounded-md border border-[var(--border)] bg-[var(--text-primary)] text-[var(--background)] font-mono font-medium text-[14px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                     {loading ? (
                         <><svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>Membuat Tender...</>
                     ) : (
@@ -1337,7 +1337,7 @@ function StepNav({ onBack, onNext, nextDisabled, nextLabel }: { onBack: () => vo
                 <ArrowLeft className="w-3.5 h-3.5" /> Kembali
             </button>
             <button type="button" onClick={onNext} disabled={nextDisabled}
-                className="flex items-center gap-2 px-6 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
+                className="flex items-center gap-2 px-6 py-2.5 rounded-md border border-[var(--border)] bg-[var(--text-primary)] text-[var(--background)] font-mono font-medium text-[13px] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed">
                 {nextLabel || "Lanjut"} <ArrowRight className="w-3.5 h-3.5" />
             </button>
         </div>
