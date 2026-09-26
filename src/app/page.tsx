@@ -6,6 +6,7 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
 import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye, FileText, Upload, Users, Rocket } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
+import HomeFooter from "@/components/home-footer";
 
 interface DashboardStats {
     totalTenders: number;
@@ -491,6 +492,8 @@ export default function HomePage() {
                     </div>
                 </div>
             </section>
+
+            <HomeFooter />
         </div>
     );
 }
