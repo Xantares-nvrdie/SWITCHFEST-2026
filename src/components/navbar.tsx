@@ -17,6 +17,7 @@ import {
     Loader2,
     ShieldCheck,
     ClipboardList,
+    BookOpen,
 } from "lucide-react";
 
 export default function Navbar() {
@@ -56,6 +57,7 @@ export default function Navbar() {
     const navItems = [
         { href: "/tenders", label: "Tender", icon: FileText },
         { href: "/organizations", label: "Organisasi", icon: Building2 },
+        { href: "/tutorial", label: "Panduan", icon: BookOpen },
     ];
 
     if (session?.user) {
