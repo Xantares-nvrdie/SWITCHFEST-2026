@@ -22,6 +22,13 @@
       "when": 1790446382165,
       "tag": "0002_optimize-query-indexes",
       "breakpoints": true
+    },
+    {
+      "idx": 3,
+      "version": "7",
+      "when": 1790447218413,
+      "tag": "0003_add-tender-tie-resolution",
+      "breakpoints": true
     }
   ]
 }

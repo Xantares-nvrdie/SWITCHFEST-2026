@@ -350,21 +350,24 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             try {
                 const result = await TenderService.finalizeTender(params.id, body, user.id);
 
-                // Log activity
+                const isTied = result.status === "TIED";
                 await AuditLogService.log({
                     userId: user.id,
                     organizationId: tender.organizationId,
                     tenderId: params.id,
-                    action: "DECLARE_TENDER_WINNER",
-                    entityType: "tender_results",
+                    action: isTied ? "DECLARE_TENDER_TIE" : "DECLARE_TENDER_WINNER",
+                    entityType: isTied ? "tenders" : "tender_results",
                     entityId: params.id,
-                    description: `Procurement Officer menetapkan pemenang tender. Transaksi skor dikirim ke Smart Contract.`,
+                    description: isTied
+                        ? "Skor tender tetap seri setelah seluruh tie-breaker diterapkan."
+                        : "Procurement Officer menetapkan pemenang tender. Transaksi skor dikirim ke Smart Contract.",
                 });
 
                 set.status = 200;
                 return {
-                    message:
-                        "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)",
+                    message: isTied
+                        ? "Tender berstatus seri. Pilih kandidat dan catat alasan penyelesaian sebelum menetapkan pemenang."
+                        : "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)",
                     data: result,
                 };
             } catch (err: any) {
@@ -380,6 +383,60 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 summary: "Finalize tender & Pick Winner",
                 description:
                     "Menyelesaikan tender, menyimpan semua skor, menetapkan pemenang, dan memicu transaksi pencatatan ke Smart Contract.",
+            },
+        },
+    )
+    .post(
+        "/:id/resolve-tie",
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins can resolve a tie" };
+            }
+
+            try {
+                const result = await TenderService.resolveTie(params.id, body, user.id);
+                await AuditLogService.log({
+                    userId: user.id,
+                    organizationId: tender.organizationId,
+                    tenderId: params.id,
+                    bidId: body.winningBidId,
+                    action: "RESOLVE_TENDER_TIE",
+                    entityType: "tender_results",
+                    entityId: params.id,
+                    description: "Panitia menetapkan pemenang dari kandidat seri dengan alasan tertulis.",
+                    metadata: { tieBreakEvidenceHash: result.tieBreakEvidenceHash },
+                });
+                return { message: "Penyelesaian seri berhasil dicatat.", data: result };
+            } catch (err: any) {
+                set.status = 400;
+                return { message: err.message || "Failed to resolve tie" };
+            }
+        },
+        {
+            auth: true,
+            params: t.Object({ id: t.String() }),
+            body: TenderModel.resolveTieBody,
+            detail: {
+                summary: "Resolve a tied tender",
+                description: "Memilih pemenang dari kandidat seri dan menyimpan alasan penyelesaian untuk audit.",
             },
         },
     )

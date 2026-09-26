@@ -24,6 +24,13 @@ export const tenders = pgTable(
         revealWindowHours: real("reveal_window_hours").default(48).notNull(),
         // Dihitung dari commit_deadline + reveal_window_hours saat tender ditutup
         revealDeadline: timestamp("reveal_deadline", { withTimezone: true }),
+        tieBreakerCriteriaIds: jsonb("tie_breaker_criteria_ids").default([]).notNull(),
+        tieBreakPolicyHash: varchar("tie_break_policy_hash", { length: 66 }),
+        tieCandidateBidIds: jsonb("tie_candidate_bid_ids").default([]).notNull(),
+        tieBreakEvidenceHash: varchar("tie_break_evidence_hash", { length: 66 }),
+        tieBreakReason: text("tie_break_reason"),
+        tieResolvedAt: timestamp("tie_resolved_at", { withTimezone: true }),
+        tieResolvedBy: text("tie_resolved_by").references(() => user.id, { onDelete: "set null" }),
         openedAt: timestamp("opened_at", { withTimezone: true }),
         closedAt: timestamp("closed_at", { withTimezone: true }),
         completedAt: timestamp("completed_at", { withTimezone: true }),

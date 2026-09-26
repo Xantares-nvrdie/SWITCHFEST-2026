@@ -24,6 +24,7 @@ export const tenderStatusEnum = pgEnum("tender_status", [
     "CLOSED",
     "REVEAL",
     "SCORING",
+    "TIED",
     "COMPLETED",
     "CANCELLED",
 ]);

@@ -49,6 +49,11 @@ interface TenderData {
     attachments?: { name: string; url: string }[];
     category: string;
     status: string;
+    tieBreakerCriteriaIds?: string[];
+    tieCandidateBidIds?: string[];
+    tieBreakPolicyHash?: string;
+    tieBreakEvidenceHash?: string;
+    tieBreakReason?: string;
     commitDeadline: string;
     revealDeadline: string;
     organization: { id: string; name: string };
@@ -126,6 +131,8 @@ export default function TenderDetailPage() {
     const [allBids, setAllBids] = useState<any[]>([]);
     const [manualScores, setManualScores] = useState<Record<string, Record<string, number>>>({});
     const [isFinalizing, setIsFinalizing] = useState(false);
+    const [tieWinnerId, setTieWinnerId] = useState("");
+    const [tieDecisionNotes, setTieDecisionNotes] = useState("");
     const [auditData, setAuditData] = useState<any>(null);
     const [loadingAuditData, setLoadingAuditData] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
@@ -607,6 +614,33 @@ export default function TenderDetailPage() {
         }
     };
 
+    const handleResolveTie = async () => {
+        if (!tieWinnerId || tieDecisionNotes.trim().length < 10) {
+            alert("Pilih kandidat dan isi alasan penyelesaian minimal 10 karakter.");
+            return;
+        }
+
+        setIsFinalizing(true);
+        try {
+            const res = await fetch(`/api/tenders/${tenderId}/resolve-tie`, {
+                method: "POST",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ winningBidId: tieWinnerId, decisionNotes: tieDecisionNotes.trim() }),
+            });
+            const data = await res.json();
+            if (!res.ok) {
+                alert(data.message || "Gagal mencatat penyelesaian seri.");
+                return;
+            }
+            alert(data.message || "Penyelesaian seri berhasil dicatat.");
+            window.location.reload();
+        } catch (error: any) {
+            alert(`Terjadi kesalahan jaringan: ${error.message}`);
+        } finally {
+            setIsFinalizing(false);
+        }
+    };
+
     // --- Scoring Engine Logic ---
     const scoredBids = useMemo(() => {
         const validBids = allBids.filter(b => b.status === "REVEALED_VALID");
@@ -681,6 +715,8 @@ export default function TenderDetailPage() {
             };
         }).sort((a, b) => b.totalScore - a.totalScore); // Ranking highest first
     }, [allBids, tender, manualScores]);
+
+    const tiedCandidates = scoredBids.filter((bid: any) => tender?.tieCandidateBidIds?.includes(bid.id));
 
     if (loading) {
         return <div className="p-8 text-center text-[var(--text-tertiary)]">Loading tender data...</div>;
@@ -791,7 +827,7 @@ export default function TenderDetailPage() {
                 <button onClick={() => setActiveTab("reveal")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "reveal" ? "border-purple-400 text-[var(--text-secondary)] bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                     <KeyRound className="w-4 h-4" /> Commit-Reveal
                 </button>
-                {(isCreator || tender.status === 'SCORING' || tender.status === 'COMPLETED') && (
+                {(isCreator || tender.status === 'SCORING' || tender.status === 'TIED' || tender.status === 'COMPLETED') && (
                     <button onClick={() => setActiveTab("scoring")} className={`px-4 py-2.5 text-xs font-bold rounded-t-xl transition-all flex items-center gap-2 border-b-2 ${activeTab === "scoring" ? "border-amber-400 text-amber-600 bg-[var(--surface-secondary)]/60" : "border-transparent text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"}`}>
                         <Award className="w-4 h-4" /> Scoring Engine
                     </button>
@@ -1177,6 +1213,51 @@ export default function TenderDetailPage() {
             {activeTab === "scoring" && (
                 <div className="space-y-6">
                     <div className="card p-6 rounded-2xl border-[var(--border)]">
+                        {tender.status === "TIED" && (
+                            <section className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4" aria-labelledby="tie-resolution-heading">
+                                <h3 id="tie-resolution-heading" className="text-sm font-bold text-amber-900">
+                                    Skor tetap seri setelah seluruh tie-breaker diterapkan
+                                </h3>
+                                <p className="mt-1 text-xs leading-relaxed text-amber-800">
+                                    Pilih salah satu kandidat seri dan catat alasan keputusan. Alasan serta bukti evaluasi akan di-hash dan dicatat ke blockchain.
+                                </p>
+                                <div className="mt-4 grid gap-3 sm:grid-cols-2">
+                                    <label className="grid gap-1.5 text-xs font-semibold text-[var(--text-primary)]">
+                                        Kandidat pemenang
+                                        <select
+                                            value={tieWinnerId}
+                                            onChange={(event) => setTieWinnerId(event.target.value)}
+                                            className="min-h-10 rounded-lg border border-amber-300 bg-white px-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                        >
+                                            <option value="">Pilih kandidat</option>
+                                            {tiedCandidates.map((bid: any) => (
+                                                <option key={bid.id} value={bid.id}>{bid.organization?.name}</option>
+                                            ))}
+                                        </select>
+                                    </label>
+                                    <label className="grid gap-1.5 text-xs font-semibold text-[var(--text-primary)]">
+                                        Alasan penyelesaian
+                                        <textarea
+                                            value={tieDecisionNotes}
+                                            onChange={(event) => setTieDecisionNotes(event.target.value)}
+                                            minLength={10}
+                                            rows={3}
+                                            placeholder="Contoh: klarifikasi pemenuhan SLA pada dokumen pendukung..."
+                                            className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                        />
+                                    </label>
+                                </div>
+                                <button
+                                    type="button"
+                                    onClick={handleResolveTie}
+                                    disabled={isFinalizing || tiedCandidates.length === 0}
+                                    className="mt-4 inline-flex min-h-10 items-center justify-center gap-2 rounded-lg bg-amber-700 px-4 text-sm font-bold text-white transition-colors hover:bg-amber-800 disabled:cursor-not-allowed disabled:opacity-50"
+                                >
+                                    {isFinalizing ? <RefreshCw className="h-4 w-4 animate-spin" /> : <ShieldCheck className="h-4 w-4" />}
+                                    Catat Penyelesaian Seri
+                                </button>
+                            </section>
+                        )}
                         <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 mb-6">
                             <div>
                                 <h3 className="text-lg font-bold text-[var(--text-primary)] flex items-center gap-2">
@@ -1185,11 +1266,12 @@ export default function TenderDetailPage() {
                                 <p className="text-xs text-[var(--text-tertiary)] mt-1">Bandingkan dan beri nilai penawaran yang sudah terenkripsi & diverifikasi.</p>
                             </div>
                             <button 
+                                type="button"
                                 onClick={handleFinalizeWinner}
-                                disabled={isFinalizing || tender.status === 'COMPLETED'}
+                                disabled={isFinalizing || tender.status === 'COMPLETED' || tender.status === 'TIED'}
                                 className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
                                 {isFinalizing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} 
-                                {tender.status === 'COMPLETED' ? 'Tender Selesai' : 'Finalize Pemenang (On-Chain)'}
+                                {tender.status === 'COMPLETED' ? 'Tender Selesai' : tender.status === 'TIED' ? 'Menunggu Penyelesaian Seri' : 'Finalize Pemenang (On-Chain)'}
                             </button>
                         </div>
                         

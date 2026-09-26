@@ -31,6 +31,7 @@ export namespace TenderModel {
             t.Literal("CLOSED"),
             t.Literal("REVEAL"),
             t.Literal("SCORING"),
+            t.Literal("TIED"),
             t.Literal("COMPLETED"),
             t.Literal("CANCELLED"),
         ]),
@@ -76,10 +77,16 @@ export namespace TenderModel {
         }))
     });
 
+    export const resolveTieBody = t.Object({
+        winningBidId: t.String(),
+        decisionNotes: t.String({ minLength: 10, maxLength: 5000 }),
+    });
+
     export type createInput = typeof createBody.static;
     export type updateInput = typeof updateBody.static;
     export type updateStatusInput = typeof updateStatusBody.static;
     export type addFieldInput = typeof addFieldBody.static;
     export type addCriterionInput = typeof addCriterionBody.static;
     export type finalizeInput = typeof finalizeBody.static;
+    export type resolveTieInput = typeof resolveTieBody.static;
 }

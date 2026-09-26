@@ -11,11 +11,20 @@ import {
     bids,
 } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
+import { createHash } from "node:crypto";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
 import { NotificationService } from "../notifications/service";
 
 export abstract class TenderService {
+    private static hashEvidence(value: unknown) {
+        return `0x${createHash("sha256").update(JSON.stringify(value)).digest("hex")}`;
+    }
+
+    private static scoreKey(score: number) {
+        return Number(score.toFixed(2));
+    }
+
     static async create(data: TenderModel.createInput & { createdBy: string }) {
         const tenderId = crypto.randomUUID();
         const now = new Date();
@@ -328,16 +337,33 @@ export abstract class TenderService {
 
         if (status === "OPEN") {
             updatePayload.openedAt = now;
-            // Create tender on Smart Contract
             const tender = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
             if (tender && tender.commitDeadline) {
+                const criteria = await db.query.tenderCriteria.findMany({
+                    where: (criterion, { eq }) => eq(criterion.tenderId, id),
+                    orderBy: (criterion, { asc }) => [asc(criterion.sortOrder), asc(criterion.id)],
+                });
+                if (criteria.length === 0) {
+                    throw new Error("Tender harus memiliki setidaknya satu kriteria sebelum dipublikasikan.");
+                }
+
+                const tieBreakerCriteriaIds = criteria.map((criterion) => criterion.id);
+                const tieBreakPolicyHash = TenderService.hashEvidence({
+                    version: 1,
+                    tieBreakerCriteriaIds,
+                });
+                updatePayload.tieBreakerCriteriaIds = tieBreakerCriteriaIds;
+                updatePayload.tieBreakPolicyHash = tieBreakPolicyHash;
+
                 try {
                     const { provider, relayerWallet, contract } = await import("@/lib/web3");
                     const nonce = await provider.getTransactionCount(relayerWallet.address, "latest");
-                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000), {
-                        nonce,
-                    });
-                    // Fire and forget mining wait
+                    const tx = await contract.createTender(
+                        id,
+                        Math.floor(tender.commitDeadline.getTime() / 1000),
+                        tieBreakPolicyHash,
+                        { nonce },
+                    );
                     tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
                 } catch (err: any) {
                     if (
@@ -437,6 +463,116 @@ export abstract class TenderService {
         }
 
         const now = new Date();
+        const [criteria, tenderBids] = await Promise.all([
+            db.query.tenderCriteria.findMany({
+                where: (criterion, { eq }) => eq(criterion.tenderId, tenderId),
+                orderBy: (criterion, { asc }) => [asc(criterion.sortOrder), asc(criterion.id)],
+            }),
+            db.query.bids.findMany({
+                where: (bid, { eq }) => eq(bid.tenderId, tenderId),
+            }),
+        ]);
+        const validBidIds = new Set(tenderBids.filter((bid) => bid.status === "REVEALED_VALID").map((bid) => bid.id));
+        const submittedBidIds = new Set(payload.bids.map((bid) => bid.bidId));
+
+        if (submittedBidIds.size !== payload.bids.length || submittedBidIds.size !== validBidIds.size) {
+            throw new Error("Semua bid yang valid harus dinilai tepat satu kali.");
+        }
+        for (const bidId of submittedBidIds) {
+            if (!validBidIds.has(bidId)) throw new Error("Skor hanya dapat disimpan untuk bid yang valid.");
+        }
+
+        const criteriaIds = new Set(criteria.map((criterion) => criterion.id));
+        for (const bid of payload.bids) {
+            const scoredCriteriaIds = new Set(bid.criteriaScores.map((score) => score.criterionId));
+            if (scoredCriteriaIds.size !== criteriaIds.size || [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))) {
+                throw new Error("Setiap bid harus memiliki skor untuk seluruh kriteria tender.");
+            }
+        }
+
+        const scoreByBidAndCriterion = new Map(
+            payload.bids.map((bid) => [
+                bid.bidId,
+                new Map(bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)])),
+            ]),
+        );
+        const rankedBids = [...payload.bids].sort((left, right) => right.totalScore - left.totalScore);
+        const topScore = TenderService.scoreKey(rankedBids[0]?.totalScore ?? 0);
+        let candidates = rankedBids.filter((bid) => TenderService.scoreKey(bid.totalScore) === topScore);
+        const tieBreakerCriteriaIds = Array.isArray(tender.tieBreakerCriteriaIds)
+            ? (tender.tieBreakerCriteriaIds as string[])
+            : criteria.map((criterion) => criterion.id);
+
+        for (const criterionId of tieBreakerCriteriaIds) {
+            if (candidates.length < 2) break;
+            const highestScore = Math.max(
+                ...candidates.map((bid) => scoreByBidAndCriterion.get(bid.bidId)?.get(criterionId) ?? 0),
+            );
+            candidates = candidates.filter(
+                (bid) => (scoreByBidAndCriterion.get(bid.bidId)?.get(criterionId) ?? 0) === highestScore,
+            );
+        }
+
+        const evaluationHash = TenderService.hashEvidence({
+            tenderId,
+            tieBreakerCriteriaIds,
+            bids: rankedBids.map((bid) => ({
+                bidId: bid.bidId,
+                totalScore: TenderService.scoreKey(bid.totalScore),
+                criteriaScores: bid.criteriaScores.map((score) => ({
+                    criterionId: score.criterionId,
+                    weightedScore: TenderService.scoreKey(score.weightedScore),
+                })),
+            })),
+        });
+
+        if (candidates.length > 1) {
+            const candidateBidIds = candidates.map((bid) => bid.bidId).sort();
+            const candidateBidIdsHash = TenderService.hashEvidence(candidateBidIds);
+
+            try {
+                const transaction = await contract.recordTie(tenderId, candidateBidIdsHash, evaluationHash);
+                await transaction.wait();
+            } catch (error) {
+                console.error("Failed to record tie on smart contract:", error);
+                throw new Error("Gagal mencatat hasil seri ke Blockchain.");
+            }
+
+            await db.transaction(async (tx) => {
+                const scoreValues = payload.bids.flatMap((bid) =>
+                    bid.criteriaScores.map((score) => ({
+                        id: crypto.randomUUID(),
+                        bidId: bid.bidId,
+                        criterionId: score.criterionId,
+                        rawScore: score.rawScore.toString(),
+                        weightedScore: score.weightedScore.toString(),
+                        scoredBy: userId,
+                        createdAt: now,
+                        updatedAt: now,
+                    })),
+                );
+                await tx.insert(bidScores).values(scoreValues);
+                await tx
+                    .update(tenders)
+                    .set({
+                        status: "TIED",
+                        tieCandidateBidIds: candidateBidIds,
+                        tieBreakEvidenceHash: evaluationHash,
+                        updatedAt: now,
+                    })
+                    .where(eq(tenders.id, tenderId));
+            });
+
+            return { status: "TIED", candidateBidIds, evaluationHash };
+        }
+
+        const winner = candidates[0];
+        if (!winner || payload.winningBidId !== winner.bidId) {
+            throw new Error("Pemenang harus sesuai dengan hasil perhitungan skor dan tie-breaker.");
+        }
+        if (TenderService.scoreKey(payload.finalScore) !== topScore) {
+            throw new Error("Skor akhir pemenang tidak sesuai dengan hasil perhitungan.");
+        }
 
         // 1. Transaction to save all scores, results, and mock blockchain
         await db.transaction(async (tx) => {
@@ -463,18 +599,14 @@ export abstract class TenderService {
             // B. Send Final Result to Smart Contract
             let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
             try {
-                const winningBid = await db.query.bids.findFirst({
-                    where: (b, { eq }) => eq(b.id, payload.winningBidId),
-                });
-                if (winningBid) {
-                    const scTx = await contract.finalizeTender(
-                        tenderId,
-                        winningBid.organizationId,
-                        payload.finalScore.toString(),
-                    );
-                    const receipt = await scTx.wait();
-                    txHash = receipt.hash;
-                }
+                const scTx = await contract.finalizeTender(
+                    tenderId,
+                    payload.winningBidId,
+                    payload.finalScore.toFixed(2),
+                    evaluationHash,
+                );
+                const receipt = await scTx.wait();
+                txHash = receipt.hash;
             } catch (err) {
                 console.error("Failed to finalize tender on smart contract:", err);
             }
@@ -565,6 +697,98 @@ export abstract class TenderService {
         }
 
         return { success: true };
+    }
+
+    static async resolveTie(tenderId: string, payload: TenderModel.resolveTieInput, userId: string) {
+        const tender = await db.query.tenders.findFirst({
+            where: (t, { eq }) => eq(t.id, tenderId),
+        });
+        if (!tender) throw new Error("Tender not found");
+        if (tender.status !== "TIED") throw new Error("Tender is not awaiting tie resolution");
+
+        const candidateBidIds = Array.isArray(tender.tieCandidateBidIds)
+            ? (tender.tieCandidateBidIds as string[])
+            : [];
+        if (!candidateBidIds.includes(payload.winningBidId)) {
+            throw new Error("Pemenang harus dipilih dari kandidat yang seri.");
+        }
+
+        const scores = await db.query.bidScores.findMany({
+            where: (score, { inArray }) => inArray(score.bidId, candidateBidIds),
+        });
+        const winnerScore = scores
+            .filter((score) => score.bidId === payload.winningBidId)
+            .reduce((total, score) => total + Number(score.weightedScore), 0);
+        if (scores.length === 0) throw new Error("Data skor untuk penyelesaian seri tidak ditemukan.");
+
+        const now = new Date();
+        const tieBreakEvidenceHash = TenderService.hashEvidence({
+            tenderId,
+            candidateBidIds: [...candidateBidIds].sort(),
+            winningBidId: payload.winningBidId,
+            decisionNotes: payload.decisionNotes,
+            evaluationHash: tender.tieBreakEvidenceHash,
+        });
+
+        let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
+        try {
+            const transaction = await contract.resolveTie(
+                tenderId,
+                payload.winningBidId,
+                winnerScore.toFixed(2),
+                tieBreakEvidenceHash,
+            );
+            const receipt = await transaction.wait();
+            txHash = receipt.hash;
+        } catch (error) {
+            console.error("Failed to resolve tie on smart contract:", error);
+            throw new Error("Gagal mencatat penyelesaian seri ke Blockchain.");
+        }
+
+        await db.transaction(async (tx) => {
+            await tx.insert(tenderResults).values({
+                id: crypto.randomUUID(),
+                tenderId,
+                winningBidId: payload.winningBidId,
+                finalScore: winnerScore.toFixed(2),
+                decisionNotes: payload.decisionNotes,
+                decidedBy: userId,
+                decidedAt: now,
+                blockchainTxHash: txHash,
+                createdAt: now,
+            });
+            await tx.insert(blockchainTransactions).values({
+                id: crypto.randomUUID(),
+                tenderId,
+                bidId: payload.winningBidId,
+                transactionType: "RESULT",
+                txHash,
+                chainId: 31337,
+                contractAddress: await contract.getAddress(),
+                blockNumber: 0,
+                blockTimestamp: now,
+                metadata: {
+                    action: "resolve_tie",
+                    candidateBidIds,
+                    tieBreakEvidenceHash,
+                },
+                createdAt: now,
+            });
+            await tx
+                .update(tenders)
+                .set({
+                    status: "COMPLETED",
+                    completedAt: now,
+                    tieBreakReason: payload.decisionNotes,
+                    tieBreakEvidenceHash,
+                    tieResolvedAt: now,
+                    tieResolvedBy: userId,
+                    updatedAt: now,
+                })
+                .where(eq(tenders.id, tenderId));
+        });
+
+        return { success: true, finalScore: winnerScore, tieBreakEvidenceHash };
     }
 
     static async getAuditData(tenderId: string) {

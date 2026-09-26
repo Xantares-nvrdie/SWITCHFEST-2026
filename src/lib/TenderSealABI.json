@@ -68,6 +68,12 @@
         "internalType": "uint256",
         "name": "commitDeadline",
         "type": "uint256"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "scoringPolicyHash",
+        "type": "bytes32"
       }
     ],
     "name": "TenderCreated",
@@ -93,6 +99,18 @@
         "internalType": "string",
         "name": "finalScore",
         "type": "string"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "evaluationHash",
+        "type": "bytes32"
+      },
+      {
+        "indexed": false,
+        "internalType": "bytes32",
+        "name": "tieBreakEvidenceHash",
+        "type": "bytes32"
       }
     ],
     "name": "TenderFinalized",
@@ -150,6 +168,11 @@
         "internalType": "uint256",
         "name": "commitDeadline",
         "type": "uint256"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "scoringPolicyHash",
+        "type": "bytes32"
       }
     ],
     "name": "createTender",
@@ -173,9 +196,85 @@
         "internalType": "string",
         "name": "finalScore",
         "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "scoringPolicyHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "evaluationHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "tieBreakEvidenceHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bool",
+        "name": "tied",
+        "type": "bool"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "evaluationHash",
+        "type": "bytes32"
       }
     ],
     "name": "finalizeTender",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "candidateBidIdsHash",
+        "type": "bytes32"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "evaluationHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "recordTie",
+    "outputs": [],
+    "stateMutability": "nonpayable",
+    "type": "function"
+  },
+  {
+    "inputs": [
+      {
+        "internalType": "string",
+        "name": "tenderId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "winningBidId",
+        "type": "string"
+      },
+      {
+        "internalType": "string",
+        "name": "finalScore",
+        "type": "string"
+      },
+      {
+        "internalType": "bytes32",
+        "name": "tieBreakEvidenceHash",
+        "type": "bytes32"
+      }
+    ],
+    "name": "resolveTie",
     "outputs": [],
     "stateMutability": "nonpayable",
     "type": "function"

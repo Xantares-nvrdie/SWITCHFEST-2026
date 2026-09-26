@@ -16,6 +16,10 @@ contract TenderSeal {
         uint256 commitDeadline;
         string winningBidId;
         string finalScore;
+        bytes32 scoringPolicyHash;
+        bytes32 evaluationHash;
+        bytes32 tieBreakEvidenceHash;
+        bool tied;
         bool finalized;
     }
 
@@ -23,10 +27,11 @@ contract TenderSeal {
     // tenderId => (bidId => Bid)
     mapping(string => mapping(string => Bid)) public tenderBids;
 
-    event TenderCreated(string tenderId, uint256 commitDeadline);
+    event TenderCreated(string tenderId, uint256 commitDeadline, bytes32 scoringPolicyHash);
     event BidCommitted(string tenderId, string bidId, address vendor, string commitmentHash);
     event RevealAttested(string tenderId, string bidId);
-    event TenderFinalized(string tenderId, string winningBidId, string finalScore);
+    event TenderTied(string tenderId, bytes32 candidateBidIdsHash, bytes32 evaluationHash);
+    event TenderFinalized(string tenderId, string winningBidId, string finalScore, bytes32 evaluationHash, bytes32 tieBreakEvidenceHash);
 
     modifier onlyRelayer() {
         require(msg.sender == relayer, "Only relayer can perform this action");
@@ -37,16 +42,20 @@ contract TenderSeal {
         relayer = msg.sender;
     }
 
-    function createTender(string memory tenderId, uint256 commitDeadline) external onlyRelayer {
+    function createTender(string memory tenderId, uint256 commitDeadline, bytes32 scoringPolicyHash) external onlyRelayer {
         require(tenders[tenderId].commitDeadline == 0, "Tender already exists");
         tenders[tenderId] = Tender({
             tenderId: tenderId,
             commitDeadline: commitDeadline,
             winningBidId: "",
             finalScore: "",
+            scoringPolicyHash: scoringPolicyHash,
+            evaluationHash: bytes32(0),
+            tieBreakEvidenceHash: bytes32(0),
+            tied: false,
             finalized: false
         });
-        emit TenderCreated(tenderId, commitDeadline);
+        emit TenderCreated(tenderId, commitDeadline, scoringPolicyHash);
     }
 
     function commitBid(string memory tenderId, string memory bidId, string memory commitmentHash) external {
@@ -75,14 +84,56 @@ contract TenderSeal {
         emit RevealAttested(tenderId, bidId);
     }
 
-    function finalizeTender(string memory tenderId, string memory winningBidId, string memory finalScore) external onlyRelayer {
+    function recordTie(string memory tenderId, bytes32 candidateBidIdsHash, bytes32 evaluationHash) external onlyRelayer {
         require(!tenders[tenderId].finalized, "Tender already finalized");
         require(tenders[tenderId].commitDeadline > 0, "Tender does not exist");
+        require(!tenders[tenderId].tied, "Tie already recorded");
+
+        tenders[tenderId].tied = true;
+        tenders[tenderId].evaluationHash = evaluationHash;
+
+        emit TenderTied(tenderId, candidateBidIdsHash, evaluationHash);
+    }
+
+    function finalizeTender(
+        string memory tenderId,
+        string memory winningBidId,
+        string memory finalScore,
+        bytes32 evaluationHash
+    ) external onlyRelayer {
+        require(!tenders[tenderId].finalized, "Tender already finalized");
+        require(tenders[tenderId].commitDeadline > 0, "Tender does not exist");
+        require(!tenders[tenderId].tied, "Tender requires tie resolution");
+
+        _finalizeTender(tenderId, winningBidId, finalScore, evaluationHash, bytes32(0));
+    }
+
+    function resolveTie(
+        string memory tenderId,
+        string memory winningBidId,
+        string memory finalScore,
+        bytes32 tieBreakEvidenceHash
+    ) external onlyRelayer {
+        require(!tenders[tenderId].finalized, "Tender already finalized");
+        require(tenders[tenderId].tied, "Tender is not tied");
+
+        _finalizeTender(tenderId, winningBidId, finalScore, tenders[tenderId].evaluationHash, tieBreakEvidenceHash);
+    }
+
+    function _finalizeTender(
+        string memory tenderId,
+        string memory winningBidId,
+        string memory finalScore,
+        bytes32 evaluationHash,
+        bytes32 tieBreakEvidenceHash
+    ) private {
 
         tenders[tenderId].winningBidId = winningBidId;
         tenders[tenderId].finalScore = finalScore;
+        tenders[tenderId].evaluationHash = evaluationHash;
+        tenders[tenderId].tieBreakEvidenceHash = tieBreakEvidenceHash;
         tenders[tenderId].finalized = true;
 
-        emit TenderFinalized(tenderId, winningBidId, finalScore);
+        emit TenderFinalized(tenderId, winningBidId, finalScore, evaluationHash, tieBreakEvidenceHash);
     }
 }

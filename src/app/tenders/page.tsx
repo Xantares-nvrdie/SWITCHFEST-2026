@@ -13,7 +13,7 @@ interface TenderItem {
     category: string;
     organizationId: string;
     organizationName: string;
-    status: "DRAFT" | "OPEN" | "CLOSED" | "REVEAL" | "SCORING" | "COMPLETED";
+    status: "DRAFT" | "OPEN" | "CLOSED" | "REVEAL" | "SCORING" | "TIED" | "COMPLETED";
     commitDeadline: string;
     revealWindowHours: number;
     participantCount: number;
@@ -101,6 +101,7 @@ export default function TendersPage() {
         OPEN: "Dibuka",
         REVEAL: "Reveal",
         SCORING: "Penilaian",
+        TIED: "Seri",
         COMPLETED: "Selesai",
     };
 
@@ -110,6 +111,7 @@ export default function TendersPage() {
         CLOSED: "status-closed",
         REVEAL: "status-reveal",
         SCORING: "status-scoring",
+        TIED: "status-reveal",
         COMPLETED: "status-completed",
     };
 
