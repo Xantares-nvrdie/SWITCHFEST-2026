@@ -158,7 +158,7 @@ export default function TendersPage() {
                         onClick={() => setActiveTab("my")}
                         className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                             activeTab === "my"
-                                ? "bg-[var(--text-primary)] text-white shadow-md"
+                                ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
                                 : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                         }`}
                     >
@@ -168,7 +168,7 @@ export default function TendersPage() {
                         onClick={() => setActiveTab("all")}
                         className={`px-5 py-2.5 rounded-full text-sm font-semibold transition-all whitespace-nowrap ${
                             activeTab === "all"
-                                ? "bg-[var(--text-primary)] text-white shadow-md"
+                                ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
                                 : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                         }`}
                     >
@@ -184,7 +184,7 @@ export default function TendersPage() {
                             placeholder="Cari tender, kode, atau organisasi..."
                             value={searchQuery}
                             onChange={(e) => setSearchQuery(e.target.value)}
-                            className="w-full pl-10 pr-4 py-2.5 rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:bg-white transition-all"
+                            className="w-full pl-10 pr-4 py-2.5 rounded-full border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/30 focus:bg-[var(--surface-secondary)] transition-all"
                         />
                     </div>
 
@@ -195,7 +195,7 @@ export default function TendersPage() {
                                 onClick={() => setStatusFilter(key)}
                                 className={`px-4 py-2 rounded-full text-[13px] font-semibold transition-all whitespace-nowrap ${
                                     statusFilter === key
-                                        ? "bg-white text-[var(--text-primary)] shadow-sm border border-[var(--border)]"
+                                        ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm border border-[var(--border)]"
                                         : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                                 }`}
                             >

@@ -94,7 +94,7 @@ export default function OrganizationsPage() {
                     </Link>
                     <Link
                         href="/setup-organization"
-                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                     >
                         <PlusCircle className="w-4 h-4" />
                         Buat Organisasi Baru
@@ -148,13 +148,13 @@ export default function OrganizationsPage() {
                         <div className="flex items-center justify-center gap-3 pt-2">
                             <Link
                                 href="/join-organization"
-                                className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                className="px-4 py-2 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border)] text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                             >
                                 Input Kode Undangan
                             </Link>
                             <Link
                                 href="/setup-organization"
-                                className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[13px] font-semibold text-white hover:opacity-90"
+                                className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[13px] font-semibold text-[var(--background)] hover:opacity-90"
                             >
                                 Buat Organisasi
                             </Link>
@@ -203,7 +203,7 @@ export default function OrganizationsPage() {
                                                 </span>
                                             )}
                                             {isRejected && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-500/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/30 flex items-center gap-1">
                                                     Ditolak
                                                 </span>
                                             )}
@@ -248,7 +248,7 @@ export default function OrganizationsPage() {
                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
                                                 memberRole === "ORGANIZATION_ADMIN" 
                                                     ? "bg-[var(--accent-light)] hover:opacity-90 text-[var(--accent)] border border-teal-200"
-                                                    : "bg-white hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
+                                                    : "bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
                                             }`}
                                         >
                                             {memberRole === "ORGANIZATION_ADMIN" ? (

@@ -62,9 +62,9 @@ interface Organization {
 }
 
 const roleMeta: Record<OrgRole, { label: string; icon: any; color: string; bg: string }> = {
-    ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
-    PROCUREMENT_OFFICER: { label: "Procurement Officer", icon: Briefcase, color: "text-[var(--accent)]", bg: "bg-teal-50 border-teal-200" },
-    AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-blue-50 border-blue-200" },
+    ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-amber-600", bg: "bg-amber-500/10 border-amber-500/20" },
+    PROCUREMENT_OFFICER: { label: "Procurement Officer", icon: Briefcase, color: "text-[var(--accent)]", bg: "bg-teal-500/10 border-teal-500/20" },
+    AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-blue-500/10 border-blue-500/20" },
     MEMBER: { label: "Member", icon: User, color: "text-[var(--text-tertiary)]", bg: "bg-[var(--surface-secondary)] border-[var(--border)]" },
 };
 
@@ -93,8 +93,8 @@ function CopyButton({ text }: { text: string }) {
             onClick={handleCopy}
             className={`flex items-center gap-1.5 px-2.5 py-1 rounded-md text-[11px] font-medium transition-all border ${
                 copied
-                    ? "bg-teal-50 border-teal-200 text-teal-600"
-                    : "bg-white border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                    ? "bg-teal-500/10 border-teal-500/20 text-teal-600"
+                    : "bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
             }`}
         >
             {copied ? <Check className="w-3 h-3" /> : <Copy className="w-3 h-3" />}
@@ -236,8 +236,8 @@ export default function OrgManagePage() {
         fetchData();
     };
 
-    const inputClass = "w-full pl-9 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
-    const selectClass = "appearance-none w-full pl-3 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all cursor-pointer";
+    const inputClass = "w-full pl-9 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
+    const selectClass = "appearance-none w-full pl-3 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all cursor-pointer";
 
     if (isLoading) return (
         <div className="flex items-center justify-center h-64">
@@ -247,7 +247,7 @@ export default function OrgManagePage() {
 
     if (error || !org) return (
         <div className="flex flex-col items-center justify-center h-64 gap-4 card p-8">
-            <AlertCircle className="w-10 h-10 text-red-600" />
+            <AlertCircle className="w-10 h-10 text-red-500" />
             <p className="text-[14px] font-medium text-[var(--text-secondary)]">{error ?? "Organisasi tidak ditemukan"}</p>
         </div>
     );
@@ -278,15 +278,15 @@ export default function OrgManagePage() {
 
             {/* Rejection Banner */}
             {org.verificationStatus === "REJECTED" && (
-                <div className="card border-red-200 bg-red-50/50 p-4 flex items-start gap-3">
-                    <AlertCircle className="w-5 h-5 text-red-600 shrink-0 mt-0.5" />
+                <div className="card border-red-200 bg-red-500/10/50 p-4 flex items-start gap-3">
+                    <AlertCircle className="w-5 h-5 text-red-500 shrink-0 mt-0.5" />
                     <div className="space-y-1">
                         <h3 className="text-[14px] font-bold text-red-700">Pendaftaran Organisasi Ditolak</h3>
-                        <p className="text-[13px] text-red-600/90 leading-relaxed">
+                        <p className="text-[13px] text-red-500/90 leading-relaxed">
                             Organisasi ini telah ditolak oleh Admin Sistem dengan alasan: <br />
                             <span className="font-semibold">{org.rejectionReason || "Tidak ada alasan spesifik."}</span>
                         </p>
-                        <p className="text-[12px] text-red-600/70 pt-1">
+                        <p className="text-[12px] text-red-500/70 pt-1">
                             Anda tidak dapat mengubah profil atau mengelola organisasi yang ditolak.
                         </p>
                     </div>
@@ -301,7 +301,7 @@ export default function OrgManagePage() {
                     return (
                         <button key={tab} onClick={() => setActiveTab(tab as typeof activeTab)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-                                isActive ? "bg-white text-[var(--text-primary)] shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-white/50"
+                                isActive ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50"
                             }`}>
                             <Icon className="w-4 h-4" />
                             {label}
@@ -400,7 +400,7 @@ export default function OrgManagePage() {
                                                 {isSelf && <span className="text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--border-light)] px-1.5 py-0.5 rounded">(Anda)</span>}
                                                 <RoleBadge role={m.role} />
                                                 {m.status === "SUSPENDED" && (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-50 text-red-600 border border-red-200">
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/10 text-red-500 border border-red-200">
                                                         Ditangguhkan
                                                     </span>
                                                 )}
@@ -417,7 +417,7 @@ export default function OrgManagePage() {
                                                 <select
                                                     value={m.role}
                                                     onChange={(e) => handleUpdateMemberRole(m.id, e.target.value as OrgRole)}
-                                                    className="appearance-none text-[12px] font-medium pr-8 pl-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all border border-[var(--border)] bg-white text-[var(--text-primary)] hover:border-[var(--accent)]"
+                                                    className="appearance-none text-[12px] font-medium pr-8 pl-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:border-[var(--accent)]"
                                                 >
                                                     <option value="MEMBER">Member</option>
                                                     <option value="AUDITOR">Auditor</option>
@@ -432,7 +432,7 @@ export default function OrgManagePage() {
                                                 onClick={() => handleToggleMemberStatus(m.id, m.status)}
                                                 className={`p-1.5 rounded-lg transition-all border ${
                                                     m.status === "ACTIVE" 
-                                                        ? "border-[var(--border)] bg-white text-[var(--text-tertiary)] hover:text-amber-600 hover:border-amber-200" 
+                                                        ? "border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:text-amber-600 hover:border-amber-200" 
                                                         : "border-teal-200 bg-teal-50 text-teal-600"
                                                 }`}
                                                 title={m.status === "ACTIVE" ? "Tangguhkan anggota" : "Aktifkan anggota"}>
@@ -520,7 +520,7 @@ export default function OrgManagePage() {
                                     Generate Kode
                                 </button>
                                 <button onClick={() => setShowInviteForm(false)}
-                                    className="px-5 py-2.5 rounded-lg text-[13px] font-semibold text-[var(--text-secondary)] bg-white border border-[var(--border)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)] transition-all">
+                                    className="px-5 py-2.5 rounded-lg text-[13px] font-semibold text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)] transition-all">
                                     Batal
                                 </button>
                             </div>
@@ -555,7 +555,7 @@ export default function OrgManagePage() {
                                                 {inv.isActive && <CopyButton text={inv.code} />}
                                                 <RoleBadge role={inv.role} />
                                                 {!inv.isActive && (
-                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-50 text-red-600 border border-red-200">
+                                                    <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/10 text-red-500 border border-red-200">
                                                         Dicabut (Revoked)
                                                     </span>
                                                 )}
@@ -578,7 +578,7 @@ export default function OrgManagePage() {
                                         {/* Revoke */}
                                         {inv.isActive && org.verificationStatus !== "REJECTED" && (
                                             <button onClick={() => handleRevoke(inv.id)}
-                                                className="p-2 rounded-lg transition-all text-[var(--text-tertiary)] border border-transparent hover:border-red-200 hover:text-red-600 hover:bg-red-50"
+                                                className="p-2 rounded-lg transition-all text-[var(--text-tertiary)] border border-transparent hover:border-red-200 hover:text-red-500 hover:bg-red-500/10"
                                                 title="Cabut kode">
                                                 <Trash2 className="w-5 h-5" />
                                             </button>

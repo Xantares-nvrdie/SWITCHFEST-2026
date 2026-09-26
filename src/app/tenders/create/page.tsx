@@ -531,10 +531,10 @@ export default function CreateTenderPage() {
                 </div>
             )}
             {errorMessage && (
-                <div className="p-4 rounded-xl bg-red-50 border border-red-500/30 text-red-600 text-sm flex items-center gap-3">
+                <div className="p-4 rounded-xl bg-red-500/10 border border-red-500/30 text-red-500 text-sm flex items-center gap-3">
                     <AlertCircle className="w-5 h-5 text-red-500 shrink-0" />
                     {errorMessage}
-                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-500 hover:text-red-600">✕</button>
+                    <button onClick={() => setErrorMessage(null)} className="ml-auto text-red-500 hover:text-red-500">✕</button>
                 </div>
             )}
 
@@ -606,7 +606,7 @@ function StepIndicator({ current }: { current: number }) {
                     <div className="flex flex-col items-center gap-1.5 flex-1">
                         <div className={`w-9 h-9 rounded-full flex items-center justify-center border-2 transition-all duration-300 ${
                             current > s.id ? "bg-emerald-500 border-emerald-500 text-[var(--surface)]"
-                            : current === s.id ? "bg-white border-[var(--accent)] text-[var(--text-primary)] ring-1 ring-[var(--accent)]"
+                            : current === s.id ? "bg-[var(--surface-secondary)] border-[var(--accent)] text-[var(--text-primary)] ring-1 ring-[var(--accent)]"
                             : "bg-[var(--surface-secondary)] border-[var(--border)] text-[var(--text-tertiary)]"
                         }`}>
                             {current > s.id ? <Check className="w-4 h-4" /> : s.icon}
@@ -648,7 +648,7 @@ function StepTemplate({ onSelect }: { onSelect: (t: Template) => void }) {
                             onClick={() => onSelect(tpl)}
                             onMouseEnter={() => setHovered(tpl.id)}
                             onMouseLeave={() => setHovered(null)}
-                            className={`relative text-left p-5 rounded-xl border transition-all duration-200 bg-white ${
+                            className={`relative text-left p-5 rounded-xl border transition-all duration-200 bg-[var(--surface-secondary)] ${
                                 hovered === tpl.id ? "border-[var(--accent)] ring-1 ring-[var(--accent)] scale-[1.02]" : "border-[var(--border)] hover:border-[var(--border-strong)]"
                             }`}
                         >
@@ -695,7 +695,7 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
 
                 {/* Org Selector */}
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Organisasi Penyelenggara <span className="text-red-600">*</span></label>
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Organisasi Penyelenggara <span className="text-red-500">*</span></label>
                     {orgsLoading ? (
                         <div className="flex items-center gap-2 px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-tertiary)]">
                             <svg className="w-4 h-4 animate-spin" fill="none" viewBox="0 0 24 24"><circle className="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" strokeWidth="4" /><path className="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z" /></svg>
@@ -725,7 +725,7 @@ function StepBasicInfo({ form, setForm, userOrgs, orgsLoading, selectedOrgId, se
                 </div>
 
                 <div className="space-y-2">
-                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Judul Tender <span className="text-red-600">*</span></label>
+                    <label className="text-xs font-semibold text-[var(--text-secondary)]">Judul Tender <span className="text-red-500">*</span></label>
                     <input type="text" value={form.title} onChange={(e) => setForm((p) => ({ ...p, title: e.target.value }))} placeholder="Contoh: Pengadaan 100 Laptop untuk Kantor Pusat Tahun 2026"
                         className="w-full px-4 py-3 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:border-emerald-500/60 focus:ring-1 focus:ring-emerald-500/20 transition-all" />
                 </div>
@@ -902,7 +902,7 @@ function StepFieldsAndScoring({
                     <div className="space-y-1.5">
                         <div className="flex justify-between text-xs font-semibold">
                             <span className="text-[var(--text-tertiary)]">Total Bobot ({scoredCount} field dinilai)</span>
-                            <span className={weightOk ? "text-[var(--accent)]" : totalWeight > 100 ? "text-red-600" : "text-amber-600"}>
+                            <span className={weightOk ? "text-[var(--accent)]" : totalWeight > 100 ? "text-red-500" : "text-amber-600"}>
                                 {totalWeight}% / 100%
                                 {weightOk && " ✓"}
                                 {!weightOk && totalWeight > 0 && ` (${weightRemaining > 0 ? "+" : ""}${weightRemaining}% lagi)`}
@@ -912,7 +912,7 @@ function StepFieldsAndScoring({
                             <div
                                 className={`h-full rounded-full transition-all duration-300 ${
                                     weightOk ? "bg-gradient-to-r from-[var(--accent)] to-emerald-400"
-                                    : totalWeight > 100 ? "bg-red-500"
+                                    : totalWeight > 100 ? "bg-red-500/100"
                                     : "bg-gradient-to-r from-purple-500 to-teal-600"
                                 }`}
                                 style={{ width: `${Math.min(totalWeight, 100)}%` }}
@@ -974,8 +974,8 @@ function StepFieldsAndScoring({
                                                 <label className="text-[10px] font-bold text-[var(--text-tertiary)] uppercase tracking-wider">Wajib Diisi</label>
                                                 <div className="flex items-center gap-2 h-[38px]">
                                                     <button type="button" onClick={() => onUpdate(idx, "required", !field.required)}
-                                                        className={`relative w-10 h-5 rounded-full transition-colors ${field.required ? "bg-emerald-500" : "bg-slate-700"}`}>
-                                                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${field.required ? "left-5" : "left-0.5"}`} />
+                                                        className={`relative w-10 h-5 rounded-full transition-colors ${field.required ? "bg-emerald-500" : "bg-[var(--border)]"}`}>
+                                                        <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--surface-secondary)] shadow transition-all ${field.required ? "left-5" : "left-0.5"}`} />
                                                     </button>
                                                     <span className={`text-xs font-semibold ${field.required ? "text-[var(--accent)]" : "text-[var(--text-tertiary)]"}`}>
                                                         {field.required ? "Wajib" : "Opsional"}
@@ -996,7 +996,7 @@ function StepFieldsAndScoring({
                                     </div>
                                     {/* Type badge + delete */}
                                     <div className="flex flex-col items-end gap-2 shrink-0">
-                                        <button type="button" onClick={() => onRemove(field.id)} className="p-1.5 text-slate-700 hover:text-red-600 hover:bg-red-50 rounded-lg transition-colors">
+                                        <button type="button" onClick={() => onRemove(field.id)} className="p-1.5 text-slate-700 hover:text-red-500 hover:bg-red-500/10 rounded-lg transition-colors">
                                             <Trash2 className="w-4 h-4" />
                                         </button>
                                         <div className={`flex items-center gap-1 px-2 py-1 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[10px] font-medium ${meta.color}`}>
@@ -1019,8 +1019,8 @@ function StepFieldsAndScoring({
                                         </div>
                                         {/* Toggle scored */}
                                         <button type="button" onClick={() => onUpdate(idx, "scored", !field.scored)}
-                                            className={`relative w-10 h-5 rounded-full transition-colors ${field.scored ? "bg-purple-500" : "bg-slate-700"}`}>
-                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-white shadow transition-all ${field.scored ? "left-5" : "left-0.5"}`} />
+                                            className={`relative w-10 h-5 rounded-full transition-colors ${field.scored ? "bg-purple-500" : "bg-[var(--border)]"}`}>
+                                            <span className={`absolute top-0.5 w-4 h-4 rounded-full bg-[var(--surface-secondary)] shadow transition-all ${field.scored ? "left-5" : "left-0.5"}`} />
                                         </button>
                                     </div>
 
@@ -1141,7 +1141,7 @@ function StepReview({ form, totalWeight, weightOk, loading, onBack, onSubmit, on
                     })}
                 </div>
                 {scoredFields.length > 0 && (
-                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)]" : "bg-red-50 border border-red-200 text-red-600"}`}>
+                    <div className={`flex items-center gap-2 px-3 py-2 rounded-lg text-xs font-semibold ${weightOk ? "bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)]" : "bg-red-500/10 border border-red-200 text-red-500"}`}>
                         {weightOk ? <CheckCircle2 className="w-4 h-4" /> : <AlertCircle className="w-4 h-4" />}
                         Total Bobot: {totalWeight}% {weightOk ? "— Valid ✓" : "— Harus tepat 100%"}
                     </div>
@@ -1182,7 +1182,7 @@ function LivePreviewPanel({ fields, title }: { fields: BidField[]; title: string
             </div>
             <div className="card rounded-2xl overflow-hidden border-cyan-500/20">
                 <div className="flex items-center gap-2 px-4 py-2.5 bg-[var(--surface)]/80 border-b border-[var(--border)]">
-                    <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /><div className="w-2.5 h-2.5 rounded-full bg-slate-700" /></div>
+                    <div className="flex gap-1.5"><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]" /><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]" /><div className="w-2.5 h-2.5 rounded-full bg-[var(--border)]" /></div>
                     <div className="flex-1 h-5 rounded bg-[var(--surface-secondary)] text-[10px] text-[var(--text-tertiary)] flex items-center px-2">tenderseal.app/tenders/submit</div>
                 </div>
                 <div className="p-5 space-y-4 max-h-[70vh] overflow-y-auto">
@@ -1201,7 +1201,7 @@ function LivePreviewPanel({ fields, title }: { fields: BidField[]; title: string
                                         <label className="flex items-center gap-1.5 text-xs font-semibold text-[var(--text-secondary)]">
                                             <span className={meta.color}>{meta.icon}</span>
                                             {f.name || <span className="text-[var(--text-tertiary)] italic">Nama field</span>}
-                                            {f.required && <span className="text-red-600">*</span>}
+                                            {f.required && <span className="text-red-500">*</span>}
                                             {f.scored && <span className="ml-auto text-[10px] font-bold text-[var(--text-secondary)]">{f.weight}%</span>}
                                         </label>
                                         {f.type === "currency" && (
@@ -1263,7 +1263,7 @@ function OptionsChipInput({ options, onChange }: { options: string[]; onChange: 
                 {options.map((opt) => (
                     <span key={opt} className="inline-flex items-center gap-1 px-2 py-0.5 rounded-md bg-cyan-500/15 border border-blue-200 text-[var(--accent)] text-xs font-medium">
                         {opt}
-                        <button type="button" onClick={(e) => { e.stopPropagation(); onChange(options.filter((o) => o !== opt)); }} className="text-cyan-500/60 hover:text-red-600 transition-colors leading-none">✕</button>
+                        <button type="button" onClick={(e) => { e.stopPropagation(); onChange(options.filter((o) => o !== opt)); }} className="text-cyan-500/60 hover:text-red-500 transition-colors leading-none">✕</button>
                     </span>
                 ))}
                 <input ref={inputRef} type="text" value={inputVal} onChange={(e) => setInputVal(e.target.value)} onKeyDown={handleKeyDown} onBlur={commit}

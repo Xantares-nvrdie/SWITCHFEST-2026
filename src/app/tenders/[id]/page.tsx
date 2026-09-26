@@ -776,7 +776,7 @@ export default function TenderDetailPage() {
     }
     
     if (!tender) {
-        return <div className="p-8 text-center text-red-600">Tender not found.</div>;
+        return <div className="p-8 text-center text-red-500">Tender not found.</div>;
     }
 
     return (
@@ -969,7 +969,7 @@ export default function TenderDetailPage() {
                         ) : (submittedSealed || allBids.some((b: any) => userOrgs.some(o => o.id === b.organizationId))) ? (
                             <div className="space-y-6">
                                 <div className="p-5 rounded-2xl bg-[var(--accent-light)] border border-teal-200 text-[var(--accent)] flex flex-col items-center justify-center text-center gap-3">
-                                    <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm">
+                                    <div className="w-12 h-12 bg-[var(--surface-secondary)] rounded-full flex items-center justify-center shadow-sm">
                                         <CheckCircle2 className="w-6 h-6 text-[var(--accent)]" />
                                     </div>
                                     <div>
@@ -1000,7 +1000,7 @@ export default function TenderDetailPage() {
                                     </button>
                                     
                                     {viewResult && (
-                                        <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${viewResult.isValid ? 'bg-slate-50 text-slate-800 border border-slate-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
+                                        <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${viewResult.isValid ? 'bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)]' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
                                             <div className="flex items-center gap-2">
                                                 {viewResult.isValid ? <CheckCircle2 className="w-5 h-5 text-emerald-600" /> : <XCircle className="w-5 h-5" />}
                                                 {viewResult.message}
@@ -1008,7 +1008,7 @@ export default function TenderDetailPage() {
                                             {viewResult.isValid && !!viewResult.decryptedPayload && (
                                                 <div className="space-y-2 mt-2">
                                                     {tender.fields?.map((f: any) => (
-                                                        <div key={f.key} className="bg-white p-3 rounded-lg border border-slate-200 flex flex-col gap-1 shadow-sm">
+                                                        <div key={f.key} className="bg-[var(--surface-secondary)] p-3 rounded-lg border border-[var(--border)] flex flex-col gap-1 shadow-sm">
                                                             <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">{f.name}</span>
                                                             {f.type.toLowerCase() === 'file' && viewResult.decryptedPayload[f.key]?.includes("_isEncryptedFile") ? (
                                                                 <button onClick={() => handleDownloadEncryptedFile(viewResult.decryptedPayload[f.key])} className="text-xs font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1 self-start mt-1">
@@ -1051,7 +1051,7 @@ export default function TenderDetailPage() {
 
                             {tender.fields?.map((f: any) => (
                                 <div key={f.key} className="space-y-1.5">
-                                    <label className="text-xs font-semibold text-[var(--text-secondary)]">{f.name} {f.required && <span className="text-red-600">*</span>}</label>
+                                    <label className="text-xs font-semibold text-[var(--text-secondary)]">{f.name} {f.required && <span className="text-red-500">*</span>}</label>
                                     {f.type.toLowerCase() === 'textarea' ? (
                                         <textarea
                                             value={formData[f.key] || ""}
@@ -1139,7 +1139,7 @@ export default function TenderDetailPage() {
                             <hr className="border-[var(--border)]" />
                             
                             <div className="space-y-1.5">
-                                <label className="text-xs font-semibold text-[var(--accent)]">Secret Key / PIN Enkripsi <span className="text-red-600">*</span></label>
+                                <label className="text-xs font-semibold text-[var(--accent)]">Secret Key / PIN Enkripsi <span className="text-red-500">*</span></label>
                                 <p className="text-[11px] text-[var(--text-tertiary)]">Kunci ini tidak akan dikirim ke server. Gunakan kunci yang kuat dan INGAT kunci ini untuk fase Reveal.</p>
                                 <input
                                     type="password"
@@ -1193,7 +1193,7 @@ export default function TenderDetailPage() {
                             <p className="text-sm text-purple-700 mt-2 max-w-sm">Anda baru bisa melakukan proses Dekripsi & Reveal setelah batas waktu pengumpulan (Commit Deadline) berakhir.</p>
                         </div>
                     ) : (tender?.status === "SCORING" || tender?.status === "CLOSED" || (tender?.revealDeadline && new Date() > new Date(tender.revealDeadline))) ? (
-                        <div className="py-12 text-center bg-red-50/50 border border-red-200/50 rounded-xl flex flex-col items-center justify-center">
+                        <div className="py-12 text-center bg-red-500/10/50 border border-red-200/50 rounded-xl flex flex-col items-center justify-center">
                             <Lock className="w-12 h-12 text-red-300 mx-auto mb-4" />
                             <h4 className="font-bold text-red-800 text-lg">Fase Reveal Telah Berakhir</h4>
                             <p className="text-sm text-red-700 mt-2 max-w-sm">Batas waktu untuk melakukan Dekripsi & Reveal penawaran Anda sudah lewat. Proses penilaian (Scoring) sedang/sudah berlangsung.</p>
@@ -1216,14 +1216,14 @@ export default function TenderDetailPage() {
                             </button>
                             
                             {revealResult && (
-                                <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200' : 'bg-red-50 text-red-600 border border-red-500/30'}`}>
+                                <div className={`mt-4 p-4 rounded-xl text-sm font-semibold flex flex-col gap-2 ${revealResult.isValid ? 'bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200' : 'bg-red-500/10 text-red-500 border border-red-500/30'}`}>
                                     <div className="flex items-center gap-2">
                                         {revealResult.isValid ? <CheckCircle2 className="w-5 h-5" /> : <XCircle className="w-5 h-5" />}
                                         {revealResult.message}
                                     </div>
                                     {revealResult.isValid && !!revealResult.decryptedPayload && (
-                                        <div className="mt-4 p-4 bg-white rounded-xl border border-teal-100 flex flex-col gap-4">
-                                            <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider border-b border-teal-100 pb-2 mb-2">Isi Penawaran Anda</h4>
+                                        <div className="mt-4 p-4 bg-[var(--surface-secondary)] rounded-xl border border-teal-500/20 flex flex-col gap-4">
+                                            <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider border-b border-teal-500/20 pb-2 mb-2">Isi Penawaran Anda</h4>
                                             {tender.fields?.map((f: any) => {
                                                 const val = (revealResult.decryptedPayload as any)[f.key];
                                                 return (
@@ -1267,7 +1267,7 @@ export default function TenderDetailPage() {
                 <div className="space-y-6">
                     <div className="card p-6 rounded-2xl border-[var(--border)]">
                         {tender.status === "TIED" && (
-                            <section className="mb-6 rounded-xl border border-amber-300 bg-amber-50 p-4" aria-labelledby="tie-resolution-heading">
+                            <section className="mb-6 rounded-xl border border-amber-500/30 bg-amber-50 p-4" aria-labelledby="tie-resolution-heading">
                                 <h3 id="tie-resolution-heading" className="text-sm font-bold text-amber-900">
                                     Skor tetap seri setelah seluruh tie-breaker diterapkan
                                 </h3>
@@ -1280,7 +1280,7 @@ export default function TenderDetailPage() {
                                         <select
                                             value={tieWinnerId}
                                             onChange={(event) => setTieWinnerId(event.target.value)}
-                                            className="min-h-10 rounded-lg border border-amber-300 bg-white px-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                            className="min-h-10 rounded-lg border border-amber-500/30 bg-[var(--surface-secondary)] px-3 text-sm text-[var(--text-primary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
                                         >
                                             <option value="">Pilih kandidat</option>
                                             {tiedCandidates.map((bid: any) => (
@@ -1296,7 +1296,7 @@ export default function TenderDetailPage() {
                                             minLength={10}
                                             rows={3}
                                             placeholder="Contoh: klarifikasi pemenuhan SLA pada dokumen pendukung..."
-                                            className="rounded-lg border border-amber-300 bg-white px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
+                                            className="rounded-lg border border-amber-500/30 bg-[var(--surface-secondary)] px-3 py-2 text-sm text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-amber-600"
                                         />
                                     </label>
                                 </div>
@@ -1338,7 +1338,7 @@ export default function TenderDetailPage() {
                             {scoredBids.map((bid: any) => {
                                 const payload = bid.reveal?.revealedPayload || {};
                                 return (
-                                    <div key={bid.id} className={`bg-white border ${bid.totalScore > 0 ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]' : 'border-[var(--border)]'} rounded-xl overflow-hidden flex flex-col transition-all duration-300`}>
+                                    <div key={bid.id} className={`bg-[var(--surface-secondary)] border ${bid.totalScore > 0 ? 'border-[var(--accent)] ring-1 ring-[var(--accent)]' : 'border-[var(--border)]'} rounded-xl overflow-hidden flex flex-col transition-all duration-300`}>
                                         <div className="p-4 bg-[var(--surface-secondary)]/50 border-b border-[var(--border)] flex justify-between items-center">
                                             <span className="font-bold text-[var(--text-primary)]">{bid.organization?.name}</span>
                                             <span className="text-[10px] font-mono font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md border border-teal-200">
@@ -1462,7 +1462,7 @@ export default function TenderDetailPage() {
                         <div className="space-y-6">
                             {/* Final Status Card (No Winner vs Winner) */}
                             {!auditData.result?.winningBidId ? (
-                                <div className="bg-amber-50 border border-amber-300 rounded-xl p-6">
+                                <div className="bg-amber-50 border border-amber-500/30 rounded-xl p-6">
                                     <div className="flex items-start gap-4">
                                         <div className="p-3 bg-amber-100 rounded-xl">
                                             <AlertCircle className="w-8 h-8 text-amber-700" />
@@ -1476,7 +1476,7 @@ export default function TenderDetailPage() {
                                                 {auditData.result?.decisionNotes || (auditData.bids?.length === 0 ? "Tidak ada penawaran yang diajukan oleh vendor hingga batas waktu berakhir." : "Tidak ada penawaran yang di-reveal secara sah oleh vendor hingga batas waktu berakhir.")}
                                             </p>
                                             <div className="flex flex-wrap gap-4 text-xs font-mono">
-                                                <span className="bg-white/80 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-800 flex items-center gap-1">
+                                                <span className="bg-[var(--surface-secondary)] px-3 py-1.5 rounded-lg border border-amber-200 text-amber-800 flex items-center gap-1">
                                                     <Layers className="w-3 h-3" /> TxHash (Blockchain): <span className="text-slate-600 truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash || "-"}</span>
                                                 </span>
                                             </div>
@@ -1638,7 +1638,7 @@ export default function TenderDetailPage() {
             {/* Edit Tender Modal */}
             {isEditingTender && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
-                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                    <div className="bg-[var(--surface-secondary)] rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
                         <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-[var(--surface)]">
                             <h3 className="font-bold text-[var(--text-primary)]">Edit Detail Tender</h3>
                             <button onClick={() => setIsEditingTender(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
@@ -1711,7 +1711,7 @@ export default function TenderDetailPage() {
                                                 <option value="currency">Mata Uang</option>
                                                 <option value="file">File Dokumen</option>
                                             </select>
-                                            <button type="button" onClick={() => { const newF = [...editTenderData.fields]; newF.splice(idx, 1); setEditTenderData({...editTenderData, fields: newF}) }} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                                            <button type="button" onClick={() => { const newF = [...editTenderData.fields]; newF.splice(idx, 1); setEditTenderData({...editTenderData, fields: newF}) }} className="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
                                         </div>
                                     ))}
                                     {(!editTenderData.fields || editTenderData.fields.length === 0) && (
@@ -1734,7 +1734,7 @@ export default function TenderDetailPage() {
                                                     <input type="number" placeholder="Bobot" value={c.weight || 0} onChange={e => { const newC = [...editTenderData.criteria]; newC[idx].weight = Number(e.target.value); setEditTenderData({...editTenderData, criteria: newC}) }} className="w-full text-[13px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)] text-right" />
                                                     <span className="text-xs text-[var(--text-secondary)]">%</span>
                                                 </div>
-                                                <button type="button" onClick={() => { const newC = [...editTenderData.criteria]; newC.splice(idx, 1); setEditTenderData({...editTenderData, criteria: newC}) }} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                                                <button type="button" onClick={() => { const newC = [...editTenderData.criteria]; newC.splice(idx, 1); setEditTenderData({...editTenderData, criteria: newC}) }} className="text-red-500 hover:bg-red-500/10 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
                                             </div>
                                             <input type="text" placeholder="Panduan Evaluator (Opsional)" value={c.description || ""} onChange={e => { const newC = [...editTenderData.criteria]; newC[idx].description = e.target.value; setEditTenderData({...editTenderData, criteria: newC}) }} className="w-full text-[12px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)]" />
                                         </div>

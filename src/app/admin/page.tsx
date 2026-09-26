@@ -1,6 +1,7 @@
 "use client";
 
 import { useState, useEffect, useCallback } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import Link from "next/link";
 import {
     ShieldCheck,
@@ -109,17 +110,24 @@ export default function AdminDashboardPage() {
     });
 
     return (
-        <div className="space-y-8 pb-16">
+        <motion.div 
+        initial={{ opacity: 0, y: 20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="space-y-8 pb-16 relative"
+    >
+        {/* Holographic glowing orb background */}
+        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
+
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--text-primary)] flex items-center justify-center">
-                        <ShieldCheck className="w-5 h-5 text-white" />
+                    <div className="w-10 h-10 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center justify-center shadow-lg">
+                        <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
                             <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">Admin Approval</h1>
-                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--text-primary)] text-white">
+                            <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--text-primary)] text-[var(--background)]">
                                 Sistem
                             </span>
                         </div>
@@ -140,8 +148,9 @@ export default function AdminDashboardPage() {
 
             {/* Metrics Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
-                <div className="card p-5">
-                    <div className="flex items-center justify-between">
+                <div className="bento-card p-6 border-[var(--border)] bg-[var(--surface-secondary)] relative overflow-hidden group">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
+                        <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-[var(--text-tertiary)]">Total Organisasi</span>
                         <Building2 className="w-4 h-4 text-[var(--text-tertiary)]" />
                     </div>
@@ -149,20 +158,22 @@ export default function AdminDashboardPage() {
                     <p className="text-[11px] text-[var(--text-tertiary)] mt-1">Terdaftar di sistem</p>
                 </div>
 
-                <div className="card p-5 border-amber-200 bg-amber-50/30">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[12px] font-medium text-amber-600 flex items-center gap-1.5">
+                <div className="bento-card p-6 border-amber-500/20 bg-amber-500/5 relative overflow-hidden group">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
+                        <div className="flex items-center justify-between relative z-10">
+                        <span className="text-[12px] font-medium text-amber-500 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                             Pending Approval
                         </span>
-                        <Clock className="w-4 h-4 text-amber-600" />
+                        <Clock className="w-4 h-4 text-amber-500" />
                     </div>
-                    <p className="text-[28px] font-bold text-amber-600 mt-2">{pendingCount}</p>
-                    <p className="text-[11px] text-amber-600/80 mt-1">Butuh verifikasi admin</p>
+                    <p className="text-[28px] font-bold text-amber-500 mt-2">{pendingCount}</p>
+                    <p className="text-[11px] text-amber-500/80 mt-1">Butuh verifikasi admin</p>
                 </div>
 
-                <div className="card p-5 border-teal-200 bg-teal-50/30">
-                    <div className="flex items-center justify-between">
+                <div className="bento-card p-6 border-[var(--accent)]/20 bg-[var(--accent)]/5 relative overflow-hidden group">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
+                        <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-[var(--accent)]">Terverifikasi (Approved)</span>
                         <CheckCircle2 className="w-4 h-4 text-[var(--accent)]" />
                     </div>
@@ -170,13 +181,14 @@ export default function AdminDashboardPage() {
                     <p className="text-[11px] text-[var(--accent)] mt-1">Aktif & terverifikasi</p>
                 </div>
 
-                <div className="card p-5 border-red-200 bg-red-50/30">
-                    <div className="flex items-center justify-between">
-                        <span className="text-[12px] font-medium text-red-600">Ditolak (Rejected)</span>
-                        <XCircle className="w-4 h-4 text-red-600" />
+                <div className="bento-card p-6 border-red-500/20 bg-red-500/5 relative overflow-hidden group">
+                    <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
+                        <div className="flex items-center justify-between relative z-10">
+                        <span className="text-[12px] font-medium text-red-500">Ditolak (Rejected)</span>
+                        <XCircle className="w-4 h-4 text-red-500" />
                     </div>
-                    <p className="text-[28px] font-bold text-red-600 mt-2">{rejectedCount}</p>
-                    <p className="text-[11px] text-red-600 mt-1">Ditolak verifikasinya</p>
+                    <p className="text-[28px] font-bold text-red-500 mt-2">{rejectedCount}</p>
+                    <p className="text-[11px] text-red-500 mt-1">Ditolak verifikasinya</p>
                 </div>
             </div>
 
@@ -211,7 +223,7 @@ export default function AdminDashboardPage() {
                                 onClick={() => setFilterStatus(status)}
                                 className={`px-3 py-1.5 rounded-md text-[12px] font-semibold transition-all whitespace-nowrap ${
                                     isActive
-                                        ? "bg-white text-[var(--text-primary)] shadow-sm"
+                                        ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
                                         : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)]"
                                 }`}
                             >
@@ -229,7 +241,7 @@ export default function AdminDashboardPage() {
                 </div>
             ) : filteredOrgs.length === 0 ? (
                 <div className="text-center py-16 card space-y-3">
-                    <ShieldCheck className="w-10 h-10 text-[var(--border)] mx-auto" />
+                    <ShieldCheck className="w-10 h-10 text-[var(--text-tertiary)] mx-auto" />
                     <h3 className="text-[15px] font-semibold text-[var(--text-secondary)]">Tidak ada organisasi ditemukan</h3>
                     <p className="text-[13px] text-[var(--text-tertiary)] max-w-sm mx-auto">
                         Tidak ada pengajuan organisasi dengan kriteria filter yang dipilih.
@@ -247,7 +259,7 @@ export default function AdminDashboardPage() {
                         return (
                             <div
                                 key={org.id}
-                                className={`card p-6 transition-all space-y-4 ${
+                                className={`bento-card p-6 transition-all space-y-4 relative overflow-hidden ${
                                     isPending ? "border-amber-200" : ""
                                 }`}
                             >
@@ -260,10 +272,10 @@ export default function AdminDashboardPage() {
                                             <span
                                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                                                     org.type === "BUYER"
-                                                        ? "bg-[var(--accent-light)] text-[var(--accent)] border-teal-200"
+                                                        ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-blue-50 text-blue-600 border-blue-200"
-                                                        : "bg-purple-50 text-purple-600 border-purple-200"
+                                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                        : "bg-purple-500/10 text-purple-400 border-purple-500/20"
                                                 }`}
                                             >
                                                 {org.type === "BUYER" ? "Panitia" : org.type === "VENDOR" ? "Vendor" : "Both"}
@@ -271,17 +283,17 @@ export default function AdminDashboardPage() {
 
                                             {/* Status Badge */}
                                             {isPending && (
-                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-50 text-amber-600 border border-amber-200 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-amber-500/10 text-amber-500 border border-amber-500/20 flex items-center gap-1">
                                                     <Clock className="w-3 h-3" /> Pending Admin Review
                                                 </span>
                                             )}
                                             {isApproved && (
-                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Approved &amp; Verified
                                                 </span>
                                             )}
                                             {isRejected && (
-                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-50 text-red-600 border border-red-200 flex items-center gap-1">
+                                                <span className="text-[11px] font-semibold px-2 py-0.5 rounded-md bg-red-500/10 text-red-500 border border-red-500/20 flex items-center gap-1">
                                                     <XCircle className="w-3 h-3" /> Ditolak (Rejected)
                                                 </span>
                                             )}
@@ -346,7 +358,7 @@ export default function AdminDashboardPage() {
                                                 <button
                                                     onClick={() => handleVerify(org.id, "APPROVED")}
                                                     disabled={isProcessing}
-                                                    className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center gap-1.5 disabled:opacity-50"
                                                 >
                                                     {isProcessing ? (
                                                         <Loader2 className="w-3.5 h-3.5 animate-spin" />
@@ -359,7 +371,7 @@ export default function AdminDashboardPage() {
                                                 <button
                                                     onClick={() => setRejectingOrg(org)}
                                                     disabled={isProcessing}
-                                                    className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-red-600 font-semibold text-[13px] hover:bg-red-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-red-500 font-semibold text-[13px] hover:bg-red-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
                                                 >
                                                     <XCircle className="w-3.5 h-3.5" />
                                                     Tolak
@@ -371,7 +383,7 @@ export default function AdminDashboardPage() {
                                             <button
                                                 onClick={() => setRejectingOrg(org)}
                                                 disabled={isProcessing}
-                                                className="px-3 py-1.5 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-red-600 hover:border-red-200 text-[12px] font-medium transition-all flex items-center gap-1"
+                                                className="px-3 py-1.5 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-red-500 hover:border-red-200 text-[12px] font-medium transition-all flex items-center gap-1"
                                             >
                                                 Batalkan Persetujuan
                                             </button>
@@ -381,7 +393,7 @@ export default function AdminDashboardPage() {
                                             <button
                                                 onClick={() => handleVerify(org.id, "APPROVED")}
                                                 disabled={isProcessing}
-                                                className="px-3 py-1.5 rounded-md bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 text-[12px] font-semibold flex items-center gap-1 transition-all"
+                                                className="px-3 py-1.5 rounded-md bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20 text-[12px] font-semibold flex items-center gap-1 transition-all"
                                             >
                                                 Setujui Ulang
                                             </button>
@@ -407,7 +419,7 @@ export default function AdminDashboardPage() {
                 <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
                     <div className="card max-w-md w-full p-6 space-y-4">
                         <div className="flex items-center gap-2">
-                            <XCircle className="w-5 h-5 text-red-600" />
+                            <XCircle className="w-5 h-5 text-red-500" />
                             <h3 className="text-[16px] font-bold text-[var(--text-primary)]">Tolak Organisasi</h3>
                         </div>
 
@@ -448,6 +460,6 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
             )}
-        </div>
+        </motion.div>
     );
 }
