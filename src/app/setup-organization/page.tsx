@@ -44,8 +44,8 @@ const orgTypes: OrgTypeOption[] = [
         subtitle: "Penyelenggara Tender",
         icon: ShoppingCart,
         colorClass: "text-[var(--accent)]",
-        bgClass: "bg-teal-50",
-        borderClass: "border-teal-200",
+        bgClass: "bg-teal-500/10",
+        borderClass: "border-teal-500/30",
         roles: [
             { icon: Briefcase, label: "Procurement Officer", colorClass: "text-[var(--accent)]" },
             { icon: Eye, label: "Auditor", colorClass: "text-[var(--text-secondary)]" },
@@ -58,9 +58,9 @@ const orgTypes: OrgTypeOption[] = [
         label: "Vendor / Supplier",
         subtitle: "Peserta Tender",
         icon: Package,
-        colorClass: "text-blue-600",
-        bgClass: "bg-blue-50",
-        borderClass: "border-blue-200",
+        colorClass: "text-blue-500",
+        bgClass: "bg-blue-500/10",
+        borderClass: "border-blue-500/30",
         roles: [
             { icon: Lock, label: "Submit Bid", colorClass: "text-[var(--text-secondary)]" },
             { icon: Eye, label: "Reveal & Verify", colorClass: "text-[var(--text-secondary)]" },
@@ -73,9 +73,9 @@ const orgTypes: OrgTypeOption[] = [
         label: "Both",
         subtitle: "Buyer & Vendor",
         icon: Layers,
-        colorClass: "text-purple-600",
-        bgClass: "bg-purple-50",
-        borderClass: "border-purple-200",
+        colorClass: "text-purple-500",
+        bgClass: "bg-purple-500/10",
+        borderClass: "border-purple-500/30",
         roles: [
             { icon: ShoppingCart, label: "Create Tenders", colorClass: "text-[var(--accent)]" },
             { icon: Package, label: "Join Tenders", colorClass: "text-blue-600" },
@@ -103,7 +103,7 @@ export default function SetupOrganizationPage() {
     const [isLoading, setIsLoading] = useState(false);
     const [error, setError] = useState<string | null>(null);
 
-    const inputClass = "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
+    const inputClass = "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
 
     const handleCreate = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -195,14 +195,14 @@ export default function SetupOrganizationPage() {
                                         onClick={() => setSelectedType(opt.value)}
                                         className={`w-full text-left rounded-xl p-4 transition-all duration-200 border ${
                                             isSelected
-                                                ? `border-[var(--accent)] bg-teal-50/30 ring-1 ring-[var(--accent)]`
-                                                : "border-[var(--border)] bg-white hover:bg-[var(--surface-secondary)]"
+                                                ? `border-[var(--accent)] bg-[var(--accent)]/5 ring-1 ring-[var(--accent)]`
+                                                : "border-[var(--border)] bg-transparent hover:bg-[var(--surface-secondary)]"
                                         }`}
                                     >
                                         <div className="flex items-start gap-4">
                                             <div
                                                 className={`w-10 h-10 rounded-lg flex items-center justify-center shrink-0 border ${
-                                                    isSelected ? `${opt.bgClass} ${opt.borderClass}` : "bg-white border-[var(--border)]"
+                                                    isSelected ? `${opt.bgClass} ${opt.borderClass}` : "bg-[var(--surface-secondary)] border-[var(--border)]"
                                                 }`}
                                             >
                                                 <Icon className={`w-5 h-5 ${isSelected ? opt.colorClass : "text-[var(--text-secondary)]"}`} />
@@ -238,7 +238,7 @@ export default function SetupOrganizationPage() {
                                             </div>
                                             <div
                                                 className={`w-4 h-4 rounded-full border-2 shrink-0 mt-1 transition-all flex items-center justify-center ${
-                                                    isSelected ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border)] bg-white"
+                                                    isSelected ? "border-[var(--accent)] bg-[var(--accent)]" : "border-[var(--border)] bg-[var(--surface-secondary)]"
                                                 }`}
                                             >
                                                 {isSelected && <div className="w-1.5 h-1.5 rounded-full bg-white" />}

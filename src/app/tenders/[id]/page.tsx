@@ -1153,7 +1153,7 @@ export default function TenderDetailPage() {
                             <button
                                 onClick={handleSubmitBid}
                                 disabled={submittingBid || userOrgs.length === 0}
-                                className="mt-6 w-full py-3 rounded-lg bg-[var(--text-primary)] hover:opacity-90 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
+                                className="mt-6 w-full py-3 rounded-lg bg-[var(--accent)] hover:opacity-90 text-white font-bold text-sm transition-all flex items-center justify-center gap-2 disabled:opacity-50 disabled:cursor-not-allowed"
                             >
                                 {submittingBid ? (
                                     <>
@@ -1177,8 +1177,8 @@ export default function TenderDetailPage() {
             {activeTab === "reveal" && (
                 <div className="card p-6 rounded-2xl border-[var(--border)]">
                      <div className="flex items-center gap-3 mb-6">
-                        <div className="p-2.5 rounded-xl bg-purple-50 border border-purple-500/20">
-                            <KeyRound className="w-5 h-5 text-[var(--text-secondary)]" />
+                        <div className="p-2.5 rounded-xl bg-purple-500/10 border border-purple-500/20">
+                            <KeyRound className="w-5 h-5 text-purple-500" />
                         </div>
                         <div>
                             <h3 className="text-base font-bold text-[var(--text-primary)] leading-tight">Fase Reveal & Dekripsi</h3>
@@ -1187,16 +1187,16 @@ export default function TenderDetailPage() {
                     </div>
 
                     {tender?.status === "OPEN" || tender?.status === "DRAFT" ? (
-                        <div className="py-12 text-center bg-purple-50/50 border border-purple-200/50 rounded-xl flex flex-col items-center justify-center">
-                            <Lock className="w-12 h-12 text-purple-300 mx-auto mb-4" />
-                            <h4 className="font-bold text-purple-800 text-lg">Fase Reveal Belum Dimulai</h4>
-                            <p className="text-sm text-purple-700 mt-2 max-w-sm">Anda baru bisa melakukan proses Dekripsi & Reveal setelah batas waktu pengumpulan (Commit Deadline) berakhir.</p>
+                        <div className="py-12 text-center bg-purple-500/5 border border-purple-500/20 rounded-xl flex flex-col items-center justify-center">
+                            <Lock className="w-12 h-12 text-purple-500/50 mx-auto mb-4" />
+                            <h4 className="font-bold text-purple-500 text-lg">Fase Reveal Belum Dimulai</h4>
+                            <p className="text-sm text-[var(--text-secondary)] mt-2 max-w-sm">Anda baru bisa melakukan proses Dekripsi & Reveal setelah batas waktu pengumpulan (Commit Deadline) berakhir.</p>
                         </div>
                     ) : (tender?.status === "SCORING" || tender?.status === "CLOSED" || (tender?.revealDeadline && new Date() > new Date(tender.revealDeadline))) ? (
-                        <div className="py-12 text-center bg-red-500/10/50 border border-red-200/50 rounded-xl flex flex-col items-center justify-center">
-                            <Lock className="w-12 h-12 text-red-300 mx-auto mb-4" />
-                            <h4 className="font-bold text-red-800 text-lg">Fase Reveal Telah Berakhir</h4>
-                            <p className="text-sm text-red-700 mt-2 max-w-sm">Batas waktu untuk melakukan Dekripsi & Reveal penawaran Anda sudah lewat. Proses penilaian (Scoring) sedang/sudah berlangsung.</p>
+                        <div className="py-12 text-center bg-red-500/5 border border-red-500/20 rounded-xl flex flex-col items-center justify-center">
+                            <Lock className="w-12 h-12 text-red-500/50 mx-auto mb-4" />
+                            <h4 className="font-bold text-red-500 text-lg">Fase Reveal Telah Berakhir</h4>
+                            <p className="text-sm text-[var(--text-secondary)] mt-2 max-w-sm">Batas waktu untuk melakukan Dekripsi & Reveal penawaran Anda sudah lewat. Proses penilaian (Scoring) sedang/sudah berlangsung.</p>
                         </div>
                     ) : (
                         <div className="max-w-md mx-auto space-y-4 py-8">
@@ -1462,31 +1462,31 @@ export default function TenderDetailPage() {
                         <div className="space-y-6">
                             {/* Final Status Card (No Winner vs Winner) */}
                             {!auditData.result?.winningBidId ? (
-                                <div className="bg-amber-50 border border-amber-500/30 rounded-xl p-6">
+                                <div className="bg-amber-500/10 border border-amber-500/30 rounded-xl p-6">
                                     <div className="flex items-start gap-4">
-                                        <div className="p-3 bg-amber-100 rounded-xl">
-                                            <AlertCircle className="w-8 h-8 text-amber-700" />
+                                        <div className="p-3 bg-amber-500/20 rounded-xl">
+                                            <AlertCircle className="w-8 h-8 text-amber-500" />
                                         </div>
                                         <div className="flex-1">
-                                            <h3 className="text-amber-800 font-bold text-sm tracking-wider uppercase mb-1">Status Hasil Tender</h3>
-                                            <p className="text-2xl font-bold text-amber-900 mb-2">
+                                            <h3 className="text-amber-500 font-bold text-sm tracking-wider uppercase mb-1">Status Hasil Tender</h3>
+                                            <p className="text-2xl font-bold text-[var(--text-primary)] mb-2">
                                                 Diselesaikan Tanpa Pemenang (Gugur)
                                             </p>
-                                            <p className="text-xs text-amber-800 mb-3">
+                                            <p className="text-xs text-[var(--text-secondary)] mb-3">
                                                 {auditData.result?.decisionNotes || (auditData.bids?.length === 0 ? "Tidak ada penawaran yang diajukan oleh vendor hingga batas waktu berakhir." : "Tidak ada penawaran yang di-reveal secara sah oleh vendor hingga batas waktu berakhir.")}
                                             </p>
                                             <div className="flex flex-wrap gap-4 text-xs font-mono">
-                                                <span className="bg-[var(--surface-secondary)] px-3 py-1.5 rounded-lg border border-amber-200 text-amber-800 flex items-center gap-1">
-                                                    <Layers className="w-3 h-3" /> TxHash (Blockchain): <span className="text-slate-600 truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash || "-"}</span>
+                                                <span className="bg-[var(--surface-secondary)] px-3 py-1.5 rounded-lg border border-[var(--border)] text-amber-500 flex items-center gap-1">
+                                                    <Layers className="w-3 h-3" /> TxHash (Blockchain): <span className="text-[var(--text-tertiary)] truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash || "-"}</span>
                                                 </span>
                                             </div>
                                         </div>
                                     </div>
                                 </div>
                             ) : (
-                                <div className="bg-teal-50 border border-[var(--accent)] rounded-xl p-6">
+                                <div className="bg-[var(--accent)]/10 border border-[var(--accent)] rounded-xl p-6">
                                     <div className="flex items-start gap-4">
-                                        <div className="p-3 bg-[var(--accent-light)] rounded-xl">
+                                        <div className="p-3 bg-[var(--accent)]/20 rounded-xl">
                                             <Award className="w-8 h-8 text-[var(--accent)]" />
                                         </div>
                                         <div className="flex-1">
@@ -1495,10 +1495,10 @@ export default function TenderDetailPage() {
                                                 {auditData.bids?.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
                                             </p>
                                             <div className="flex flex-wrap gap-4 text-xs font-mono">
-                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)]">
+                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--accent)]">
                                                     Skor Akhir: <span className="font-bold text-[var(--text-primary)]">{Number(auditData.result?.finalScore || 0).toFixed(2)}</span>
                                                 </span>
-                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)] flex items-center gap-1">
+                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-[var(--border)] text-[var(--accent)] flex items-center gap-1">
                                                     <Layers className="w-3 h-3" /> TxHash: <span className="text-[var(--text-tertiary)] truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash}</span>
                                                 </span>
                                             </div>
@@ -1532,8 +1532,8 @@ export default function TenderDetailPage() {
                                                     <div>
                                                         <div className="flex items-center gap-2">
                                                             <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
-                                                            {isWinner && <span className="text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
-                                                            {!isRevealed && <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-1 rounded-md uppercase border border-red-200">Gugur (Tidak Di-reveal)</span>}
+                                                            {isWinner && <span className="text-[10px] font-bold bg-[var(--accent)]/20 text-[var(--accent)] px-2 py-1 rounded-md uppercase border border-[var(--accent)]/30">Pemenang</span>}
+                                                            {!isRevealed && <span className="text-[10px] font-bold bg-red-500/10 text-red-500 px-2 py-1 rounded-md uppercase border border-red-500/30">Gugur (Tidak Di-reveal)</span>}
                                                         </div>
                                                         <span className="text-[10px] text-[var(--text-tertiary)] mt-1 flex items-center gap-1">
                                                             <Clock className="w-3 h-3" /> Submitted: {new Date(bid.submittedAt).toLocaleString('id-ID')}
