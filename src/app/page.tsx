@@ -6,7 +6,6 @@ import Image from "next/image";
 import { useSession } from "@/lib/auth-client";
 import { PlusCircle, ArrowRight, Shield, Lock, FileKey, Eye, FileText, Upload, Users, Rocket } from "lucide-react";
 import { motion, useScroll, useTransform } from "framer-motion";
-import { CryptoVaultScene } from "@/components/crypto-vault";
 
 interface DashboardStats {
     totalTenders: number;
@@ -115,13 +114,23 @@ export default function HomePage() {
                 </div>
 
                 <motion.div 
-                    initial={{ opacity: 0, scale: 0.9 }} 
-                    animate={{ opacity: 1, scale: 1 }} 
+                    initial={{ opacity: 0 }} 
+                    animate={{ opacity: 1 }} 
                     transition={{ duration: 1.5, ease: "easeOut" }}
-                    className="hidden lg:block absolute right-0 w-[55%] h-[90vh] pointer-events-none"
-                    style={{ y }}
+                    className="hidden lg:block absolute right-0 top-0 w-[50vw] h-full pointer-events-none overflow-hidden z-0"
                 >
-                    <CryptoVaultScene />
+                    <video 
+                        src="/video/Office%20Discussion%204K%20Video.mp4" 
+                        autoPlay 
+                        loop 
+                        muted 
+                        playsInline
+                        className="w-full h-full object-cover opacity-40 mix-blend-luminosity"
+                    />
+                    {/* Seamless fading gradients */}
+                    <div className="absolute inset-0 bg-gradient-to-r from-[var(--background)] via-transparent to-transparent w-1/2" />
+                    <div className="absolute inset-0 bg-gradient-to-b from-[var(--background)] via-transparent to-transparent h-1/4" />
+                    <div className="absolute inset-0 bg-gradient-to-t from-[var(--background)] via-transparent to-transparent h-1/4 mt-auto" />
                 </motion.div>
             </section>
 
