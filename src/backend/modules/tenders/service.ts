@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions, tenderParticipants, organizationMembers } from "@/db/schema";
+import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions, tenderParticipants, organizationMembers, bids } from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
@@ -114,27 +114,41 @@ export abstract class TenderService {
                 UPDATE tenders 
                 SET status = 'REVEAL', closed_at = ${now}, updated_at = ${now}
                 WHERE status = 'OPEN' AND commit_deadline < ${now}
-                RETURNING id, title
+                RETURNING id, title, created_by
             `);
 
             if (updatedToReveal.rows.length > 0) {
                 // Notifikasi ke partisipan (vendor) bahwa fase reveal dimulai
                 for (const tender of updatedToReveal.rows as any[]) {
-                    // Fetch all users belonging to the participating organizations
-                    const membersToNotify = await db.select({ userId: organizationMembers.userId })
-                        .from(tenderParticipants)
-                        .innerJoin(organizationMembers, eq(tenderParticipants.organizationId, organizationMembers.organizationId))
-                        .where(eq(tenderParticipants.tenderId, tender.id));
+                    // Fetch all users belonging to organizations that have submitted a bid
+                    const membersToNotifyQuery = await db.select({ userId: organizationMembers.userId })
+                        .from(bids)
+                        .innerJoin(organizationMembers, eq(bids.organizationId, organizationMembers.organizationId))
+                        .where(eq(bids.tenderId, tender.id));
                     
-                    if (membersToNotify.length > 0) {
-                        const notificationsPayload = membersToNotify.map(m => ({
-                            userId: m.userId,
+                    // Remove duplicate user IDs
+                    const uniqueUserIds = [...new Set(membersToNotifyQuery.map(m => m.userId))];
+                    
+                    if (uniqueUserIds.length > 0) {
+                        const notificationsPayload = uniqueUserIds.map(userId => ({
+                            userId: userId,
                             title: "Fase Reveal Dimulai!",
                             message: `Waktu commit untuk tender "${tender.title}" telah berakhir. Segera lakukan Dekripsi (Reveal) penawaran Anda sebelum Reveal Deadline berakhir!`,
                             type: "INFO" as const,
                             link: `/tenders/${tender.id}`
                         }));
                         await NotificationService.createMany(notificationsPayload);
+                    }
+                    
+                    // Notifikasi juga untuk panitia pembuat tender
+                    if (tender.created_by) {
+                        await NotificationService.create({
+                            userId: tender.created_by,
+                            title: "Fase Reveal Dimulai",
+                            message: `Waktu pengumpulan (commit) untuk tender "${tender.title}" telah berakhir. Saat ini vendor sedang melakukan dekripsi penawaran mereka.`,
+                            type: "INFO",
+                            link: `/tenders/${tender.id}`
+                        });
                     }
                 }
             }

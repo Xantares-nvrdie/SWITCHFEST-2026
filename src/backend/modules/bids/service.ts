@@ -207,6 +207,28 @@ export abstract class BidService {
                 })
                 .then((tx: any) => tx && tx.wait())
                 .catch((err: any) => console.error("Failed to attest reveal on smart contract:", err));
+                
+            // Send notification to Panitia (Creator) that a vendor has revealed
+            try {
+                const tenderInfo = await db.query.tenders.findFirst({
+                    where: (t, { eq }) => eq(t.id, existingBid.tenderId)
+                });
+                const orgInfo = await db.query.organizations.findFirst({
+                    where: (o, { eq }) => eq(o.id, existingBid.organizationId)
+                });
+                
+                if (tenderInfo && tenderInfo.createdBy && orgInfo) {
+                    await NotificationService.create({
+                        userId: tenderInfo.createdBy,
+                        title: "Dekripsi (Reveal) Berhasil!",
+                        message: `Vendor ${orgInfo.name} telah berhasil mendekripsi penawaran mereka untuk tender "${tenderInfo.title}". Commitment Hash tervalidasi.`,
+                        type: "SUCCESS",
+                        link: `/tenders/${tenderInfo.id}`
+                    });
+                }
+            } catch (err) {
+                console.error("Failed to send reveal notification to panitia:", err);
+            }
         }
 
         return {
