@@ -42,6 +42,8 @@ export default function OrganizationsPage() {
     const [allOrgs, setAllOrgs] = useState<Organization[]>([]);
     const [activeTab, setActiveTab] = useState<"my" | "all">("my");
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 6;
     const { data: session } = useSession();
     const isSysAdmin = (session?.user as any)?.role === "admin";
 
@@ -65,13 +67,21 @@ export default function OrganizationsPage() {
         loadData();
     }, []);
 
-    const orgsToDisplay = activeTab === "my" 
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const filteredOrgs = activeTab === "my" 
         ? myOrgs 
         : allOrgs.filter((org) => {
             if (isSysAdmin) return true;
             const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
             return status === "APPROVED";
         });
+
+    const totalPages = Math.ceil(filteredOrgs.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedOrgs = filteredOrgs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
         <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
@@ -131,7 +141,7 @@ export default function OrganizationsPage() {
                 <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin" />
                 </div>
-            ) : orgsToDisplay.length === 0 ? (
+            ) : filteredOrgs.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl card border-[var(--border)] space-y-4">
                     <Building2 className="w-12 h-12 text-[var(--text-tertiary)] mx-auto" />
                     <div>
@@ -163,7 +173,7 @@ export default function OrganizationsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orgsToDisplay.map((org) => {
+                    {paginatedOrgs.map((org) => {
                         const isMine = myOrgs.some((m) => m.id === org.id);
                         const memberRole = org.memberRole ?? myOrgs.find((m) => m.id === org.id)?.memberRole;
                         const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
@@ -264,6 +274,41 @@ export default function OrganizationsPage() {
                             </div>
                         );
                     })}
+                </div>
+            )}
+
+            {!isLoading && totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8 pb-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
+                        >
+                            Sebelumnya
+                        </button>
+                        <div className="flex items-center gap-2 px-1">
+                            <select
+                                value={currentPage}
+                                onChange={(e) => setCurrentPage(Number(e.target.value))}
+                                className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] font-bold text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none"
+                            >
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <option key={i + 1} value={i + 1}>
+                                        Hal {i + 1}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">dari {totalPages}</span>
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
+                        >
+                            Selanjutnya
+                        </button>
+                    </div>
                 </div>
             )}
         </div>

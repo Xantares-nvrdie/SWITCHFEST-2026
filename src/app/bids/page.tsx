@@ -65,7 +65,7 @@ export default function BidsHistoryPage() {
     const statusClasses: Record<string, string> = {
         SEALED: "bg-blue-50 text-blue-600 border-blue-200",
         REVEALED_VALID: "bg-emerald-50 text-emerald-600 border-emerald-200",
-        REVEALED_INVALID: "bg-red-50 text-red-600 border-red-200",
+        REVEALED_INVALID: "bg-red-500/10 text-red-400 border-red-500/20",
         WITHDRAWN: "bg-slate-50 text-slate-600 border-slate-200",
     };
 

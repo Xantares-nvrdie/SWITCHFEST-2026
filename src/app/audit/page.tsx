@@ -18,6 +18,13 @@ export default function AuditPage() {
     const [searchQuery, setSearchQuery] = useState("");
     const [logs, setLogs] = useState<AuditLogItem[]>([]);
     const [loading, setLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    
+    const ITEMS_PER_PAGE = 10;
+
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [searchQuery]);
 
     useEffect(() => {
         fetch("/api/audit-logs")
@@ -46,8 +53,12 @@ export default function AuditPage() {
             log.userEmail?.toLowerCase().includes(searchQuery.toLowerCase()),
     );
 
+    const totalPages = Math.ceil(filteredLogs.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedLogs = filteredLogs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
+
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
@@ -86,7 +97,7 @@ export default function AuditPage() {
                     <div className="text-center text-sm text-[var(--text-tertiary)] py-12">Belum ada aktivitas tercatat.</div>
                 ) : (
                     <div className="space-y-3">
-                        {filteredLogs.map((log) => (
+                        {paginatedLogs.map((log) => (
                             <div
                                 key={log.id}
                                 className="p-4 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] flex flex-col md:flex-row md:items-center justify-between gap-3 text-xs"
@@ -121,6 +132,44 @@ export default function AuditPage() {
                                 </span>
                             </div>
                         ))}
+
+                        {totalPages > 1 && (
+                            <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-6 border-t border-[var(--border)] gap-4">
+                                <span className="text-[13px] text-[var(--text-tertiary)] font-medium">
+                                    Menampilkan <strong className="text-[var(--text-primary)]">{startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredLogs.length)}</strong> dari <strong className="text-[var(--text-primary)]">{filteredLogs.length}</strong> entri
+                                </span>
+                                <div className="flex items-center gap-2">
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        disabled={currentPage === 1}
+                                        className="px-4 py-2 rounded-lg border border-[var(--border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        Sebelumnya
+                                    </button>
+                                    <div className="flex items-center gap-2 px-1">
+                                        <select
+                                            value={currentPage}
+                                            onChange={(e) => setCurrentPage(Number(e.target.value))}
+                                            className="px-2 py-1.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-bold text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none"
+                                        >
+                                            {Array.from({ length: totalPages }).map((_, i) => (
+                                                <option key={i + 1} value={i + 1}>
+                                                    Hal {i + 1}
+                                                </option>
+                                            ))}
+                                        </select>
+                                        <span className="text-[13px] text-[var(--text-tertiary)] hidden sm:inline">dari {totalPages}</span>
+                                    </div>
+                                    <button
+                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        disabled={currentPage === totalPages}
+                                        className="px-4 py-2 rounded-lg border border-[var(--border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
+                                    >
+                                        Selanjutnya
+                                    </button>
+                                </div>
+                            </div>
+                        )}
                     </div>
                 )}
             </div>

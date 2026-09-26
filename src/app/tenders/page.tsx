@@ -302,9 +302,20 @@ export default function TendersPage() {
                     >
                         Sebelumnya
                     </button>
-                    <span className="text-[14px] font-medium text-[var(--text-secondary)] px-2">
-                        Hal <span className="text-[var(--text-primary)] font-bold">{page}</span> dari {totalPages}
-                    </span>
+                    <div className="flex items-center gap-2 px-1">
+                        <select
+                            value={page}
+                            onChange={(e) => setPage(Number(e.target.value))}
+                            className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] font-bold text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none"
+                        >
+                            {Array.from({ length: totalPages }).map((_, i) => (
+                                <option key={i + 1} value={i + 1}>
+                                    Hal {i + 1}
+                                </option>
+                            ))}
+                        </select>
+                        <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">dari {totalPages}</span>
+                    </div>
                     <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                         disabled={page === totalPages}

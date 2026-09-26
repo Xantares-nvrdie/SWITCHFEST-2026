@@ -341,7 +341,7 @@ export default function AdminDashboardPage() {
 
                                         {/* Rejection Note if any */}
                                         {isRejected && org.rejectionReason && (
-                                            <div className="mt-3 p-3 rounded-lg bg-red-50 border border-red-100 text-[12px] text-red-700 flex items-start gap-2">
+                                            <div className="mt-3 p-3 rounded-lg bg-red-500/10 border border-red-500/20 text-[12px] text-red-400 flex items-start gap-2">
                                                 <AlertCircle className="w-4 h-4 shrink-0 mt-0.5" />
                                                 <div>
                                                     <span className="font-semibold block">Alasan Penolakan:</span>
