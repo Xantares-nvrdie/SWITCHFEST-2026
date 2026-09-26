@@ -12,6 +12,18 @@ serta diarahkan pada kontribusi terhadap **SDG 16 – Peace, Justice and Strong 
 
 ---
 
+## Teknologi yang Digunakan
+
+Proyek ini dibangun menggunakan teknologi mutakhir untuk memastikan keamanan, kecepatan, dan skalabilitas:
+- **Frontend:** Next.js 16 (App Router), React, Tailwind CSS, Lucide Icons.
+- **Backend:** ElysiaJS berjalan di atas runtime Bun.
+- **Database & Storage:** PostgreSQL melalui Supabase, dengan Drizzle ORM.
+- **Blockchain:** Hardhat (Local Node), Ethers.js, Solidity untuk Smart Contract Commit-Reveal.
+- **Autentikasi:** Better Auth.
+- **Tugas Latar Belakang:** Cron Jobs (`@elysiajs/cron`) untuk sinkronisasi status otomatis.
+
+---
+
 ## 1. Ringkasan Masalah
 
 Dalam proses tender, vendor menyerahkan penawaran yang dapat berisi harga, spesifikasi teknis, waktu pengiriman, garansi, dokumen, dan informasi komersial lainnya.
@@ -169,7 +181,19 @@ Kriteria:
 
 Tender juga dapat mendefinisikan field bid secara dinamis.
 
-## 5.2 Organisasi Penyelenggara Tender
+## 5.2 Manajemen Tender (Edit & Lampiran)
+
+Selama tender belum memasuki batas akhir (deadline) atau belum ada penawaran final yang mengikat, **Procurement Officer** dapat melakukan pembaruan terhadap parameter tender. 
+- **Edit Deadline:** Memperpanjang tenggat waktu *reveal* atau *commit* jika terdapat penyesuaian jadwal pengadaan.
+- **Kelola Lampiran (Attachments):** Menambahkan atau menghapus dokumen pendukung (seperti Kerangka Acuan Kerja / Spesifikasi Teknis) agar vendor mendapatkan informasi yang paling *up-to-date*.
+Perubahan ini dilakukan melalui rute `PATCH` di backend yang diamankan dengan otorisasi berbasis peran (RBAC).
+
+## 5.3 Otomatisasi Status (Cron Jobs)
+
+Untuk memastikan sistem berjalan mandiri (*self-driving*), TenderSeal dilengkapi dengan **Background Cron Jobs** menggunakan `@elysiajs/cron`. 
+Sistem akan secara periodik mengevaluasi waktu saat ini terhadap *deadline* seluruh tender yang aktif. Jika *deadline* fase *Commit* telah terlewati, Cron akan otomatis memicu perubahan status ke fase *Reveal* tanpa memerlukan intervensi manual dari administrator, sehingga sinkronisasi antara *database off-chain* dan status *on-chain* selalu terjaga secara asinkron (non-blocking).
+
+## 5.4 Organisasi Penyelenggara Tender
 
 TenderSeal dirancang sebagai platform **multi-organization**. Organisasi dari luar platform dapat mendaftar, membuat profil organisasi, dan memberikan permission `PROCUREMENT_OFFICER` kepada anggota organisasinya.
 
