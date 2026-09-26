@@ -45,7 +45,7 @@ export default function SupportPage() {
     };
 
     return (
-        <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12 pt-4 pb-20">
+        <div className="space-y-8 w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12 pt-4 pb-20">
             {/* Header */}
             <div className="flex flex-col gap-2">
                 <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Support Center</h1>

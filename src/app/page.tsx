@@ -64,7 +64,7 @@ export default function HomePage() {
     };
 
     return (
-        <div className="flex flex-col gap-32 pb-32 overflow-x-clip w-full max-w-[1440px] mx-auto px-6">
+        <div className="flex flex-col gap-32 pb-32 overflow-x-clip w-full max-w-[1920px] mx-auto px-6">
             {/* Immersive Hero Section */}
             <section className="relative min-h-[85vh] flex items-center justify-between pt-10">
                 <div className="absolute inset-0 -z-10 bg-[radial-gradient(ellipse_at_top_right,_var(--tw-gradient-stops))] from-[rgba(16,185,129,0.05)] via-transparent to-transparent pointer-events-none" />

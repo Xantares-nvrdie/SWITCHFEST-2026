@@ -16,7 +16,7 @@ export default function TutorialPage() {
     ];
 
     return (
-        <div className="w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12 py-12">
+        <div className="w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12 py-12">
             {/* Header */}
             <div className="mb-12">
                 <h1 className="font-display text-4xl md:text-5xl font-extrabold text-[var(--text-primary)] tracking-tight mb-4">

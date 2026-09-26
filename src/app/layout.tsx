@@ -35,7 +35,7 @@ export default function RootLayout({
                         <Navbar />
                         <main className="flex-1 w-full flex flex-col">{children}</main>
                         <footer className="border-t border-[var(--border)] py-8 text-center text-sm text-[var(--text-tertiary)]">
-                            <div className="max-w-[1440px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
+                            <div className="max-w-[1920px] mx-auto px-6 flex flex-col sm:flex-row items-center justify-between gap-3">
                                 <div className="flex items-center gap-2">
                                     <span className="font-display font-semibold text-[var(--text-primary)]">TenderSeal</span>
                                     <span>© 2026</span>

@@ -6,7 +6,7 @@ import { ArrowRight, Shield, Zap, Sparkles } from "lucide-react";
 
 export default function HomeFooter() {
     return (
-        <section className="w-full max-w-[1440px] mx-auto px-4 md:px-8 mt-10 mb-8">
+        <section className="w-full max-w-[1920px] mx-auto px-4 md:px-8 mt-10 mb-8">
             <div className="relative w-full rounded-[40px] overflow-hidden border border-[var(--border)] bg-[var(--surface-secondary)]/30 backdrop-blur-3xl shadow-2xl group">
                 
                 {/* Organic Glowing Orbs (Fluid/Not Rigid) */}

@@ -780,7 +780,7 @@ export default function TenderDetailPage() {
     }
 
     return (
-        <div className="space-y-8 w-full max-w-[1440px] mx-auto px-4 md:px-8 lg:px-12">
+        <div className="space-y-8 w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Header */}
             <div className="space-y-3">
                 <Link href="/tenders" className="inline-flex items-center gap-1 text-xs font-semibold text-[var(--text-tertiary)] hover:text-[var(--accent)] transition-colors">
