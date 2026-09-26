@@ -68,31 +68,30 @@ export default function Navbar() {
     }
 
     return (
-        <header className="sticky top-0 z-50 border-b border-[var(--border)] bg-white/80 backdrop-blur-lg">
-            <div className="max-w-6xl mx-auto px-4 sm:px-6 lg:px-8 h-14 flex items-center justify-between">
+        <header className="sticky top-0 z-50 border-b border-[var(--border-light)] glass-panel">
+            <div className="max-w-[1440px] mx-auto px-6 h-16 flex items-center justify-between">
                 {/* Kiri: Logo + Navigasi */}
-                <div className="flex items-center gap-8">
-                    <Link href="/" className="flex items-center gap-2 group">
-                        <div className="w-7 h-7 rounded-lg bg-[var(--accent)] flex items-center justify-center">
-                            <ShieldCheck className="w-4 h-4 text-white" />
+                <div className="flex items-center gap-10">
+                    <Link href="/" className="flex items-center gap-2.5 group">
+                        <div className="w-8 h-8 rounded-[10px] bg-[var(--text-primary)] flex items-center justify-center transition-transform group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]">
+                            <ShieldCheck className="w-4.5 h-4.5 text-white" />
                         </div>
-                        <span className="text-[15px] font-semibold text-[var(--text-primary)] tracking-tight">
+                        <span className="font-display text-[17px] font-bold text-[var(--text-primary)] tracking-tight">
                             TenderSeal
                         </span>
                     </Link>
 
-                    <nav className="hidden md:flex items-center gap-1">
-                        {/* Show Buat Tender if logged in and has role */}
+                    <nav className="hidden md:flex items-center gap-1.5">
                         {canCreateTender && (
                             <Link
                                 href="/tenders/create"
-                                className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
+                                className={`px-4 py-2 rounded-full text-[13px] font-semibold transition-all flex items-center gap-2 ${
                                     pathname === "/tenders/create"
-                                        ? "bg-[var(--accent)] text-white"
+                                        ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent-light)]"
                                         : "text-[var(--accent)] hover:bg-[var(--accent-light)]"
                                 }`}
                             >
-                                <PlusCircle className="w-3.5 h-3.5" />
+                                <PlusCircle className="w-4 h-4" />
                                 Buat Tender
                             </Link>
                         )}
@@ -103,13 +102,13 @@ export default function Navbar() {
                                 <Link
                                     key={item.href}
                                     href={item.href}
-                                    className={`px-3 py-1.5 rounded-lg text-[13px] font-medium transition-colors flex items-center gap-1.5 ${
+                                    className={`px-4 py-2 rounded-full text-[13px] font-medium transition-all flex items-center gap-2 ${
                                         isActive
-                                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)]"
-                                            : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                                            ? "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-primary)] shadow-sm"
+                                            : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] border border-transparent"
                                     }`}
                                 >
-                                    <item.icon className="w-3.5 h-3.5" />
+                                    <item.icon className="w-4 h-4" />
                                     {item.label}
                                 </Link>
                             );
@@ -117,52 +116,47 @@ export default function Navbar() {
                     </nav>
                 </div>
 
-                {/* Kanan: Peran Demo + Autentikasi */}
-                <div className="flex items-center gap-3">
-                    {/* Pemilih Peran Demo Removed */}
-
-                    {/* Status Autentikasi */}
+                {/* Kanan: Autentikasi */}
+                <div className="flex items-center gap-4">
                     {isPending ? (
                         <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
                     ) : session?.user ? (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <NotificationBell />
-                            <Link href="/profile" className="flex items-center gap-2 px-2.5 py-1.5 rounded-lg hover:bg-[var(--surface-secondary)] transition-colors border border-transparent hover:border-[var(--border-light)] cursor-pointer">
+                            <Link href="/profile" className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-full hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)] cursor-pointer">
+                                <span className="text-[13px] text-[var(--text-primary)] font-medium max-w-[120px] truncate hidden sm:inline">
+                                    {session.user.name}
+                                </span>
                                 {session.user.image ? (
-                                    <img src={session.user.image} alt={session.user.name} className="w-6 h-6 rounded-full object-cover border border-[var(--border)]" />
+                                    <img src={session.user.image} alt={session.user.name} className="w-7 h-7 rounded-full object-cover border border-[var(--border)]" />
                                 ) : (
-                                    <div className="w-6 h-6 rounded-full bg-[var(--accent)] flex items-center justify-center">
+                                    <div className="w-7 h-7 rounded-full bg-[var(--text-primary)] flex items-center justify-center shadow-inner">
                                         <span className="text-[10px] font-bold text-white uppercase tracking-wider">
                                             {session.user.name.substring(0, 2)}
                                         </span>
                                     </div>
                                 )}
-                                <span className="text-[13px] text-[var(--text-primary)] font-medium max-w-[120px] truncate hidden sm:inline">
-                                    {session.user.name}
-                                </span>
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-1 px-2 py-1.5 rounded-lg text-[12px] font-medium text-[var(--text-tertiary)] hover:text-red-600 hover:bg-red-50 transition-colors"
+                                className="flex items-center gap-1.5 p-2 rounded-full text-[var(--text-tertiary)] hover:text-[var(--color-rose)] hover:bg-[rgba(225,29,72,0.1)] transition-colors"
                                 title="Keluar"
                             >
-                                <LogOut className="w-3.5 h-3.5" />
+                                <LogOut className="w-4 h-4" />
                             </button>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-2">
+                        <div className="flex items-center gap-3">
                             <Link
                                 href="/login"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-colors"
+                                className="px-4 py-2 rounded-full text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                             >
-                                <LogIn className="w-3.5 h-3.5" />
                                 Masuk
                             </Link>
                             <Link
                                 href="/register"
-                                className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity"
+                                className="px-5 py-2 rounded-full text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:scale-105 transition-transform shadow-md"
                             >
-                                <UserPlus className="w-3.5 h-3.5" />
                                 Daftar
                             </Link>
                         </div>
