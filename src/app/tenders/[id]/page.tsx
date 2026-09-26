@@ -760,7 +760,9 @@ export default function TenderDetailPage() {
                                             category: tender.category,
                                             commitDeadline: localCommit,
                                             revealDeadline: localReveal,
-                                            attachments: tender.attachments ? [...tender.attachments] : []
+                                            attachments: tender.attachments ? [...tender.attachments] : [],
+                                            fields: tender.fields ? [...tender.fields] : [],
+                                            criteria: tender.criteria ? [...tender.criteria] : []
                                         });
                                         setIsEditingTender(true);
                                     }}
@@ -1486,6 +1488,57 @@ export default function TenderDetailPage() {
                                     )}
                                 </div>
                             </div>
+                            
+                            <div className="space-y-3 pt-3 border-t border-[var(--border)]">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Formulir Penawaran Vendor (Fields)</label>
+                                    <button type="button" onClick={() => setEditTenderData({...editTenderData, fields: [...(editTenderData.fields || []), { name: "", type: "text", required: true }]})} className="text-[11px] text-[var(--accent)] font-semibold hover:underline">+ Tambah Field</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {editTenderData.fields?.map((f: any, idx: number) => (
+                                        <div key={idx} className="flex gap-2 items-center p-2 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)]">
+                                            <input type="text" placeholder="Nama Field" value={f.name || ""} onChange={e => { const newF = [...editTenderData.fields]; newF[idx].name = e.target.value; newF[idx].key = e.target.value.toLowerCase().replace(/[^a-z0-9]/g, '-'); setEditTenderData({...editTenderData, fields: newF}) }} className="flex-1 text-[13px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)]" />
+                                            <select value={f.type || "text"} onChange={e => { const newF = [...editTenderData.fields]; newF[idx].type = e.target.value; setEditTenderData({...editTenderData, fields: newF}) }} className="w-1/3 text-[13px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)]">
+                                                <option value="text">Teks Pendek</option>
+                                                <option value="textarea">Teks Panjang</option>
+                                                <option value="number">Angka</option>
+                                                <option value="currency">Mata Uang</option>
+                                                <option value="file">File Dokumen</option>
+                                            </select>
+                                            <button type="button" onClick={() => { const newF = [...editTenderData.fields]; newF.splice(idx, 1); setEditTenderData({...editTenderData, fields: newF}) }} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                    {(!editTenderData.fields || editTenderData.fields.length === 0) && (
+                                        <div className="text-[11px] text-[var(--text-tertiary)] italic text-center py-2">Belum ada field khusus.</div>
+                                    )}
+                                </div>
+                            </div>
+                            
+                            <div className="space-y-3 pt-3 border-t border-[var(--border)]">
+                                <div className="flex justify-between items-center">
+                                    <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Kriteria Penilaian & Bobot</label>
+                                    <button type="button" onClick={() => setEditTenderData({...editTenderData, criteria: [...(editTenderData.criteria || []), { name: "", weight: 0, maxScore: 100, scoringType: "MANUAL" }]})} className="text-[11px] text-[var(--accent)] font-semibold hover:underline">+ Tambah Kriteria</button>
+                                </div>
+                                <div className="space-y-2">
+                                    {editTenderData.criteria?.map((c: any, idx: number) => (
+                                        <div key={idx} className="flex flex-col gap-2 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)]">
+                                            <div className="flex gap-2 items-center">
+                                                <input type="text" placeholder="Nama Kriteria (Contoh: Harga)" value={c.name || ""} onChange={e => { const newC = [...editTenderData.criteria]; newC[idx].name = e.target.value; setEditTenderData({...editTenderData, criteria: newC}) }} className="flex-1 text-[13px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)]" />
+                                                <div className="flex items-center gap-1 w-24">
+                                                    <input type="number" placeholder="Bobot" value={c.weight || 0} onChange={e => { const newC = [...editTenderData.criteria]; newC[idx].weight = Number(e.target.value); setEditTenderData({...editTenderData, criteria: newC}) }} className="w-full text-[13px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)] text-right" />
+                                                    <span className="text-xs text-[var(--text-secondary)]">%</span>
+                                                </div>
+                                                <button type="button" onClick={() => { const newC = [...editTenderData.criteria]; newC.splice(idx, 1); setEditTenderData({...editTenderData, criteria: newC}) }} className="text-red-500 hover:bg-red-50 p-1.5 rounded"><Trash2 className="w-4 h-4" /></button>
+                                            </div>
+                                            <input type="text" placeholder="Panduan Evaluator (Opsional)" value={c.description || ""} onChange={e => { const newC = [...editTenderData.criteria]; newC[idx].description = e.target.value; setEditTenderData({...editTenderData, criteria: newC}) }} className="w-full text-[12px] px-2 py-1.5 border border-[var(--border)] rounded focus:outline-none focus:border-[var(--accent)]" />
+                                        </div>
+                                    ))}
+                                    {(!editTenderData.criteria || editTenderData.criteria.length === 0) && (
+                                        <div className="text-[11px] text-[var(--text-tertiary)] italic text-center py-2">Belum ada kriteria penilaian.</div>
+                                    )}
+                                </div>
+                            </div>
+
                         </div>
                         <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3 bg-[var(--surface)]">
                             <button onClick={() => setIsEditingTender(false)} className="px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] rounded-lg">

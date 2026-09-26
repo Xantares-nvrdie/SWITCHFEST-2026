@@ -62,6 +62,43 @@ export abstract class TenderService {
         }
 
         await db.update(tenders).set(updatePayload).where(eq(tenders.id, id));
+
+        if (data.fields !== undefined) {
+            await db.delete(tenderFields).where(eq(tenderFields.tenderId, id));
+            for (const field of data.fields) {
+                await db.insert(tenderFields).values({
+                    id: crypto.randomUUID(),
+                    tenderId: id,
+                    name: field.name,
+                    key: field.key,
+                    type: field.type,
+                    required: field.required ?? true,
+                    options: field.options,
+                    validationRules: field.validationRules,
+                    sortOrder: field.sortOrder ?? 0,
+                    createdAt: new Date(),
+                });
+            }
+        }
+
+        if (data.criteria !== undefined) {
+            await db.delete(tenderCriteria).where(eq(tenderCriteria.tenderId, id));
+            for (const criterion of data.criteria) {
+                await db.insert(tenderCriteria).values({
+                    id: crypto.randomUUID(),
+                    tenderId: id,
+                    name: criterion.name,
+                    description: criterion.description,
+                    weight: criterion.weight.toString(),
+                    scoringType: criterion.scoringType ?? "MANUAL",
+                    maxScore: (criterion.maxScore ?? 100).toString(),
+                    sortOrder: criterion.sortOrder ?? 0,
+                    createdAt: new Date(),
+                    updatedAt: new Date(),
+                });
+            }
+        }
+
         return { id };
     }
 
