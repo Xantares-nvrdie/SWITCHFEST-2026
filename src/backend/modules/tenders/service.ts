@@ -222,9 +222,13 @@ export abstract class TenderService {
                     // Fire and forget mining wait
                     tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
                 } catch (err: any) {
-                    console.error("Failed to create tender on smart contract:", err);
-                    console.error("Error details:", err.message, err.stack);
-                    throw new Error("Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik. Detail: " + (err.message || ""));
+                    if (err.reason === "Tender already exists" || (err.message && err.message.includes("Tender already exists"))) {
+                        console.warn("Tender already exists on blockchain, continuing with status update.");
+                    } else {
+                        console.error("Failed to create tender on smart contract:", err);
+                        console.error("Error details:", err.message, err.stack);
+                        throw new Error("Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik. Detail: " + (err.message || ""));
+                    }
                 }
             }
         } else if (status === "CLOSED") {
