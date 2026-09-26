@@ -1095,6 +1095,12 @@ export default function TenderDetailPage() {
                             <h4 className="font-bold text-purple-800 text-lg">Fase Reveal Belum Dimulai</h4>
                             <p className="text-sm text-purple-700 mt-2 max-w-sm">Anda baru bisa melakukan proses Dekripsi & Reveal setelah batas waktu pengumpulan (Commit Deadline) berakhir.</p>
                         </div>
+                    ) : (tender?.status === "SCORING" || tender?.status === "CLOSED" || (tender?.revealDeadline && new Date() > new Date(tender.revealDeadline))) ? (
+                        <div className="py-12 text-center bg-red-50/50 border border-red-200/50 rounded-xl flex flex-col items-center justify-center">
+                            <Lock className="w-12 h-12 text-red-300 mx-auto mb-4" />
+                            <h4 className="font-bold text-red-800 text-lg">Fase Reveal Telah Berakhir</h4>
+                            <p className="text-sm text-red-700 mt-2 max-w-sm">Batas waktu untuk melakukan Dekripsi & Reveal penawaran Anda sudah lewat. Proses penilaian (Scoring) sedang/sudah berlangsung.</p>
+                        </div>
                     ) : (
                         <div className="max-w-md mx-auto space-y-4 py-8">
                             <input

@@ -145,7 +145,10 @@ export abstract class BidService {
     static async submitReveal(bidId: string, data: BidModel.submitRevealInput) {
         const existingBid = await db.query.bids.findFirst({
             where: (b, { eq }) => eq(b.id, bidId),
-            with: { crypto: true },
+            with: { 
+                crypto: true,
+                tender: true,
+            },
         });
 
         if (!existingBid) {
@@ -157,6 +160,27 @@ export abstract class BidService {
         }
 
         const now = new Date();
+        const tenderInfo = existingBid.tender;
+        
+        if (!tenderInfo) {
+            throw new Error("Tender not found");
+        }
+
+        // 1. Validasi Status Tender: Harus berada di fase REVEAL
+        if (tenderInfo.status !== "REVEAL" && tenderInfo.status !== "OPEN") {
+             // Jika sudah masuk SCORING atau CLOSED, maka tidak bisa direveal
+             // Catatan: Kadang cron job belum mengubah status dari OPEN ke REVEAL tepat waktu, 
+             // tapi kita harus pastikan belum masuk fase setelahnya (SCORING).
+             if (tenderInfo.status === "SCORING" || tenderInfo.status === "CLOSED" || tenderInfo.status === "DRAFT") {
+                 throw new Error(`Sesi reveal tidak valid karena status tender saat ini adalah ${tenderInfo.status}.`);
+             }
+        }
+
+        // 2. Validasi Deadline Reveal: Harus belum melewati waktu
+        if (tenderInfo.revealDeadline && now > tenderInfo.revealDeadline) {
+            throw new Error("Waktu sesi reveal telah berakhir. Anda tidak dapat mendekripsi penawaran lagi.");
+        }
+
         const payloadJsonString = JSON.stringify(data.revealedPayload);
 
         // Re-calculate commitment hash: Hash(tender_id + vendor_org + bid_payload + bid_salt)
