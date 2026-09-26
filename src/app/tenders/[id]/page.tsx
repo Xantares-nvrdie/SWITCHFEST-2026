@@ -741,31 +741,7 @@ export default function TenderDetailPage() {
                                     <ShieldCheck className="w-4 h-4" /> Publikasikan (Set OPEN)
                                 </button>
                                 <button
-                                    onClick={() => {
-                                        let localCommit = "";
-                                        let localReveal = "";
-                                        if (tender.commitDeadline) {
-                                            const d = new Date(tender.commitDeadline);
-                                            const offset = d.getTimezoneOffset() * 60000;
-                                            localCommit = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
-                                        }
-                                        if (tender.revealDeadline) {
-                                            const d = new Date(tender.revealDeadline);
-                                            const offset = d.getTimezoneOffset() * 60000;
-                                            localReveal = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
-                                        }
-                                        setEditTenderData({
-                                            title: tender.title,
-                                            description: tender.description,
-                                            category: tender.category,
-                                            commitDeadline: localCommit,
-                                            revealDeadline: localReveal,
-                                            attachments: tender.attachments ? [...tender.attachments] : [],
-                                            fields: tender.fields ? [...tender.fields] : [],
-                                            criteria: tender.criteria ? [...tender.criteria] : []
-                                        });
-                                        setIsEditingTender(true);
-                                    }}
+                                    onClick={() => router.push(`/tenders/${tender.id}/edit`)}
                                     className="px-4 py-2 bg-[var(--surface-secondary)] hover:bg-[var(--border)] text-[var(--text-primary)] text-xs font-bold rounded-lg transition-all flex items-center gap-2"
                                 >
                                     <Edit3 className="w-4 h-4" /> Edit Detail
