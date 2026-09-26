@@ -32,6 +32,16 @@ export default function HomePage() {
     });
     const x = useTransform(scrollYProgress, [0, 1], ["0%", "-75%"]);
 
+    // Parallax testimonials
+    const parallaxRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress: parallaxScroll } = useScroll({
+        target: parallaxRef,
+        offset: ["start end", "end start"]
+    });
+    const y1 = useTransform(parallaxScroll, [0, 1], [100, -300]);
+    const y2 = useTransform(parallaxScroll, [0, 1], [300, -100]);
+    const y3 = useTransform(parallaxScroll, [0, 1], [50, -400]);
+
     useEffect(() => {
         fetch("/api/tenders")
             .then(async (r) => {
@@ -50,7 +60,7 @@ export default function HomePage() {
             .finally(() => setLoading(false));
     }, []);
 
-    const stagger = {
+    const stagger: any = {
         hidden: { opacity: 0, y: 20 },
         visible: (i: number) => ({
             opacity: 1,
@@ -367,6 +377,109 @@ export default function HomePage() {
                             </div>
                         </motion.div>
                     ))}
+                </div>
+            </section>
+
+            {/* Infinite Scrolling Testimonials */}
+            <section className="py-24 space-y-16">
+                <div className="text-center max-w-3xl mx-auto px-4 relative z-10">
+                    <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Protokol Kepercayaan</h2>
+                    <p className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium">Validasi fungsional dari institusi yang telah bermigrasi ke arsitektur desentralisasi.</p>
+                </div>
+
+                <div className="relative h-[900px] overflow-hidden -mx-6 px-6">
+                    {/* Gradient masks for smooth fade at top/bottom */}
+                    <div className="absolute top-0 left-0 right-0 h-40 bg-gradient-to-b from-[var(--background)] to-transparent z-10 pointer-events-none" />
+                    <div className="absolute bottom-0 left-0 right-0 h-40 bg-gradient-to-t from-[var(--background)] to-transparent z-10 pointer-events-none" />
+                    
+                    <div className="grid grid-cols-1 md:grid-cols-3 gap-6 h-full items-start">
+                        {/* Column 1 - Scrolls Up */}
+                        <div className="h-full overflow-hidden">
+                            <motion.div 
+                                animate={{ y: ["0%", "-50%"] }}
+                                transition={{ repeat: Infinity, ease: "linear", duration: 40 }}
+                                className="flex flex-col gap-6"
+                            >
+                                {[
+                                    { quote: "Audit logs di smart contract tidak bisa direkayasa oleh siapapun, termasuk administrator IT internal. Bukti kriptografis ini mengeliminasi perdebatan tentang transparansi.", name: "Budi S.", title: "Kepala Divisi Pengadaan", highlight: true },
+                                    { quote: "Enkripsi sisi klien menjamin panitia zero-knowledge terhadap harga penawaran sebelum waktu yang ditetapkan. Celah kolusi ditutup rapat.", name: "Rina A.", title: "Lead Internal Auditor", highlight: false },
+                                    { quote: "Proses verifikasi kualifikasi teknis vendor kini terpusat dan konsisten. Kami tidak perlu lagi melakukan sinkronisasi data antar cabang secara manual.", name: "Hendra T.", title: "VP Operations", highlight: false },
+                                    { quote: "Kami tidak lagi berurusan dengan insiden 'dokumen hilang' atau perselisihan timestamp. Semua transaksi terukir permanen di ledger.", name: "Siska M.", title: "Legal Officer", highlight: false },
+                                ].concat([
+                                    { quote: "Audit logs di smart contract tidak bisa direkayasa oleh siapapun, termasuk administrator IT internal. Bukti kriptografis ini mengeliminasi perdebatan tentang transparansi.", name: "Budi S.", title: "Kepala Divisi Pengadaan", highlight: true },
+                                    { quote: "Enkripsi sisi klien menjamin panitia zero-knowledge terhadap harga penawaran sebelum waktu yang ditetapkan. Celah kolusi ditutup rapat.", name: "Rina A.", title: "Lead Internal Auditor", highlight: false },
+                                    { quote: "Proses verifikasi kualifikasi teknis vendor kini terpusat dan konsisten. Kami tidak perlu lagi melakukan sinkronisasi data antar cabang secara manual.", name: "Hendra T.", title: "VP Operations", highlight: false },
+                                    { quote: "Kami tidak lagi berurusan dengan insiden 'dokumen hilang' atau perselisihan timestamp. Semua transaksi terukir permanen di ledger.", name: "Siska M.", title: "Legal Officer", highlight: false },
+                                ]).map((item, i) => (
+                                    <div key={i} className={`bento-card p-8 ${item.highlight ? 'bg-[var(--surface-secondary)]/50 border-[var(--border)]' : ''}`}>
+                                        <p className="text-[16px] text-[var(--text-secondary)] leading-relaxed italic">"{item.quote}"</p>
+                                        <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                                            <p className="font-bold text-[var(--text-primary)]">{item.name}</p>
+                                            <p className="text-[14px] text-[var(--text-tertiary)]">{item.title}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        </div>
+
+                        {/* Column 2 - Scrolls Down */}
+                        <div className="h-full overflow-hidden hidden md:block">
+                            <motion.div 
+                                animate={{ y: ["-50%", "0%"] }}
+                                transition={{ repeat: Infinity, ease: "linear", duration: 45 }}
+                                className="flex flex-col gap-6"
+                            >
+                                {[
+                                    { quote: "Siklus rekonsiliasi data turun 80%. Validasi hash otomatis membuktikan bahwa dokumen vendor sama persis dengan yang dikirim sebelum batas waktu.", name: "PT Konstruksi Nusantara", title: "Vendor Rekanan", highlight: true },
+                                    { quote: "Awalnya kami skeptis dengan blockchain. Namun arsitektur commit-reveal memberikan kerahasiaan harga yang dijamin secara matematis, bukan sekadar janji.", name: "Ketua ULP", title: "Lembaga Negara", highlight: false },
+                                    { quote: "Tidak ada server terpusat berarti tidak ada single point of failure. Kami bisa melakukan proses pengadaan bernilai tinggi tanpa cemas soal downtime.", name: "Dr. Anton", title: "CTO, Fintech", highlight: false },
+                                    { quote: "Struktur deterministik ini memaksa seluruh pihak bermain bersih, mengeliminasi lobi-lobi pasca-penutupan tender karena sistem menolak akses secara mutlak.", name: "Direktur Utama", title: "Vendor Alat Kesehatan", highlight: false },
+                                ].concat([
+                                    { quote: "Siklus rekonsiliasi data turun 80%. Validasi hash otomatis membuktikan bahwa dokumen vendor sama persis dengan yang dikirim sebelum batas waktu.", name: "PT Konstruksi Nusantara", title: "Vendor Rekanan", highlight: true },
+                                    { quote: "Awalnya kami skeptis dengan blockchain. Namun arsitektur commit-reveal memberikan kerahasiaan harga yang dijamin secara matematis, bukan sekadar janji.", name: "Ketua ULP", title: "Lembaga Negara", highlight: false },
+                                    { quote: "Tidak ada server terpusat berarti tidak ada single point of failure. Kami bisa melakukan proses pengadaan bernilai tinggi tanpa cemas soal downtime.", name: "Dr. Anton", title: "CTO, Fintech", highlight: false },
+                                    { quote: "Struktur deterministik ini memaksa seluruh pihak bermain bersih, mengeliminasi lobi-lobi pasca-penutupan tender karena sistem menolak akses secara mutlak.", name: "Direktur Utama", title: "Vendor Alat Kesehatan", highlight: false },
+                                ]).map((item, i) => (
+                                    <div key={i} className={`bento-card p-8 ${item.highlight ? 'bg-[var(--accent)]/10 border-[var(--accent)]/20' : ''}`}>
+                                        <p className="text-[16px] text-[var(--text-secondary)] leading-relaxed italic">"{item.quote}"</p>
+                                        <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                                            <p className="font-bold text-[var(--text-primary)]">{item.name}</p>
+                                            <p className="text-[14px] text-[var(--text-tertiary)]">{item.title}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        </div>
+
+                        {/* Column 3 - Scrolls Up (Slightly slower) */}
+                        <div className="h-full overflow-hidden hidden lg:block">
+                            <motion.div 
+                                animate={{ y: ["0%", "-50%"] }}
+                                transition={{ repeat: Infinity, ease: "linear", duration: 50 }}
+                                className="flex flex-col gap-6"
+                            >
+                                {[
+                                    { quote: "Sistem ini melindungi integritas panitia. Tidak ada peluang tekanan eksternal untuk membocorkan harga karena dekripsi butuh otorisasi kunci vendor.", name: "Direktur Kepatuhan", title: "BUMN Karya", highlight: false },
+                                    { quote: "Mampu memproses 5.000+ dokumen penawaran tanpa hambatan. State blockchain disinkronisasi sempurna tanpa mengorbankan metrik web performance.", name: "Principal Engineer", title: "Konsultan IT", highlight: true },
+                                    { quote: "Zero-trust protocol yang diimplementasikan TenderSeal secara efektif mengubah standar kewajaran dan keamanan pengadaan di sektor publik.", name: "Ketua Satgas", title: "Lembaga Anti-Korupsi", highlight: false },
+                                    { quote: "Efisiensi pengadaan meningkat 3x lipat, sementara risiko sanggahan (dispute) dari peserta tender turun hingga menyentuh angka nol.", name: "Kepala Biro Logistik", title: "Pemerintah Provinsi", highlight: false },
+                                ].concat([
+                                    { quote: "Sistem ini melindungi integritas panitia. Tidak ada peluang tekanan eksternal untuk membocorkan harga karena dekripsi butuh otorisasi kunci vendor.", name: "Direktur Kepatuhan", title: "BUMN Karya", highlight: false },
+                                    { quote: "Mampu memproses 5.000+ dokumen penawaran tanpa hambatan. State blockchain disinkronisasi sempurna tanpa mengorbankan metrik web performance.", name: "Principal Engineer", title: "Konsultan IT", highlight: true },
+                                    { quote: "Zero-trust protocol yang diimplementasikan TenderSeal secara efektif mengubah standar kewajaran dan keamanan pengadaan di sektor publik.", name: "Ketua Satgas", title: "Lembaga Anti-Korupsi", highlight: false },
+                                    { quote: "Efisiensi pengadaan meningkat 3x lipat, sementara risiko sanggahan (dispute) dari peserta tender turun hingga menyentuh angka nol.", name: "Kepala Biro Logistik", title: "Pemerintah Provinsi", highlight: false },
+                                ]).map((item, i) => (
+                                    <div key={i} className={`bento-card p-8 ${item.highlight ? 'bg-[var(--surface-secondary)]/50 border-[var(--border)]' : ''}`}>
+                                        <p className="text-[16px] text-[var(--text-secondary)] leading-relaxed italic">"{item.quote}"</p>
+                                        <div className="mt-6 pt-6 border-t border-[var(--border)]">
+                                            <p className="font-bold text-[var(--text-primary)]">{item.name}</p>
+                                            <p className="text-[14px] text-[var(--text-tertiary)]">{item.title}</p>
+                                        </div>
+                                    </div>
+                                ))}
+                            </motion.div>
+                        </div>
+                    </div>
                 </div>
             </section>
         </div>

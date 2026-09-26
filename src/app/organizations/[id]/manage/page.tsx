@@ -61,7 +61,7 @@ interface Organization {
     rejectionReason?: string;
 }
 
-const roleMeta: Record<OrgRole, { label: string; icon: React.ElementType; color: string; bg: string }> = {
+const roleMeta: Record<OrgRole, { label: string; icon: any; color: string; bg: string }> = {
     ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-amber-600", bg: "bg-amber-50 border-amber-200" },
     PROCUREMENT_OFFICER: { label: "Procurement Officer", icon: Briefcase, color: "text-[var(--accent)]", bg: "bg-teal-50 border-teal-200" },
     AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-blue-50 border-blue-200" },
