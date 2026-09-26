@@ -38,18 +38,54 @@ export abstract class TenderService {
         const now = new Date();
         try {
             // Bulk update to REVEAL
-            await db.execute(sql`
+            const updatedToReveal = await db.execute(sql`
                 UPDATE tenders 
                 SET status = 'REVEAL', closed_at = ${now}, updated_at = ${now}
                 WHERE status = 'OPEN' AND commit_deadline < ${now}
+                RETURNING id, title
             `);
 
+            if (updatedToReveal.rows.length > 0) {
+                // Notifikasi ke partisipan (vendor) bahwa fase reveal dimulai
+                for (const tender of updatedToReveal.rows as any[]) {
+                    const participants = await db.query.tenderParticipants.findMany({
+                        where: eq(schema.tenderParticipants.tenderId, tender.id),
+                        with: { user: true }
+                    });
+                    
+                    if (participants.length > 0) {
+                        const notificationsPayload = participants.map(p => ({
+                            userId: p.userId,
+                            title: "Fase Reveal Dimulai!",
+                            message: `Waktu commit untuk tender "${tender.title}" telah berakhir. Segera lakukan Dekripsi (Reveal) penawaran Anda sebelum Reveal Deadline berakhir!`,
+                            type: "TENDER_UPDATE",
+                            link: `/tenders/${tender.id}`
+                        }));
+                        await NotificationService.createMany(notificationsPayload);
+                    }
+                }
+            }
+
             // Bulk update to SCORING
-            await db.execute(sql`
+            const updatedToScoring = await db.execute(sql`
                 UPDATE tenders 
                 SET status = 'SCORING', updated_at = ${now}
                 WHERE status = 'REVEAL' AND reveal_deadline < ${now}
+                RETURNING id, title, creator_id
             `);
+
+            if (updatedToScoring.rows.length > 0) {
+                // Notifikasi ke panitia (creator) bahwa fase scoring dimulai
+                for (const tender of updatedToScoring.rows as any[]) {
+                    await NotificationService.create({
+                        userId: tender.creator_id,
+                        title: "Fase Scoring Terbuka",
+                        message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
+                        type: "TENDER_UPDATE",
+                        link: `/tenders/${tender.id}`
+                    });
+                }
+            }
         } catch (error) {
             console.error("Bulk lazy update failed:", error);
         }
