@@ -202,7 +202,7 @@ export default function AdminDashboardPage() {
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
                         placeholder="Cari nama, NPWP/NIB, email..."
-                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
+                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
                     />
                 </div>
 
@@ -371,7 +371,7 @@ export default function AdminDashboardPage() {
                                                 <button
                                                     onClick={() => setRejectingOrg(org)}
                                                     disabled={isProcessing}
-                                                    className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-red-500 font-semibold text-[13px] hover:bg-red-50 transition-colors flex items-center gap-1.5 disabled:opacity-50"
+                                                    className="px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-red-500 font-semibold text-[13px] hover:bg-red-500/10 transition-colors flex items-center gap-1.5 disabled:opacity-50"
                                                 >
                                                     <XCircle className="w-3.5 h-3.5" />
                                                     Tolak
@@ -383,7 +383,7 @@ export default function AdminDashboardPage() {
                                             <button
                                                 onClick={() => setRejectingOrg(org)}
                                                 disabled={isProcessing}
-                                                className="px-3 py-1.5 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-red-500 hover:border-red-200 text-[12px] font-medium transition-all flex items-center gap-1"
+                                                className="px-3 py-1.5 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[var(--text-tertiary)] hover:text-red-500 hover:border-red-500/30 text-[12px] font-medium transition-all flex items-center gap-1"
                                             >
                                                 Batalkan Persetujuan
                                             </button>
@@ -401,7 +401,7 @@ export default function AdminDashboardPage() {
 
                                         <Link
                                             href={`/organizations/${org.id}/manage`}
-                                            className="p-2 rounded-md bg-white border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
+                                            className="p-2 rounded-md bg-[var(--surface)] border border-[var(--border)] text-[var(--text-tertiary)] hover:text-[var(--text-primary)] transition-colors"
                                             title="Buka Halaman Manajemen"
                                         >
                                             <ArrowUpRight className="w-4 h-4" />
@@ -434,7 +434,7 @@ export default function AdminDashboardPage() {
                                 value={rejectionReason}
                                 onChange={(e) => setRejectionReason(e.target.value)}
                                 placeholder="Contoh: Dokumen legalitas tidak lengkap..."
-                                className="w-full p-3 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none transition-all"
+                                className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none transition-all"
                             />
                         </div>
 
@@ -445,7 +445,7 @@ export default function AdminDashboardPage() {
                                     setRejectingOrg(null);
                                     setRejectionReason("");
                                 }}
-                                className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                                className="px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                             >
                                 Batal
                             </button>
