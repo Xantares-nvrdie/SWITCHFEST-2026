@@ -34,7 +34,11 @@ export abstract class TenderService {
         return { id: tenderId };
     }
 
+    static isBulkUpdating = false;
+
     static async performBulkStatusUpdates() {
+        if (this.isBulkUpdating) return;
+        this.isBulkUpdating = true;
         const now = new Date();
         try {
             // Bulk update to REVEAL
@@ -72,14 +76,14 @@ export abstract class TenderService {
                 UPDATE tenders 
                 SET status = 'SCORING', updated_at = ${now}
                 WHERE status = 'REVEAL' AND reveal_deadline < ${now}
-                RETURNING id, title, creator_id
+                RETURNING id, title, created_by
             `);
 
             if (updatedToScoring.rows.length > 0) {
                 // Notifikasi ke panitia (creator) bahwa fase scoring dimulai
                 for (const tender of updatedToScoring.rows as any[]) {
                     await NotificationService.create({
-                        userId: tender.creator_id,
+                        userId: tender.created_by,
                         title: "Fase Scoring Terbuka",
                         message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
                         type: "INFO",
@@ -89,6 +93,8 @@ export abstract class TenderService {
             }
         } catch (error) {
             console.error("Bulk lazy update failed:", error);
+        } finally {
+            this.isBulkUpdating = false;
         }
     }
 
