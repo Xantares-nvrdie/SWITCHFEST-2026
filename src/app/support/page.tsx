@@ -50,7 +50,7 @@ export default function SupportPage() {
             <div className="flex flex-col gap-2">
                 <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Support Center</h1>
                 <p className="text-[16px] text-[var(--text-secondary)] mt-1 max-w-2xl">
-                    Tim dukungan teknis TenderSeal siap membantu Anda menyelesaikan kendala operasional, masalah enkripsi, atau kendala verifikasi.
+                    Tim kami siap membantu Anda menyelesaikan masalah teknis, kendala verifikasi, atau jika Anda lupa PIN.
                 </p>
             </div>
 
@@ -88,11 +88,11 @@ export default function SupportPage() {
                             <div className="space-y-2">
                                 <label className="text-[13px] font-medium text-[var(--text-secondary)]">Kategori Kendala</label>
                                 <select name="category" required className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none">
-                                    <option>Kendala Teknis (Platform Error)</option>
-                                    <option>Lupa PIN / Gagal Dekripsi</option>
-                                    <option>Verifikasi Organisasi Terhambat</option>
-                                    <option>Laporan Keamanan / Bug</option>
-                                    <option>Lainnya</option>
+                                    <option>Sistem error</option>
+                                    <option>Lupa PIN / Tidak bisa buka penawaran</option>
+                                    <option>Verifikasi organisasi belum diproses</option>
+                                    <option>Laporan bug keamanan</option>
+                                    <option>Pertanyaan lainnya</option>
                                 </select>
                             </div>
 
@@ -162,7 +162,7 @@ export default function SupportPage() {
                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[12px] flex items-start gap-3">
                         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                         <p className="leading-relaxed font-medium">
-                            Untuk permohonan pemulihan akun akibat lupa PIN, Anda wajib melampirkan surat permohonan resmi berstempel organisasi.
+                            Jika Anda lupa PIN, Anda perlu melampirkan surat permohonan reset PIN yang dicap resmi oleh organisasi Anda.
                         </p>
                     </div>
                 </div>

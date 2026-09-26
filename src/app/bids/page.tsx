@@ -83,7 +83,7 @@ export default function BidsHistoryPage() {
                 <div>
                     <h1 className="text-[28px] font-bold text-[var(--text-primary)] tracking-tight">Riwayat Penawaran</h1>
                     <p className="text-[14px] text-[var(--text-secondary)] mt-0.5">
-                        Daftar seluruh bid terenkripsi yang pernah Anda atau organisasi Anda kirimkan.
+                        Daftar semua penawaran yang pernah Anda kirimkan melalui TenderSeal.
                     </p>
                 </div>
             </div>

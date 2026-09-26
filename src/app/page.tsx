@@ -20,9 +20,22 @@ export default function HomePage() {
     const [stats, setStats] = useState<DashboardStats | null>(null);
     const [activeStep, setActiveStep] = useState(0);
     
-    // Hero scroll
+    // Hero scroll & Parallax
     const { scrollYProgress: heroScroll } = useScroll();
-    const y = useTransform(heroScroll, [0, 1], ["0%", "50%"]);
+    const heroParallaxY = useTransform(heroScroll, [0, 1], ["0%", "50%"]);
+    
+    // Scrollytelling for Architecture section
+    const architectureRef = useRef<HTMLDivElement>(null);
+    const { scrollYProgress: archScroll } = useScroll({
+        target: architectureRef,
+        offset: ["start end", "end start"]
+    });
+    
+    // Values for the floating Shield
+    const shieldY = useTransform(archScroll, [0, 1], ["-50%", "150%"]);
+    const shieldRotate = useTransform(archScroll, [0, 1], [0, 360]);
+    const shieldScale = useTransform(archScroll, [0, 0.5, 1], [0.8, 1.2, 0.8]);
+    const shieldOpacity = useTransform(archScroll, [0, 0.2, 0.8, 1], [0, 1, 1, 0]);
 
     // Horizontal scroll section
     const targetRef = useRef<HTMLDivElement>(null);
@@ -72,18 +85,42 @@ export default function HomePage() {
                 <div className="w-full lg:w-1/2 space-y-8 z-10">
                     <motion.div custom={0} initial="hidden" animate="visible" variants={stagger} className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-[var(--border)]">
                         <div className="w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Sistem Aktif & Terlindungi</span>
+                        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">Sistem Berjalan Normall</span>
                     </motion.div>
 
-                    <motion.h1 custom={1} initial="hidden" animate="visible" variants={stagger} className="font-display text-[64px] sm:text-[80px] font-bold tracking-tighter text-[var(--text-primary)] leading-[1.05]">
-                        Pengadaan digital
-                        <br />
-                        <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-tertiary)]">yang mustahil diintip.</span>
-                    </motion.h1>
+                    <h1 className="font-display text-[64px] sm:text-[80px] font-bold tracking-tighter text-[var(--text-primary)] leading-[1.05]">
+                        <div className="overflow-hidden">
+                            <motion.span 
+                                initial={{ y: "100%" }} 
+                                animate={{ y: 0 }} 
+                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.1 }}
+                                className="inline-block"
+                            >
+                                Pengadaan digital
+                            </motion.span>
+                        </div>
+                        <div className="overflow-hidden">
+                            <motion.span 
+                                initial={{ y: "100%" }} 
+                                animate={{ y: 0 }} 
+                                transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.2 }}
+                                className="inline-block text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-tertiary)]"
+                            >
+                                yang mustahil diintip.
+                            </motion.span>
+                        </div>
+                    </h1>
 
-                    <motion.p custom={2} initial="hidden" animate="visible" variants={stagger} className="text-[18px] text-[var(--text-secondary)] leading-relaxed max-w-xl font-medium">
-                        TenderSeal menggunakan <span className="text-[var(--text-primary)]">Commit-Reveal Cryptography</span> di sisi klien. Server tidak pernah melihat isi harga Anda. Smart contract mencatat setiap langkah.
-                    </motion.p>
+                    <div className="overflow-hidden">
+                        <motion.p 
+                            initial={{ y: "100%" }} 
+                            animate={{ y: 0 }} 
+                            transition={{ duration: 0.8, ease: [0.16, 1, 0.3, 1], delay: 0.3 }}
+                            className="text-[18px] text-[var(--text-secondary)] leading-relaxed max-w-xl font-medium"
+                        >
+                            TenderSeal mengenkripsi penawaran harga di sisi browser Anda. Server tidak pernah menerima angka aslinya. Setiap perubahan tercatat permanen di smart contract Ethereum.
+                        </motion.p>
+                    </div>
 
                     <motion.div custom={3} initial="hidden" animate="visible" variants={stagger} className="flex flex-wrap items-center gap-4 pt-4">
                         {session?.user ? (
@@ -108,6 +145,7 @@ export default function HomePage() {
                     initial={{ opacity: 0 }} 
                     animate={{ opacity: 1 }} 
                     transition={{ duration: 1.5, ease: "easeOut" }}
+                    style={{ y: heroParallaxY }}
                     className="hidden lg:block absolute right-0 top-0 w-[50vw] h-full pointer-events-none overflow-hidden z-0"
                 >
                     <video 
@@ -129,8 +167,8 @@ export default function HomePage() {
             <section ref={targetRef} className="relative h-[400vh]">
                 <div className="sticky top-0 h-[100vh] flex flex-col justify-center overflow-hidden bg-[var(--background)] z-10">
                     <div className="absolute top-12 left-6 md:left-16 z-20">
-                        <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Kapasitas Platform</h2>
-                        <p className="text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl">Infrastruktur yang dirancang untuk menangani pengadaan tingkat institusi.</p>
+                        <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Apa yang sistem ini tangani</h2>
+                        <p className="text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl">Dirancang untuk tim pengadaan yang perlu bekerja cepat tanpa mengorbankan integritas data.</p>
                     </div>
 
                     <motion.div style={{ x }} className="flex w-[400%] h-full items-center pt-24">
@@ -141,9 +179,9 @@ export default function HomePage() {
                                     <Image src="/assets/Edmond%20Dantes%20Photo.jpg" alt="Efisiensi Tim" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Fokus pada Keputusan</h3>
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Tim Anda fokus menilai, bukan mengurus administrasi</h3>
                                     <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
-                                        Sistem mengotomatisasi pencatatan dan keamanan data agar tim pengadaan Anda dapat memfokuskan waktu pada evaluasi kualitas vendor, bukan administrasi teknis.
+                                        Pencatatan dan keamanan data berjalan otomatis. Tim pengadaan Anda bisa langsung bergerak ke evaluasi kualitas vendor.
                                     </p>
                                 </div>
                             </div>
@@ -156,9 +194,9 @@ export default function HomePage() {
                                     <Image src="/assets/Mining%20Photo%20from%20Pexels.jpg" alt="Skala Industri" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Infrastruktur Kelas Berat</h3>
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Skala industri, respons tetap cepat</h3>
                                     <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
-                                        Dirancang untuk pengadaan skala industri. Sistem sanggup memproses tender dengan ribuan baris rincian teknis tanpa penurunan kecepatan respons.
+                                        Sistem memproses tender dengan ribuan baris rincian teknis tanpa penurunan kecepatan respons.
                                     </p>
                                 </div>
                             </div>
@@ -171,9 +209,9 @@ export default function HomePage() {
                                     <Image src="/assets/Office%20Photo%207750129.jpg" alt="Kolaborasi Transparan" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Ruang Kontrol Terpusat</h3>
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Semua anggota melihat data yang sama</h3>
                                     <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
-                                        Semua anggota komite memantau status secara serentak dari satu sumber data. Tidak ada dokumen tertinggal atau informasi asimetris.
+                                        Tidak ada dokumen tertinggal atau informasi yang berbeda antar anggota. Semua memantau dari satu sumber data secara bersamaan.
                                     </p>
                                 </div>
                             </div>
@@ -186,9 +224,9 @@ export default function HomePage() {
                                     <Image src="/assets/Working%20Photo%20from%20Pexels.jpg" alt="Evaluasi Akurat" fill className="object-cover transition-transform duration-700 group-hover:scale-105" />
                                 </div>
                                 <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Verifikasi Otentik</h3>
+                                    <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">Tidak ada yang bisa diubah setelah deadline</h3>
                                     <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
-                                        Jejak hash kriptografis mencegah manipulasi pasca-batas waktu. Anda mengevaluasi data otentik yang dapat dibuktikan kebenarannya melalui smart contract.
+                                        Hash kriptografis mencegah manipulasi pasca-batas waktu. Kebenarannya dapat dibuktikan langsung melalui smart contract.
                                     </p>
                                 </div>
                             </div>
@@ -241,7 +279,26 @@ export default function HomePage() {
             </motion.section>
 
             {/* Architecture / How it Works */}
-            <section className="space-y-16">
+            <section ref={architectureRef} className="space-y-16 relative">
+                {/* Background Scrollytelling Object */}
+                <motion.div 
+                    style={{ y: shieldY, rotate: shieldRotate, scale: shieldScale, opacity: shieldOpacity }}
+                    className="hidden lg:flex absolute right-[10%] top-[0%] w-[350px] h-[350px] pointer-events-none z-[-1] items-center justify-center"
+                >
+                    <div className="relative flex items-center justify-center w-full h-full opacity-10">
+                        {/* Outer Ring */}
+                        <div className="absolute w-[120%] h-[120%] border-[8px] border-dashed border-[var(--text-primary)] rounded-full" />
+                        
+                        {/* Middle Solid Ring */}
+                        <div className="absolute w-full h-full border-4 border-[var(--text-primary)] rounded-full" />
+
+                        {/* Center Icon */}
+                        <div className="relative z-10 w-48 h-48 text-[var(--text-primary)] flex items-center justify-center rounded-[24px] border-4 border-[var(--text-primary)]">
+                            <Shield className="w-24 h-24" />
+                            <Lock className="w-10 h-10 absolute bottom-4 right-4" />
+                        </div>
+                    </div>
+                </motion.div>
                 <div className="max-w-2xl">
                     <motion.h2 
                         initial={{ opacity: 0, y: 20 }}
@@ -249,7 +306,7 @@ export default function HomePage() {
                         viewport={{ once: true }}
                         className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight"
                     >
-                        Protokol Commit-Reveal
+                        Bagaimana harga Anda dilindungi
                     </motion.h2>
                     <motion.p 
                         initial={{ opacity: 0, y: 20 }}
@@ -258,7 +315,7 @@ export default function HomePage() {
                         transition={{ delay: 0.1 }}
                         className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium leading-relaxed"
                     >
-                        Tiga langkah matematis yang menjamin manipulasi harga adalah hal yang tidak mungkin secara kriptografis.
+                        Tiga langkah kriptografis yang memastikan tidak ada pihak mana pun yang bisa melihat atau mengubah harga sebelum waktunya.
                     </motion.p>
                 </div>
 
@@ -267,9 +324,9 @@ export default function HomePage() {
                     <div className="hidden md:block absolute top-12 left-[10%] right-[10%] h-[2px] bg-gradient-to-r from-transparent via-[var(--border)] to-transparent -z-10" />
 
                     {[
-                        { step: "01", title: "Enkripsi Lokal", desc: "Harga Anda dienkripsi di browser dengan AES-256-GCM. Kunci turunan Argon2id tidak pernah dikirim ke server.", icon: Lock },
-                        { step: "02", title: "Komitmen Blockchain", desc: "Hash kriptografis dari penawaran Anda dicatat permanen ke Ethereum Smart Contract sebelum deadline.", icon: Shield },
-                        { step: "03", title: "Dekripsi & Verifikasi", desc: "Hanya saat fase pembukaan, PIN digunakan untuk membuka data. Hash dicocokkan otomatis untuk validasi.", icon: Eye },
+                        { step: "01", title: "Enkripsi Lokal", desc: "Harga Anda dienkripsi di browser Anda sendiri menggunakan AES-256-GCM. Kunci tidak pernah keluar dari perangkat Anda.", icon: Lock },
+                        { step: "02", title: "Komitmen On-Chain", desc: "Hash dari penawaran Anda dicatat ke Ethereum Smart Contract sebelum deadline. Tidak bisa dihapus atau diubah.", icon: Shield },
+                        { step: "03", title: "Buka dan Verifikasi", desc: "Saat fase reveal, PIN digunakan untuk membuka data. Hash dicocokkan otomatis oleh sistem. Tidak bisa dipalsukan.", icon: Eye },
                     ].map((item, i) => (
                         <motion.div 
                             key={i}
@@ -301,7 +358,7 @@ export default function HomePage() {
                         viewport={{ once: true }}
                         className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight"
                     >
-                        Protokol Inisiasi
+                        Cara membuat tender baru
                     </motion.h2>
                     <motion.p 
                         initial={{ opacity: 0, y: 20 }}
@@ -310,16 +367,16 @@ export default function HomePage() {
                         transition={{ delay: 0.1 }}
                         className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium leading-relaxed"
                     >
-                        Empat tahap deterministik untuk merilis pengadaan ke jaringan. Sorot pada panel untuk melihat detail proses.
+                        Empat langkah untuk menerbitkan tender ke jaringan. Klik setiap panel untuk melihat detailnya.
                     </motion.p>
                 </div>
 
                 <div className="flex flex-col md:flex-row h-[800px] md:h-[500px] gap-4 w-full cursor-pointer">
                     {[
-                        { id: "01", title: "Konfigurasi Base", desc: "Tentukan ruang lingkup teknis, jadwal kriptografis untuk fase komitmen, dan jendela waktu presisi untuk pembukaan harga.", icon: FileText, accent: "rgba(16,185,129,0.2)" },
-                        { id: "02", title: "Enkripsi Dokumen", desc: "Lampirkan Kerangka Acuan Kerja. Sistem akan melakukan hashing secara lokal untuk menjamin integritas file sebelum dikirim.", icon: Upload, accent: "rgba(59,130,246,0.2)" },
-                        { id: "03", title: "Distribusi Akses", desc: "Otorisasi vendor terdaftar. Kunci publik mereka dienkripsi ke dalam sesi tender, memastikan hanya entitas sah yang dapat berpartisipasi.", icon: Users, accent: "rgba(245,158,11,0.2)" },
-                        { id: "04", title: "Injeksi Kontrak", desc: "Smart contract mengambil alih otoritas waktu. Sistem secara absolut akan menolak paket penawaran sedetik setelah batas waktu.", icon: Rocket, accent: "rgba(139,92,246,0.2)" },
+                        { id: "01", title: "Isi Detail Tender", desc: "Tentukan ruang lingkup pengadaan, tanggal deadline untuk pengumpulan penawaran, dan jadwal pembukaan harga.", icon: FileText, accent: "rgba(16,185,129,0.2)" },
+                        { id: "02", title: "Lampirkan Dokumen", desc: "Unggah Kerangka Acuan Kerja (KAK). Sistem melakukan hashing lokal untuk memverifikasi integritas file sebelum disimpan.", icon: Upload, accent: "rgba(59,130,246,0.2)" },
+                        { id: "03", title: "Otorisasi Vendor", desc: "Daftarkan vendor yang boleh mengikuti tender ini. Hanya vendor yang diotorisasi yang dapat mengirimkan penawaran.", icon: Users, accent: "rgba(245,158,11,0.2)" },
+                        { id: "04", title: "Terbitkan ke Blockchain", desc: "Smart contract mengunci jadwal secara otomatis. Sistem menolak penawaran yang masuk setelah batas waktu.", icon: Rocket, accent: "rgba(139,92,246,0.2)" },
                     ].map((item, i) => (
                         <motion.div 
                             key={i}
@@ -383,8 +440,8 @@ export default function HomePage() {
             {/* Infinite Scrolling Testimonials */}
             <section className="py-24 space-y-16">
                 <div className="text-center max-w-3xl mx-auto px-4 relative z-10">
-                    <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Protokol Kepercayaan</h2>
-                    <p className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium">Validasi fungsional dari institusi yang telah bermigrasi ke arsitektur desentralisasi.</p>
+                    <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Apa kata pengguna</h2>
+                    <p className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium">Pengalaman tim pengadaan yang sudah menggunakan TenderSeal untuk proses lelang mereka.</p>
                 </div>
 
                 <div className="relative h-[900px] overflow-hidden -mx-6 px-6">

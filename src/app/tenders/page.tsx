@@ -136,7 +136,7 @@ export default function TendersPage() {
                 <div>
                     <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Tender</h1>
                     <p className="text-[16px] text-[var(--text-secondary)] mt-1 font-medium">
-                        Eksplorasi dan kelola tender pengadaan digital terenkripsi.
+                        Cari tender yang tersedia atau kelola tender organisasi Anda.
                     </p>
                 </div>
 

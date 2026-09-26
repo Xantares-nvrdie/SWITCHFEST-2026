@@ -66,7 +66,7 @@ export default function AuditPage() {
                         Audit Trail & Verifikasi On-Chain
                     </h1>
                     <p className="text-sm text-[var(--text-tertiary)] mt-1">
-                        Riwayat aktivitas transparan, pelacakan IP address, dan bukti integritas Smart Contract.
+                        Pantau semua aktivitas yang terjadi di sistem TenderSeal beserta catatan permanen dari smart contract.
                     </p>
                 </div>
             </div>
@@ -88,7 +88,7 @@ export default function AuditPage() {
             {/* Audit Log Timeline */}
             <div className="bento-card p-6 space-y-4">
                 <h3 className="text-base font-bold text-[var(--text-primary)] flex items-center gap-2">
-                    <History className="w-4 h-4 text-amber-600" /> Log Aktivitas Sistem (Database & IP Inet)
+                    <History className="w-4 h-4 text-amber-600" /> Log Aktivitas
                 </h3>
 
                 {loading ? (

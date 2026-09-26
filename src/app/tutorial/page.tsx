@@ -23,7 +23,7 @@ export default function TutorialPage() {
                     Pusat Bantuan & Tutorial
                 </h1>
                 <p className="text-lg text-[var(--text-secondary)] max-w-2xl leading-relaxed">
-                    Pelajari bagaimana TenderSeal menggunakan kriptografi modern (Commit-Reveal Scheme) untuk mengamankan proses pengadaan Anda dari awal hingga akhir.
+                    Pelajari cara kerja TenderSeal: dari cara penawaran dienkripsi di perangkat Anda, hingga bagaimana hasilnya tercatat permanen di blockchain.
                 </p>
             </div>
 
@@ -53,10 +53,10 @@ export default function TutorialPage() {
 
                     <div className="mt-12 p-6 rounded-2xl bg-[var(--surface-secondary)]/30 border border-[var(--border)] relative overflow-hidden">
                         <div className="absolute top-0 right-0 w-32 h-32 bg-[var(--accent)]/10 blur-[50px] pointer-events-none" />
-                        <h3 className="font-bold text-[var(--text-primary)] mb-2 relative z-10">Butuh Bantuan Lain?</h3>
-                        <p className="text-[13px] text-[var(--text-tertiary)] mb-5 relative z-10">Tim support teknis kami siap membantu jika Anda mengalami kendala operasional.</p>
+                        <h3 className="font-bold text-[var(--text-primary)] mb-2 relative z-10">Ada pertanyaan lain?</h3>
+                        <p className="text-[13px] text-[var(--text-tertiary)] mb-5 relative z-10">Tim kami siap membantu jika ada kendala saat menggunakan sistem.</p>
                         <Link href="/support" className="w-full py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] font-bold text-sm hover:scale-[1.02] active:scale-[0.98] transition-transform relative z-10 flex items-center justify-center">
-                            Hubungi Support
+                            Hubungi Kami
                         </Link>
                     </div>
                 </div>
@@ -74,7 +74,7 @@ export default function TutorialPage() {
                                         Cara Kerja Sistem
                                     </h2>
                                     <p className="text-[16px] text-[var(--text-secondary)] leading-relaxed mb-8">
-                                        TenderSeal tidak seperti aplikasi e-procurement konvensional. Kami menggunakan protokol <span className="text-emerald-400 font-semibold">Commit-Reveal Scheme</span> yang menjamin bahwa <strong>tidak ada seorang pun</strong>—termasuk Admin IT, Panitia Pembuat Komitmen (PPK), atau Vendor lain—yang bisa mengintip dokumen penawaran harga sebelum waktu yang ditentukan (Fase Reveal).
+                                        TenderSeal berbeda dari aplikasi e-procurement biasa. Dengan protokol <span className="text-emerald-400 font-semibold">Commit-Reveal</span>, tidak ada satu pun pihak, termasuk Admin IT, Panitia, atau vendor lain, yang bisa melihat isi penawaran harga sebelum waktu pembukaan tiba.
                                     </p>
                                 </div>
 
@@ -86,7 +86,7 @@ export default function TutorialPage() {
                                         <div>
                                             <h3 className="font-bold text-[18px] text-[var(--text-primary)] mb-2">1. Fase Commit (Penguncian Data)</h3>
                                             <p className="text-[14px] text-[var(--text-tertiary)] leading-relaxed">
-                                                Saat vendor men-submit (Bid) dokumen penawaran, data harga tidak dikirim dalam format teks biasa. Browser/komputer vendor akan mengubah harga menjadi sebuah <strong>Hash Kriptografis rahasia (Algoritma SHA-256)</strong> menggunakan sebuah PIN. Server TenderSeal hanya menerima Hash acak ini, sehingga server sepenuhnya buta terhadap harga aslinya.
+                                                Saat vendor mengirim penawaran, harga tidak dikirim dalam teks biasa. Browser vendor mengubah harga menjadi <strong>Hash Kriptografis (SHA-256)</strong> menggunakan PIN. Server hanya menerima hash acak ini dan tidak tahu angka aslinya.
                                             </p>
                                         </div>
                                     </div>
@@ -98,7 +98,7 @@ export default function TutorialPage() {
                                         <div>
                                             <h3 className="font-bold text-[18px] text-[var(--text-primary)] mb-2">2. Zero-Knowledge State (Masa Tunggu)</h3>
                                             <p className="text-[14px] text-[var(--text-tertiary)] leading-relaxed">
-                                                Selama masa tender masih berjalan, sistem berada dalam status <i>Zero-Knowledge</i>. Sistem ini 100% kebal terhadap kebocoran orang dalam (insider threat) atau peretasan database, karena kunci untuk membuka brankas data (PIN) sepenuhnya dipegang secara offline oleh vendor masing-masing.
+                                                Selama tender berjalan, sistem dalam status <i>Zero-Knowledge</i>. Bahkan jika database diretas, tidak ada yang bisa membuka penawaran tanpa PIN yang dipegang masing-masing vendor secara offline.
                                             </p>
                                         </div>
                                     </div>
@@ -110,7 +110,7 @@ export default function TutorialPage() {
                                         <div>
                                             <h3 className="font-bold text-[18px] text-[var(--text-primary)] mb-2">3. Fase Reveal (Pembukaan Paksa)</h3>
                                             <p className="text-[14px] text-[var(--text-tertiary)] leading-relaxed">
-                                                Setelah batas waktu (deadline) tender habis, fase Reveal dimulai. Seluruh vendor yang berpartisipasi wajib memasukkan PIN Rahasia mereka kembali untuk mendekripsi dokumen. Server akan memvalidasi apakah PIN tersebut cocok dengan jejak Hash di awal. Jika valid, dokumen dibuka dan dicatat permanen dalam Audit Trail.
+                                                Setelah deadline berakhir, vendor memasukkan PIN mereka untuk mendekripsi penawaran. Server mencocokkan PIN dengan hash awal. Jika cocok, penawaran dibuka dan dicatat permanen di Audit Trail.
                                             </p>
                                         </div>
                                     </div>
