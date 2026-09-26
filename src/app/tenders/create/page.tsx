@@ -1030,8 +1030,8 @@ function StepFieldsAndScoring({
                                             <div className="sm:col-span-3 space-y-1">
                                                 <label className="text-[10px] font-bold text-[var(--text-secondary)] uppercase tracking-wider">Bobot (%)</label>
                                                 <div className="relative">
-                                                    <input type="number" min={0} max={100} value={field.weight}
-                                                        onChange={(e) => onUpdate(idx, "weight", Number(e.target.value))}
+                                                    <input type="number" min={0} max={100} value={field.weight === 0 ? "" : field.weight}
+                                                        onChange={(e) => onUpdate(idx, "weight", e.target.value === "" ? 0 : parseInt(e.target.value, 10))}
                                                         className="w-full px-3 py-2 pr-7 rounded-lg bg-purple-50 border border-purple-500/30 text-sm font-bold text-[var(--text-secondary)] focus:outline-none focus:border-purple-500/60" />
                                                     <Percent className="absolute right-2 top-1/2 -translate-y-1/2 w-3 h-3 text-purple-500/50" />
                                                 </div>
