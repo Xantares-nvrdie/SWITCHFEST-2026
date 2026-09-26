@@ -458,11 +458,15 @@ export abstract class TenderService {
         });
 
         if (!tender) throw new Error("Tender not found");
-        if (tender.status !== "SCORING") {
-            throw new Error("Tender can only be finalized if its status is SCORING");
-        }
 
         const now = new Date();
+        const commitPassed = tender.commitDeadline && new Date(tender.commitDeadline) < now;
+        const revealPassed = tender.revealDeadline && new Date(tender.revealDeadline) < now;
+
+        let effectiveStatus = tender.status;
+        if (effectiveStatus === "OPEN" && commitPassed) effectiveStatus = "REVEAL";
+        if (effectiveStatus === "REVEAL" && revealPassed) effectiveStatus = "SCORING";
+
         const [criteria, tenderBids] = await Promise.all([
             db.query.tenderCriteria.findMany({
                 where: (criterion, { eq }) => eq(criterion.tenderId, tenderId),
@@ -472,10 +476,126 @@ export abstract class TenderService {
                 where: (bid, { eq }) => eq(bid.tenderId, tenderId),
             }),
         ]);
-        const validBidIds = new Set(tenderBids.filter((bid) => bid.status === "REVEALED_VALID").map((bid) => bid.id));
-        const submittedBidIds = new Set(payload.bids.map((bid) => bid.bidId));
+        const validBids = tenderBids.filter((bid) => bid.status === "REVEALED_VALID");
+        const validBidIds = new Set(validBids.map((bid) => bid.id));
 
-        if (submittedBidIds.size !== payload.bids.length || submittedBidIds.size !== validBidIds.size) {
+        // Jika tidak ada bid yang valid / tidak ada yang reveal
+        if (validBidIds.size === 0) {
+            // Bisa diselesaikan jika sudah lewat commit deadline (jika 0 bids) atau sudah lewat reveal deadline / SCORING
+            if (effectiveStatus !== "SCORING" && !(effectiveStatus === "REVEAL" && tenderBids.length === 0)) {
+                throw new Error("Tender belum dapat diselesaikan karena batas waktu belum berakhir.");
+            }
+
+            const evaluationHash = TenderService.hashEvidence({
+                tenderId,
+                status: "NO_WINNER",
+                totalBids: tenderBids.length,
+                validBids: 0,
+                finalizedAt: now.toISOString(),
+            });
+
+            let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
+            try {
+                const scTx = await contract.finalizeTender(
+                    tenderId,
+                    "NO_WINNER",
+                    "0.00",
+                    evaluationHash,
+                );
+                const receipt = await scTx.wait();
+                txHash = receipt.hash;
+            } catch (err) {
+                console.error("Failed to finalize tender on smart contract (no winner):", err);
+            }
+
+            const decisionNotes = tenderBids.length === 0
+                ? "Tender diselesaikan tanpa pemenang (tidak ada penawaran yang diajukan oleh vendor)."
+                : "Tender diselesaikan tanpa pemenang (tidak ada vendor yang melakukan reveal penawaran secara sah).";
+
+            let contractAddress = "0x0000000000000000000000000000000000000000";
+            try {
+                contractAddress = await contract.getAddress();
+            } catch {
+                // fallback
+            }
+
+            await db.transaction(async (tx) => {
+                await tx.insert(tenderResults).values({
+                    id: crypto.randomUUID(),
+                    tenderId,
+                    winningBidId: null,
+                    finalScore: "0.00",
+                    decisionNotes,
+                    decidedBy: userId,
+                    decidedAt: now,
+                    blockchainTxHash: txHash,
+                    createdAt: now,
+                });
+
+                await tx.insert(blockchainTransactions).values({
+                    id: crypto.randomUUID(),
+                    tenderId,
+                    bidId: null,
+                    transactionType: "RESULT",
+                    txHash: txHash,
+                    chainId: 31337,
+                    contractAddress,
+                    blockNumber: 0,
+                    blockTimestamp: now,
+                    metadata: {
+                        action: "finalize_no_winner",
+                        reason: tenderBids.length === 0 ? "NO_BIDS" : "NO_REVEALED_BIDS",
+                        winningBidId: null,
+                        finalScore: 0,
+                        totalBids: tenderBids.length,
+                    },
+                    createdAt: now,
+                });
+
+                await tx
+                    .update(tenders)
+                    .set({
+                        status: "COMPLETED",
+                        completedAt: now,
+                        updatedAt: now,
+                    })
+                    .where(eq(tenders.id, tenderId));
+            });
+
+            if (tenderBids.length > 0) {
+                try {
+                    const orgIds = [...new Set(tenderBids.map((b) => b.organizationId))];
+                    const members = await db.query.organizationMembers.findMany({
+                        where: (m, { inArray, eq, and }) =>
+                            and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE")),
+                    });
+
+                    if (members.length > 0) {
+                        const notificationsPayload = members.map((member) => ({
+                            userId: member.userId,
+                            title: "Pengumuman Hasil Tender",
+                            message: `Tender ${tender.code} telah diselesaikan tanpa pemenang (tidak ada penawaran yang di-reveal secara sah).`,
+                            type: "INFO" as const,
+                            link: `/tenders/${tenderId}`,
+                        }));
+                        await NotificationService.createMany(notificationsPayload);
+                    }
+                } catch (error) {
+                    console.error("Failed to send no-winner notifications:", error);
+                }
+            }
+
+            return { success: true, noWinner: true };
+        }
+
+        if (effectiveStatus !== "SCORING") {
+            throw new Error("Tender can only be finalized if its status is SCORING");
+        }
+
+        const submittedBids = payload.bids || [];
+        const submittedBidIds = new Set(submittedBids.map((bid) => bid.bidId));
+
+        if (submittedBidIds.size !== submittedBids.length || submittedBidIds.size !== validBidIds.size) {
             throw new Error("Semua bid yang valid harus dinilai tepat satu kali.");
         }
         for (const bidId of submittedBidIds) {
@@ -483,7 +603,7 @@ export abstract class TenderService {
         }
 
         const criteriaIds = new Set(criteria.map((criterion) => criterion.id));
-        for (const bid of payload.bids) {
+        for (const bid of submittedBids) {
             const scoredCriteriaIds = new Set(bid.criteriaScores.map((score) => score.criterionId));
             if (scoredCriteriaIds.size !== criteriaIds.size || [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))) {
                 throw new Error("Setiap bid harus memiliki skor untuk seluruh kriteria tender.");
@@ -491,12 +611,12 @@ export abstract class TenderService {
         }
 
         const scoreByBidAndCriterion = new Map(
-            payload.bids.map((bid) => [
+            submittedBids.map((bid) => [
                 bid.bidId,
                 new Map(bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)])),
             ]),
         );
-        const rankedBids = [...payload.bids].sort((left, right) => right.totalScore - left.totalScore);
+        const rankedBids = [...submittedBids].sort((left, right) => right.totalScore - left.totalScore);
         const topScore = TenderService.scoreKey(rankedBids[0]?.totalScore ?? 0);
         let candidates = rankedBids.filter((bid) => TenderService.scoreKey(bid.totalScore) === topScore);
         const tieBreakerCriteriaIds = Array.isArray(tender.tieBreakerCriteriaIds)
@@ -539,7 +659,7 @@ export abstract class TenderService {
             }
 
             await db.transaction(async (tx) => {
-                const scoreValues = payload.bids.flatMap((bid) =>
+                const scoreValues = submittedBids.flatMap((bid) =>
                     bid.criteriaScores.map((score) => ({
                         id: crypto.randomUUID(),
                         bidId: bid.bidId,
@@ -570,7 +690,7 @@ export abstract class TenderService {
         if (!winner || payload.winningBidId !== winner.bidId) {
             throw new Error("Pemenang harus sesuai dengan hasil perhitungan skor dan tie-breaker.");
         }
-        if (TenderService.scoreKey(payload.finalScore) !== topScore) {
+        if (TenderService.scoreKey(payload.finalScore ?? 0) !== topScore) {
             throw new Error("Skor akhir pemenang tidak sesuai dengan hasil perhitungan.");
         }
 
@@ -578,7 +698,7 @@ export abstract class TenderService {
         await db.transaction(async (tx) => {
             // A. Save Scores for each bid
             const scoreValues = [];
-            for (const bid of payload.bids) {
+            for (const bid of submittedBids) {
                 for (const score of bid.criteriaScores) {
                     scoreValues.push({
                         id: crypto.randomUUID(),
@@ -601,8 +721,8 @@ export abstract class TenderService {
             try {
                 const scTx = await contract.finalizeTender(
                     tenderId,
-                    payload.winningBidId,
-                    payload.finalScore.toFixed(2),
+                    payload.winningBidId!,
+                    (payload.finalScore ?? 0).toFixed(2),
                     evaluationHash,
                 );
                 const receipt = await scTx.wait();
@@ -614,8 +734,8 @@ export abstract class TenderService {
             await tx.insert(tenderResults).values({
                 id: crypto.randomUUID(),
                 tenderId,
-                winningBidId: payload.winningBidId,
-                finalScore: payload.finalScore.toString(),
+                winningBidId: payload.winningBidId!,
+                finalScore: (payload.finalScore ?? 0).toString(),
                 decidedBy: userId,
                 decidedAt: now,
                 blockchainTxHash: txHash,
@@ -623,6 +743,13 @@ export abstract class TenderService {
             });
 
             // C. Blockchain Transaction Record
+            let contractAddress = "0x0000000000000000000000000000000000000000";
+            try {
+                contractAddress = await contract.getAddress();
+            } catch {
+                // fallback
+            }
+
             await tx.insert(blockchainTransactions).values({
                 id: crypto.randomUUID(),
                 tenderId,
@@ -630,7 +757,7 @@ export abstract class TenderService {
                 transactionType: "RESULT",
                 txHash: txHash,
                 chainId: 31337,
-                contractAddress: await contract.getAddress(),
+                contractAddress,
                 blockNumber: 0,
                 blockTimestamp: now,
                 metadata: {
@@ -654,7 +781,7 @@ export abstract class TenderService {
 
         // E. Send Notifications
         try {
-            const bidIds = payload.bids.map((b) => b.bidId);
+            const bidIds = submittedBids.map((b) => b.bidId);
             if (bidIds.length > 0) {
                 const allBids = await db.query.bids.findMany({
                     where: (b, { inArray }) => inArray(b.id, bidIds),
@@ -764,7 +891,7 @@ export abstract class TenderService {
                 transactionType: "RESULT",
                 txHash,
                 chainId: 31337,
-                contractAddress: await contract.getAddress(),
+                contractAddress: await contract.getAddress().catch(() => "0x0000000000000000000000000000000000000000"),
                 blockNumber: 0,
                 blockTimestamp: now,
                 metadata: {
@@ -792,15 +919,16 @@ export abstract class TenderService {
     }
 
     static async getAuditData(tenderId: string) {
-        const [tender, result, tx, allBids] = await Promise.all([
+        const [tender, result, allTx, allBids] = await Promise.all([
             db.query.tenders.findFirst({
                 where: (t, { eq }) => eq(t.id, tenderId),
             }),
             db.query.tenderResults.findFirst({
                 where: (tr, { eq }) => eq(tr.tenderId, tenderId),
             }),
-            db.query.blockchainTransactions.findFirst({
+            db.query.blockchainTransactions.findMany({
                 where: (t, { eq }) => eq(t.tenderId, tenderId),
+                orderBy: (t, { desc }) => [desc(t.createdAt)],
             }),
             db.query.bids.findMany({
                 where: (b, { eq }) => eq(b.tenderId, tenderId),
@@ -811,7 +939,11 @@ export abstract class TenderService {
             }),
         ]);
 
-        if (!tender || tender.status !== "COMPLETED") {
+        if (!tender) {
+            throw new Error("Tender not found");
+        }
+
+        if (tender.status !== "COMPLETED" && tender.status !== "CANCELLED") {
             throw new Error("Tender is not completed yet or not found");
         }
 
@@ -824,10 +956,13 @@ export abstract class TenderService {
             });
         }
 
+        const resultTx = allTx.find((t) => t.transactionType === "RESULT") || allTx[0] || null;
+
         return {
             tender,
-            result,
-            transaction: tx,
+            result: result || null,
+            transaction: resultTx,
+            allTransactions: allTx,
             bids: allBids,
             scores: allScores,
         };

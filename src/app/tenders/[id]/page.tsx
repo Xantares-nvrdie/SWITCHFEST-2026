@@ -1,6 +1,6 @@
 "use client";
 
-import { useState, useEffect, useMemo } from "react";
+import { useState, useEffect, useMemo, useCallback } from "react";
 import Link from "next/link";
 import { useParams, useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
@@ -137,6 +137,32 @@ export default function TenderDetailPage() {
     const [loadingAuditData, setLoadingAuditData] = useState(false);
     const [isPublishing, setIsPublishing] = useState(false);
 
+    const loadAuditData = useCallback(() => {
+        if (!tenderId) return;
+        setLoadingAuditData(true);
+        fetch(`/api/tenders/${tenderId}/audit`)
+            .then(async (r) => {
+                const data = await r.json();
+                if (r.ok && data?.tender) {
+                    setAuditData(data);
+                } else {
+                    console.error("Audit fetch failed or returned non-ok:", data);
+                    setAuditData(null);
+                }
+            })
+            .catch((err) => {
+                console.error("Failed to load audit data:", err);
+                setAuditData(null);
+            })
+            .finally(() => setLoadingAuditData(false));
+    }, [tenderId]);
+
+    useEffect(() => {
+        if (activeTab === "audit" && !auditData && !loadingAuditData && tenderId && tender?.status === "COMPLETED") {
+            loadAuditData();
+        }
+    }, [activeTab, auditData, loadingAuditData, tenderId, tender?.status, loadAuditData]);
+
     // Load draft scores from localStorage
     useEffect(() => {
         if (!tenderId) return;
@@ -261,12 +287,7 @@ export default function TenderDetailPage() {
                 setTender(tenderData);
 
                 if (tenderData.status === "COMPLETED") {
-                    setLoadingAuditData(true);
-                    fetch(`/api/tenders/${tenderId}/audit`)
-                        .then(r => r.json())
-                        .then(data => setAuditData(data))
-                        .catch(err => console.error("Failed to load audit data:", err))
-                        .finally(() => setLoadingAuditData(false));
+                    loadAuditData();
                 }
 
                 // Initialize form data with empty strings based on required criteria/fields
@@ -563,8 +584,40 @@ export default function TenderDetailPage() {
     };
 
     const handleFinalizeWinner = async () => {
-        if (!scoredBids || scoredBids.length === 0) {
-            alert("Belum ada bid yang valid untuk dinilai.");
+        const noValidBids = !scoredBids || scoredBids.length === 0;
+
+        if (noValidBids) {
+            const hasBids = allBids.length > 0;
+            const confirmMsg = hasBids
+                ? "Tidak ada penawaran yang di-reveal secara sah oleh vendor.\n\nApakah Anda yakin ingin menyelesaikan tender ini tanpa pemenang?\n\nTindakan ini akan mengunci status tender menjadi COMPLETED di Smart Contract dan tidak bisa dibatalkan!"
+                : "Tidak ada penawaran (bid) yang masuk untuk tender ini.\n\nApakah Anda yakin ingin menyelesaikan tender ini tanpa pemenang?\n\nTindakan ini akan mengunci status tender menjadi COMPLETED di Smart Contract dan tidak bisa dibatalkan!";
+
+            if (!confirm(confirmMsg)) return;
+
+            setIsFinalizing(true);
+            try {
+                const res = await fetch(`/api/tenders/${tenderId}/finalize`, {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({
+                        winningBidId: null,
+                        finalScore: 0,
+                        bids: [],
+                    })
+                });
+
+                const data = await res.json();
+                if (res.ok) {
+                    alert(data.message || "Tender berhasil diselesaikan tanpa pemenang!");
+                    window.location.reload();
+                } else {
+                    alert(data.message || "Gagal memproses finalisasi tender.");
+                }
+            } catch (err: any) {
+                alert("Terjadi kesalahan jaringan: " + err.message);
+            } finally {
+                setIsFinalizing(false);
+            }
             return;
         }
 
@@ -574,7 +627,7 @@ export default function TenderDetailPage() {
             return;
         }
 
-        if (!confirm(`Anda yakin ingin menetapkan ${winner.organization.name} sebagai pemenang dengan skor ${winner.totalScore.toFixed(2)}?\n\nTindakan ini akan mengunci hasil ke dalam Smart Contract dan tidak bisa dibatalkan!`)) {
+        if (!confirm(`Anda yakin ingin menetapkan ${winner.organization?.name || "Vendor"} sebagai pemenang dengan skor ${winner.totalScore.toFixed(2)}?\n\nTindakan ini akan mengunci hasil ke dalam Smart Contract dan tidak bisa dibatalkan!`)) {
             return;
         }
 
@@ -1271,7 +1324,13 @@ export default function TenderDetailPage() {
                                 disabled={isFinalizing || tender.status === 'COMPLETED' || tender.status === 'TIED'}
                                 className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2">
                                 {isFinalizing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />} 
-                                {tender.status === 'COMPLETED' ? 'Tender Selesai' : tender.status === 'TIED' ? 'Menunggu Penyelesaian Seri' : 'Finalize Pemenang (On-Chain)'}
+                                {tender.status === 'COMPLETED' 
+                                    ? 'Tender Selesai' 
+                                    : tender.status === 'TIED' 
+                                        ? 'Menunggu Penyelesaian Seri' 
+                                        : scoredBids.length === 0
+                                            ? 'Selesaikan Tender (Tanpa Pemenang)'
+                                            : 'Finalize Pemenang (On-Chain)'}
                             </button>
                         </div>
                         
@@ -1358,8 +1417,25 @@ export default function TenderDetailPage() {
                             {allBids.filter(b => b.status === "REVEALED_VALID").length === 0 && (
                                 <div className="col-span-full py-16 text-center text-[var(--text-tertiary)] bg-[var(--surface-secondary)]/50 rounded-xl border border-dashed border-[var(--border)]">
                                     <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-20" />
-                                    <p className="font-semibold text-[var(--text-tertiary)]">Belum Ada Penawaran Terbuka</p>
-                                    <p className="text-xs mt-1">Vendor harus melakukan Commit-Reveal terlebih dahulu agar bisa dinilai.</p>
+                                    <p className="font-semibold text-[var(--text-primary)]">
+                                        {allBids.length === 0 ? "Tidak Ada Penawaran Masuk" : "Tidak Ada Penawaran yang Di-reveal"}
+                                    </p>
+                                    <p className="text-xs mt-1 max-w-md mx-auto text-[var(--text-tertiary)]">
+                                        {allBids.length === 0
+                                            ? "Hingga batas waktu commit berakhir, tidak ada vendor yang mengajukan penawaran. Anda dapat menyelesaikan tender ini tanpa pemenang."
+                                            : `Terdapat ${allBids.length} penawaran yang masuk, namun tidak ada vendor yang melakukan reveal secara sah hingga batas waktu berakhir. Anda dapat menyelesaikan tender ini tanpa pemenang.`}
+                                    </p>
+                                    {isCreator && tender.status !== "COMPLETED" && (
+                                        <button
+                                            type="button"
+                                            onClick={handleFinalizeWinner}
+                                            disabled={isFinalizing}
+                                            className="mt-4 px-4 py-2 bg-amber-600 hover:bg-amber-700 text-white text-xs font-bold rounded-lg transition-all inline-flex items-center gap-2"
+                                        >
+                                            {isFinalizing ? <RefreshCw className="w-4 h-4 animate-spin" /> : <ShieldCheck className="w-4 h-4" />}
+                                            Selesaikan Tender Sekarang
+                                        </button>
+                                    )}
                                 </div>
                             )}
                         </div>
@@ -1382,120 +1458,178 @@ export default function TenderDetailPage() {
                         <div className="card p-6 rounded-2xl border-[var(--border)] flex items-center justify-center py-12">
                             <RefreshCw className="w-8 h-8 text-amber-500 animate-spin" />
                         </div>
-                    ) : auditData ? (
+                    ) : auditData && auditData.tender ? (
                         <div className="space-y-6">
-                            {/* Winner Card */}
-                            <div className="bg-teal-50 border border-[var(--accent)] rounded-xl p-6">
-                                <div className="flex items-start gap-4">
-                                    <div className="p-3 bg-[var(--accent-light)] rounded-xl">
-                                        <Award className="w-8 h-8 text-[var(--accent)]" />
-                                    </div>
-                                    <div className="flex-1">
-                                        <h3 className="text-[var(--accent)] font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
-                                        <p className="text-2xl font-bold text-[var(--text-primary)] mb-2">
-                                            {auditData.bids?.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
-                                        </p>
-                                        <div className="flex flex-wrap gap-4 text-xs font-mono">
-                                            <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)]">
-                                                Skor Akhir: <span className="font-bold text-[var(--text-primary)]">{Number(auditData.result?.finalScore).toFixed(2)}</span>
-                                            </span>
-                                            <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)] flex items-center gap-1">
-                                                <Layers className="w-3 h-3" /> TxHash: <span className="text-[var(--text-tertiary)] truncate max-w-[200px]">{auditData.transaction?.txHash}</span>
-                                            </span>
+                            {/* Final Status Card (No Winner vs Winner) */}
+                            {!auditData.result?.winningBidId ? (
+                                <div className="bg-amber-50 border border-amber-300 rounded-xl p-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-amber-100 rounded-xl">
+                                            <AlertCircle className="w-8 h-8 text-amber-700" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-amber-800 font-bold text-sm tracking-wider uppercase mb-1">Status Hasil Tender</h3>
+                                            <p className="text-2xl font-bold text-amber-900 mb-2">
+                                                Diselesaikan Tanpa Pemenang (Gugur)
+                                            </p>
+                                            <p className="text-xs text-amber-800 mb-3">
+                                                {auditData.result?.decisionNotes || (auditData.bids?.length === 0 ? "Tidak ada penawaran yang diajukan oleh vendor hingga batas waktu berakhir." : "Tidak ada penawaran yang di-reveal secara sah oleh vendor hingga batas waktu berakhir.")}
+                                            </p>
+                                            <div className="flex flex-wrap gap-4 text-xs font-mono">
+                                                <span className="bg-white/80 px-3 py-1.5 rounded-lg border border-amber-200 text-amber-800 flex items-center gap-1">
+                                                    <Layers className="w-3 h-3" /> TxHash (Blockchain): <span className="text-slate-600 truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash || "-"}</span>
+                                                </span>
+                                            </div>
                                         </div>
                                     </div>
                                 </div>
-                            </div>
+                            ) : (
+                                <div className="bg-teal-50 border border-[var(--accent)] rounded-xl p-6">
+                                    <div className="flex items-start gap-4">
+                                        <div className="p-3 bg-[var(--accent-light)] rounded-xl">
+                                            <Award className="w-8 h-8 text-[var(--accent)]" />
+                                        </div>
+                                        <div className="flex-1">
+                                            <h3 className="text-[var(--accent)] font-bold text-sm tracking-wider uppercase mb-1">Pemenang Tender</h3>
+                                            <p className="text-2xl font-bold text-[var(--text-primary)] mb-2">
+                                                {auditData.bids?.find((b: any) => b.id === auditData.result?.winningBidId)?.organization?.name || "Unknown"}
+                                            </p>
+                                            <div className="flex flex-wrap gap-4 text-xs font-mono">
+                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)]">
+                                                    Skor Akhir: <span className="font-bold text-[var(--text-primary)]">{Number(auditData.result?.finalScore || 0).toFixed(2)}</span>
+                                                </span>
+                                                <span className="bg-[var(--surface-secondary)]/50 px-3 py-1.5 rounded-lg border border-teal-200 text-[var(--accent)] flex items-center gap-1">
+                                                    <Layers className="w-3 h-3" /> TxHash: <span className="text-[var(--text-tertiary)] truncate max-w-[200px]">{auditData.transaction?.txHash || auditData.result?.blockchainTxHash}</span>
+                                                </span>
+                                            </div>
+                                        </div>
+                                    </div>
+                                </div>
+                            )}
 
                             {/* Transparent Bids Breakdown */}
                             <h3 className="text-lg font-bold text-[var(--text-primary)] mb-4 mt-8 flex items-center gap-2">
                                 <Eye className="w-5 h-5 text-[var(--accent)]" /> Transparansi Proposal & Penilaian
                             </h3>
-                            <div className="grid grid-cols-1 gap-6">
-                                {auditData.bids?.map((bid: any) => {
-                                    const payload = bid.reveal?.revealedPayload || {};
-                                    const scoresForBid = auditData.scores?.filter((s: any) => s.bidId === bid.id) || [];
-                                    const isWinner = auditData.result?.winningBidId === bid.id;
-                                    
-                                    return (
-                                        <div key={bid.id} className={`bg-[var(--surface-secondary)]/50 border ${isWinner ? 'border-teal-200' : 'border-[var(--border)]'} rounded-xl overflow-hidden`}>
-                                            <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-teal-200' : 'bg-[var(--surface-secondary)]/30 border-[var(--border)]'} flex justify-between items-center`}>
-                                                <div>
-                                                    <div className="flex items-center">
-                                                        <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
-                                                        {isWinner && <span className="ml-3 text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
+
+                            {(!auditData.bids || auditData.bids.length === 0) ? (
+                                <div className="card p-8 rounded-2xl border-[var(--border)] text-center">
+                                    <ShieldCheck className="w-12 h-12 mx-auto mb-3 opacity-30 text-[var(--text-tertiary)]" />
+                                    <p className="font-semibold text-[var(--text-primary)]">Tidak Ada Proposal yang Diajukan</p>
+                                    <p className="text-xs text-[var(--text-tertiary)] mt-1">Tidak ada catatan penawaran dari vendor untuk tender ini.</p>
+                                </div>
+                            ) : (
+                                <div className="grid grid-cols-1 gap-6">
+                                    {auditData.bids.map((bid: any) => {
+                                        const isRevealed = bid.status === "REVEALED_VALID";
+                                        const payload = bid.reveal?.revealedPayload || {};
+                                        const scoresForBid = auditData.scores?.filter((s: any) => s.bidId === bid.id) || [];
+                                        const isWinner = auditData.result?.winningBidId === bid.id;
+                                        
+                                        return (
+                                            <div key={bid.id} className={`bg-[var(--surface-secondary)]/50 border ${isWinner ? 'border-teal-200' : 'border-[var(--border)]'} rounded-xl overflow-hidden`}>
+                                                <div className={`p-4 border-b ${isWinner ? 'bg-emerald-900/20 border-teal-200' : 'bg-[var(--surface-secondary)]/30 border-[var(--border)]'} flex justify-between items-center`}>
+                                                    <div>
+                                                        <div className="flex items-center gap-2">
+                                                            <span className="font-bold text-[var(--text-primary)] text-lg">{bid.organization?.name}</span>
+                                                            {isWinner && <span className="text-[10px] font-bold bg-[var(--accent-light)] text-[var(--accent)] px-2 py-1 rounded-md uppercase">Pemenang</span>}
+                                                            {!isRevealed && <span className="text-[10px] font-bold bg-red-100 text-red-700 px-2 py-1 rounded-md uppercase border border-red-200">Gugur (Tidak Di-reveal)</span>}
+                                                        </div>
+                                                        <span className="text-[10px] text-[var(--text-tertiary)] mt-1 flex items-center gap-1">
+                                                            <Clock className="w-3 h-3" /> Submitted: {new Date(bid.submittedAt).toLocaleString('id-ID')}
+                                                        </span>
                                                     </div>
-                                                    <span className="text-[10px] text-[var(--text-tertiary)] mt-1 flex items-center gap-1">
-                                                        <Clock className="w-3 h-3" /> Submitted: {new Date(bid.submittedAt).toLocaleString('id-ID')}
-                                                    </span>
-                                                </div>
-                                                <div className="text-right">
-                                                    <span className="text-xs text-[var(--text-tertiary)] block mb-1">Total Skor</span>
-                                                    <span className={`text-xl font-bold ${isWinner ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'}`}>
-                                                        {scoresForBid.reduce((acc: number, curr: any) => acc + Number(curr.weightedScore), 0).toFixed(2)}
-                                                    </span>
-                                                </div>
-                                            </div>
-                                            
-                                            <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
-                                                {/* Left: Original Proposal */}
-                                                <div>
-                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">Proposal Penawaran (Asli)</h4>
-                                                    <div className="space-y-3">
-                                                        {tender.fields?.map((f: any) => (
-                                                            <div key={f.key} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50">
-                                                                <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase block mb-1">{f.name}</span>
-                                                                {f.type.toLowerCase() === 'file' ? (
-                                                                    payload[f.key] ? (
-                                                                        payload[f.key].includes("_isEncryptedFile") ? (
-                                                                            <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
-                                                                                <Lock className="w-4 h-4" /> Buka Kriptografi & Unduh
-                                                                            </button>
-                                                                        ) : (
-                                                                            <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
-                                                                                <FileCode2 className="w-4 h-4" /> Lihat Dokumen
-                                                                            </a>
-                                                                        )
-                                                                    ) : <span className="text-sm text-[var(--text-tertiary)]">-</span>
-                                                                ) : f.type.toLowerCase() === 'currency' ? (
-                                                                    <span className="text-sm font-bold text-[var(--text-primary)]">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>
-                                                                ) : (
-                                                                    <span className="text-sm text-[var(--text-secondary)]">{payload[f.key] || '-'}</span>
-                                                                )}
-                                                            </div>
-                                                        ))}
+                                                    <div className="text-right">
+                                                        <span className="text-xs text-[var(--text-tertiary)] block mb-1">Total Skor</span>
+                                                        <span className={`text-xl font-bold ${isWinner ? 'text-[var(--accent)]' : 'text-[var(--text-primary)]'}`}>
+                                                            {scoresForBid.length > 0 
+                                                                ? scoresForBid.reduce((acc: number, curr: any) => acc + Number(curr.weightedScore), 0).toFixed(2)
+                                                                : '0.00'}
+                                                        </span>
                                                     </div>
                                                 </div>
                                                 
-                                                {/* Right: Score Breakdown */}
-                                                <div>
-                                                    <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">Rincian Penilaian Panitia</h4>
-                                                    <div className="space-y-3">
-                                                        {tender.criteria?.map((c: any) => {
-                                                            const sc = scoresForBid.find((s: any) => s.criterionId === c.id);
-                                                            return (
-                                                                <div key={c.id} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50 flex justify-between items-center">
-                                                                    <div>
-                                                                        <span className="text-xs font-bold text-[var(--text-secondary)] block">{c.name} <span className="text-[var(--text-tertiary)] font-normal">({c.weight}%)</span></span>
-                                                                        <span className="text-[10px] text-[var(--text-tertiary)]">Nilai Mentah: {sc ? Number(sc.rawScore).toFixed(1) : '0'}</span>
+                                                <div className="p-4 grid grid-cols-1 md:grid-cols-2 gap-6">
+                                                    {/* Left: Original Proposal */}
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">
+                                                            Proposal Penawaran {isRevealed ? "(Asli)" : "(Terkunci)"}
+                                                        </h4>
+                                                        {!isRevealed ? (
+                                                            <div className="p-4 bg-amber-50/60 border border-amber-200 rounded-xl text-center text-xs text-amber-800">
+                                                                <Lock className="w-6 h-6 mx-auto mb-2 text-amber-600 opacity-60" />
+                                                                Penawaran ini tidak pernah dibuka (reveal) oleh vendor hingga batas waktu selesai. Data tetap terenkripsi secara kriptografis selamanya.
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {tender.fields?.map((f: any) => (
+                                                                    <div key={f.key} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50">
+                                                                        <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase block mb-1">{f.name}</span>
+                                                                        {f.type.toLowerCase() === 'file' ? (
+                                                                            payload[f.key] ? (
+                                                                                payload[f.key].includes("_isEncryptedFile") ? (
+                                                                                    <button onClick={() => handleDownloadEncryptedFile(payload[f.key])} className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
+                                                                                        <Lock className="w-4 h-4" /> Buka Kriptografi & Unduh
+                                                                                    </button>
+                                                                                ) : (
+                                                                                    <a href={payload[f.key]} target="_blank" rel="noopener noreferrer" className="text-sm font-semibold text-[var(--accent)] hover:text-[var(--accent)] flex items-center gap-1">
+                                                                                        <FileCode2 className="w-4 h-4" /> Lihat Dokumen
+                                                                                    </a>
+                                                                                )
+                                                                            ) : <span className="text-sm text-[var(--text-tertiary)]">-</span>
+                                                                        ) : f.type.toLowerCase() === 'currency' ? (
+                                                                            <span className="text-sm font-bold text-[var(--text-primary)]">Rp {Number(payload[f.key] || 0).toLocaleString('id-ID')}</span>
+                                                                        ) : (
+                                                                            <span className="text-sm text-[var(--text-secondary)]">{payload[f.key] || '-'}</span>
+                                                                        )}
                                                                     </div>
-                                                                    <div className="text-right">
-                                                                        <span className="text-sm font-bold text-amber-600">{sc ? Number(sc.weightedScore).toFixed(2) : '0.00'}</span>
-                                                                    </div>
-                                                                </div>
-                                                            )
-                                                        })}
+                                                                ))}
+                                                            </div>
+                                                        )}
+                                                    </div>
+                                                    
+                                                    {/* Right: Score Breakdown */}
+                                                    <div>
+                                                        <h4 className="text-xs font-bold text-[var(--text-tertiary)] uppercase tracking-wider mb-3 pb-2 border-b border-[var(--border)]">Rincian Penilaian Panitia</h4>
+                                                        {!isRevealed ? (
+                                                            <div className="p-4 bg-[var(--surface-secondary)] rounded-xl text-center text-xs text-[var(--text-tertiary)]">
+                                                                Tidak ada penilaian karena dokumen penawaran tidak sah / tidak di-reveal.
+                                                            </div>
+                                                        ) : (
+                                                            <div className="space-y-3">
+                                                                {tender.criteria?.map((c: any) => {
+                                                                    const sc = scoresForBid.find((s: any) => s.criterionId === c.id);
+                                                                    return (
+                                                                        <div key={c.id} className="bg-[var(--surface-secondary)] rounded-lg p-3 border border-[var(--border)]/50 flex justify-between items-center">
+                                                                            <div>
+                                                                                <span className="text-xs font-bold text-[var(--text-secondary)] block">{c.name} <span className="text-[var(--text-tertiary)] font-normal">({c.weight}%)</span></span>
+                                                                                <span className="text-[10px] text-[var(--text-tertiary)]">Nilai Mentah: {sc ? Number(sc.rawScore).toFixed(1) : '0'}</span>
+                                                                            </div>
+                                                                            <div className="text-right">
+                                                                                <span className="text-sm font-bold text-amber-600">{sc ? Number(sc.weightedScore).toFixed(2) : '0.00'}</span>
+                                                                            </div>
+                                                                        </div>
+                                                                    )
+                                                                })}
+                                                            </div>
+                                                        )}
                                                     </div>
                                                 </div>
                                             </div>
-                                        </div>
-                                    );
-                                })}
-                            </div>
+                                        );
+                                    })}
+                                </div>
+                            )}
                         </div>
                     ) : (
-                        <div className="card p-6 rounded-2xl border-[var(--border)] text-center">
-                            <p className="text-[var(--text-tertiary)]">Gagal memuat data audit.</p>
+                        <div className="card p-6 rounded-2xl border-[var(--border)] text-center py-12">
+                            <p className="text-[var(--text-tertiary)] mb-3">Gagal memuat data audit.</p>
+                            <button
+                                onClick={loadAuditData}
+                                className="px-4 py-2 bg-[var(--surface-secondary)] hover:bg-[var(--border)] text-[var(--text-primary)] text-xs font-bold rounded-lg transition-colors inline-flex items-center gap-2"
+                            >
+                                <RefreshCw className="w-3.5 h-3.5" /> Muat Ulang Data
+                            </button>
                         </div>
                     )}
                 </div>

@@ -64,9 +64,9 @@ export namespace TenderModel {
     });
 
     export const finalizeBody = t.Object({
-        winningBidId: t.String(),
-        finalScore: t.Number(),
-        bids: t.Array(t.Object({
+        winningBidId: t.Optional(t.Nullable(t.String())),
+        finalScore: t.Optional(t.Nullable(t.Number())),
+        bids: t.Optional(t.Array(t.Object({
             bidId: t.String(),
             totalScore: t.Number(),
             criteriaScores: t.Array(t.Object({
@@ -74,7 +74,7 @@ export namespace TenderModel {
                 rawScore: t.Number(),
                 weightedScore: t.Number(),
             }))
-        }))
+        })))
     });
 
     export const resolveTieBody = t.Object({

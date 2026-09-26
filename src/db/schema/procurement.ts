@@ -77,9 +77,8 @@ export const tenderResults = pgTable("tender_results", {
         .unique()
         .references(() => tenders.id, { onDelete: "restrict" }),
     winningBidId: text("winning_bid_id")
-        .notNull()
         .references(() => bids.id, { onDelete: "restrict" }),
-    finalScore: decimal("final_score", { precision: 10, scale: 2 }).notNull(),
+    finalScore: decimal("final_score", { precision: 10, scale: 2 }),
     decisionNotes: text("decision_notes"),
     decidedBy: text("decided_by")
         .notNull()
