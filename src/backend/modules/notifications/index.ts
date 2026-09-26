@@ -1,6 +1,5 @@
 import { Elysia, t } from "elysia";
 import { NotificationService } from "./service";
-import { TenderService } from "../tenders/service";
 import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 
 export const notificationsModule = new Elysia({ prefix: "/notifications" })
@@ -12,7 +11,6 @@ export const notificationsModule = new Elysia({ prefix: "/notifications" })
                 set.status = 401;
                 return { message: "Unauthorized" };
             }
-            await TenderService.performBulkStatusUpdates().catch(console.error);
             return await NotificationService.getUserNotifications(user.id);
         },
         {
@@ -21,7 +19,24 @@ export const notificationsModule = new Elysia({ prefix: "/notifications" })
                 summary: "Get my notifications",
                 description: "Get all notifications for the current logged-in user",
             },
-        }
+        },
+    )
+    .get(
+        "/unread-count",
+        async ({ user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+            return { count: await NotificationService.getUnreadCount(user.id) };
+        },
+        {
+            auth: true,
+            detail: {
+                summary: "Get unread notification count",
+                description: "Get the current user's unread notification count.",
+            },
+        },
     )
     .post(
         "/:id/read",
@@ -39,7 +54,7 @@ export const notificationsModule = new Elysia({ prefix: "/notifications" })
                 summary: "Mark notification as read",
                 description: "Mark a specific notification as read",
             },
-        }
+        },
     )
     .post(
         "/read-all",
@@ -56,7 +71,7 @@ export const notificationsModule = new Elysia({ prefix: "/notifications" })
                 summary: "Mark all notifications as read",
                 description: "Mark all notifications for the current user as read",
             },
-        }
+        },
     );
 
 export default notificationsModule;

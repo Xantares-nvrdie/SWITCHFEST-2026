@@ -23,11 +23,11 @@ export default function HomePage() {
                 return await r.json();
             })
             .then((json: any) => {
-                const tenders = Array.isArray(json) ? json : (json.data || []);
+                const tenders = Array.isArray(json) ? json : json.data || [];
                 setStats({
                     totalTenders: json.meta?.total || tenders.length,
                     openTenders: tenders.filter((t: any) => t.status === "OPEN").length,
-                    totalBids: tenders.reduce((acc: number, t: any) => acc + (t.bids?.length || 0), 0),
+                    totalBids: tenders.reduce((acc: number, t: any) => acc + (t.bidCount || 0), 0),
                 });
             })
             .catch(console.error)
@@ -45,8 +45,8 @@ export default function HomePage() {
                 </h1>
 
                 <p className="text-[17px] text-[var(--text-secondary)] leading-relaxed max-w-lg">
-                    TenderSeal mengenkripsi penawaran vendor di dalam browser mereka sendiri.
-                    Server tidak pernah melihat isi harga. Blockchain mencatat setiap langkah.
+                    TenderSeal mengenkripsi penawaran vendor di dalam browser mereka sendiri. Server tidak pernah
+                    melihat isi harga. Blockchain mencatat setiap langkah.
                 </p>
 
                 <div className="flex items-center gap-3 pt-2">
@@ -90,9 +90,7 @@ export default function HomePage() {
                             <p className="text-[32px] font-bold text-[var(--text-primary)] tracking-tight">
                                 {stats.totalTenders}
                             </p>
-                            <p className="text-[12px] text-[var(--text-tertiary)]">
-                                {stats.openTenders} sedang dibuka
-                            </p>
+                            <p className="text-[12px] text-[var(--text-tertiary)]">{stats.openTenders} sedang dibuka</p>
                         </div>
 
                         <div className="card p-6 space-y-1">
@@ -100,24 +98,20 @@ export default function HomePage() {
                             <p className="text-[32px] font-bold text-[var(--text-primary)] tracking-tight">
                                 {stats.totalBids}
                             </p>
-                            <p className="text-[12px] text-[var(--text-tertiary)]">
-                                Terenkripsi di browser vendor
-                            </p>
+                            <p className="text-[12px] text-[var(--text-tertiary)]">Terenkripsi di browser vendor</p>
                         </div>
 
                         <div className="card p-6 space-y-1">
                             <p className="text-[13px] text-[var(--text-tertiary)] font-medium">Jaringan</p>
-                            <p className="text-[32px] font-bold text-[var(--text-primary)] tracking-tight">
-                                Sepolia
-                            </p>
-                            <p className="text-[12px] text-[var(--text-tertiary)]">
-                                Ethereum Testnet
-                            </p>
+                            <p className="text-[32px] font-bold text-[var(--text-primary)] tracking-tight">Sepolia</p>
+                            <p className="text-[12px] text-[var(--text-tertiary)]">Ethereum Testnet</p>
                         </div>
                     </>
                 ) : (
                     <div className="col-span-3 card p-8 text-center">
-                        <p className="text-[var(--text-tertiary)] text-sm">Belum ada data tender. Buat tender pertama Anda untuk memulai.</p>
+                        <p className="text-[var(--text-tertiary)] text-sm">
+                            Belum ada data tender. Buat tender pertama Anda untuk memulai.
+                        </p>
                     </div>
                 )}
             </section>
@@ -135,38 +129,48 @@ export default function HomePage() {
 
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-px bg-[var(--border)] rounded-xl overflow-hidden">
                     <div className="bg-[var(--surface)] p-8 space-y-3">
-                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">Tahap 1</p>
+                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">
+                            Tahap 1
+                        </p>
                         <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Enkripsi di Browser</h3>
                         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
-                            Penawaran dienkripsi menggunakan AES-GCM 256-bit langsung di browser vendor.
-                            Kunci dibuat dari PIN pribadi melalui Argon2id. Server tidak pernah menerima data mentah.
+                            Penawaran dienkripsi menggunakan AES-GCM 256-bit langsung di browser vendor. Kunci dibuat
+                            dari PIN pribadi melalui Argon2id. Server tidak pernah menerima data mentah.
                         </p>
                     </div>
 
                     <div className="bg-[var(--surface)] p-8 space-y-3">
-                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">Tahap 2</p>
+                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">
+                            Tahap 2
+                        </p>
                         <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Komitmen ke Blockchain</h3>
                         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
-                            Hash SHA-256 dari penawaran dicatat ke Smart Contract sebelum tenggat waktu.
-                            Ini membuktikan bahwa isi bid sudah dikunci dan tidak bisa diubah.
+                            Hash SHA-256 dari penawaran dicatat ke Smart Contract sebelum tenggat waktu. Ini membuktikan
+                            bahwa isi bid sudah dikunci dan tidak bisa diubah.
                         </p>
                     </div>
 
                     <div className="bg-[var(--surface)] p-8 space-y-3">
-                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">Tahap 3</p>
+                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">
+                            Tahap 3
+                        </p>
                         <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Penyimpanan Tersegel</h3>
                         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
-                            Server hanya menyimpan ciphertext. Dokumen lampiran dienkripsi ulang sebelum diunggah
-                            ke penyimpanan awan. Tidak ada pihak yang bisa membaca isi file.
+                            Server hanya menyimpan ciphertext. Dokumen lampiran dienkripsi ulang sebelum diunggah ke
+                            penyimpanan awan. Tidak ada pihak yang bisa membaca isi file.
                         </p>
                     </div>
 
                     <div className="bg-[var(--surface)] p-8 space-y-3">
-                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">Tahap 4</p>
-                        <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">Pembukaan dan Verifikasi</h3>
+                        <p className="text-[12px] font-semibold text-[var(--accent)] uppercase tracking-wide">
+                            Tahap 4
+                        </p>
+                        <h3 className="text-[17px] font-semibold text-[var(--text-primary)]">
+                            Pembukaan dan Verifikasi
+                        </h3>
                         <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
-                            Setelah tenggat, vendor memasukkan PIN untuk mendekripsi di browser mereka.
-                            Hash diverifikasi ulang dengan catatan di Smart Contract. Setiap langkah tercatat di audit trail.
+                            Setelah tenggat, vendor memasukkan PIN untuk mendekripsi di browser mereka. Hash
+                            diverifikasi ulang dengan catatan di Smart Contract. Setiap langkah tercatat di audit trail.
                         </p>
                     </div>
                 </div>

@@ -14,13 +14,10 @@ export function NotificationBell() {
 
         const fetchNotifications = async () => {
             try {
-                const res = await fetch("/api/notifications");
+                const res = await fetch("/api/notifications/unread-count");
                 if (res.ok) {
                     const data = await res.json();
-                    if (Array.isArray(data)) {
-                        const count = data.filter((n) => !n.isRead).length;
-                        setUnreadCount(count);
-                    }
+                    setUnreadCount(data.count ?? 0);
                 }
             } catch (error) {
                 console.error("Failed to fetch notifications:", error);
@@ -28,7 +25,7 @@ export function NotificationBell() {
         };
 
         fetchNotifications();
-        
+
         // Simple polling every 30 seconds
         const interval = setInterval(fetchNotifications, 30000);
         return () => clearInterval(interval);
@@ -37,8 +34,8 @@ export function NotificationBell() {
     if (!session?.user) return null;
 
     return (
-        <Link 
-            href="/inbox" 
+        <Link
+            href="/inbox"
             className="relative p-2 rounded-full hover:bg-[var(--surface-secondary)] transition-colors flex items-center justify-center text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
             title="Inbox Notifikasi"
         >

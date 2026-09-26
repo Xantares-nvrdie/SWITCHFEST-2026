@@ -12,14 +12,16 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
     .get(
         "/",
         async ({ query }) => {
-            const page = query.page ? parseInt(query.page as string, 10) : 1;
-            const limit = query.limit ? parseInt(query.limit as string, 10) : 20;
+            const requestedPage = query.page ? parseInt(query.page as string, 10) : 1;
+            const requestedLimit = query.limit ? parseInt(query.limit as string, 10) : 20;
+            const page = Number.isFinite(requestedPage) ? Math.max(1, requestedPage) : 1;
+            const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(1, requestedLimit), 100) : 20;
             return await TenderService.getAll(page, limit);
         },
         {
             query: t.Object({
                 page: t.Optional(t.String()),
-                limit: t.Optional(t.String())
+                limit: t.Optional(t.String()),
             }),
             detail: {
                 summary: "Get all tenders",
@@ -69,7 +71,9 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             const isApproved = org.verificationStatus === "APPROVED" || org.isVerified;
             if (!isApproved) {
                 set.status = 403;
-                return { message: "Forbidden: Organization must be approved by TenderSeal Admin before creating tenders" };
+                return {
+                    message: "Forbidden: Organization must be approved by TenderSeal Admin before creating tenders",
+                };
             }
 
             // 2. Check user's role in the organization (Must be PROCUREMENT_OFFICER or ORGANIZATION_ADMIN)
@@ -106,7 +110,8 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             body: TenderModel.createBody,
             detail: {
                 summary: "Create a new tender",
-                description: "Membuat draft tender baru (Hanya Procurement Officer / Admin dari Organisasi Terverifikasi).",
+                description:
+                    "Membuat draft tender baru (Hanya Procurement Officer / Admin dari Organisasi Terverifikasi).",
             },
         },
     )
@@ -136,12 +141,15 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
 
             if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
                 set.status = 403;
-                return { message: "Forbidden: Only Procurement Officers or Admins of this tender's organization can update it" };
+                return {
+                    message:
+                        "Forbidden: Only Procurement Officers or Admins of this tender's organization can update it",
+                };
             }
 
             try {
                 await TenderService.update(params.id, body);
-                
+
                 await AuditLogService.log({
                     userId: user.id,
                     organizationId: tender.organizationId,
@@ -151,7 +159,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                     entityId: params.id,
                     description: `Data tender diperbarui`,
                 });
-                
+
                 return { message: "Tender updated successfully" };
             } catch (err: any) {
                 set.status = 400;
@@ -166,7 +174,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 description: "Mengubah informasi tender yang masih dalam status DRAFT.",
                 tags: ["Tenders"],
             },
-        }
+        },
     )
 
     // ── Update Status (Requires Officer / Admin of Tender Org) ────────────────
@@ -194,11 +202,14 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
 
             if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
                 set.status = 403;
-                return { message: "Forbidden: Only Procurement Officers or Admins of this tender's organization can update status" };
+                return {
+                    message:
+                        "Forbidden: Only Procurement Officers or Admins of this tender's organization can update status",
+                };
             }
 
             await TenderService.updateStatus(params.id, body.status);
-            
+
             await AuditLogService.log({
                 userId: user.id,
                 organizationId: tender.organizationId,
@@ -217,7 +228,8 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             body: TenderModel.updateStatusBody,
             detail: {
                 summary: "Update tender status",
-                description: "Mengubah alur status tender (Hanya Procurement Officer / Admin dari Organisasi Penyelenggara).",
+                description:
+                    "Mengubah alur status tender (Hanya Procurement Officer / Admin dari Organisasi Penyelenggara).",
             },
         },
     )
@@ -305,7 +317,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 summary: "Add evaluation criterion to tender",
                 description: "Menambahkan kriteria dan bobot penilaian tender.",
             },
-        }
+        },
     )
     // ── Finalize Tender ───────────────────────────────────────────────────────
     .post(
@@ -337,7 +349,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
 
             try {
                 const result = await TenderService.finalizeTender(params.id, body, user.id);
-                
+
                 // Log activity
                 await AuditLogService.log({
                     userId: user.id,
@@ -350,7 +362,11 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 });
 
                 set.status = 200;
-                return { message: "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)", data: result };
+                return {
+                    message:
+                        "Tender finalized successfully (Winner set, scores recorded, smart contract transaction initiated)",
+                    data: result,
+                };
             } catch (err: any) {
                 set.status = 400;
                 return { message: err.message || "Failed to finalize tender" };
@@ -362,9 +378,10 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             body: TenderModel.finalizeBody,
             detail: {
                 summary: "Finalize tender & Pick Winner",
-                description: "Menyelesaikan tender, menyimpan semua skor, menetapkan pemenang, dan memicu transaksi pencatatan ke Smart Contract.",
+                description:
+                    "Menyelesaikan tender, menyimpan semua skor, menetapkan pemenang, dan memicu transaksi pencatatan ke Smart Contract.",
             },
-        }
+        },
     )
 
     // ── Audit Log ─────────────────────────────────────────────────────────────
@@ -385,8 +402,7 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
                 summary: "Get Audit Log",
                 description: "Mengambil data transparan hasil akhir tender beserta jejak skor dan blockchain.",
             },
-        }
+        },
     );
 
 export default tendersModule;
-

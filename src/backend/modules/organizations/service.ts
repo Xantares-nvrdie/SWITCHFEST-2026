@@ -27,7 +27,6 @@ export abstract class OrganizationService {
                 email: data.email,
                 phone: data.phone,
                 address: data.address,
-                walletAddress: data.walletAddress,
                 createdAt: now,
                 updatedAt: now,
             });
@@ -49,7 +48,19 @@ export abstract class OrganizationService {
     }
 
     static async getAll() {
-        return db.select().from(organizations);
+        return db
+            .select({
+                id: organizations.id,
+                name: organizations.name,
+                type: organizations.type,
+                email: organizations.email,
+                phone: organizations.phone,
+                address: organizations.address,
+                verificationStatus: organizations.verificationStatus,
+                isVerified: organizations.isVerified,
+                isActive: organizations.isActive,
+            })
+            .from(organizations);
     }
 
     static async getById(id: string) {
@@ -59,14 +70,7 @@ export abstract class OrganizationService {
 
         if (!org) return null;
 
-        const members = await db.query.organizationMembers.findMany({
-            where: (m, { eq }) => eq(m.organizationId, id),
-            with: {
-                user: true,
-            },
-        });
-
-        return { ...org, members };
+        return org;
     }
 
     static async update(id: string, data: OrganizationModel.updateInput) {
@@ -95,7 +99,6 @@ export abstract class OrganizationService {
             })
             .where(eq(organizations.id, id));
     }
-
 
     static async addMember(organizationId: string, data: OrganizationModel.addMemberInput) {
         const memberId = crypto.randomUUID();
