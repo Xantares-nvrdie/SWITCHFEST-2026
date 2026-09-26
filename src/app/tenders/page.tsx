@@ -3,14 +3,7 @@
 import { useState, useEffect } from "react";
 import Link from "next/link";
 import { useSession } from "@/lib/auth-client";
-import {
-    PlusCircle,
-    Search,
-    Clock,
-    Users,
-    Loader2,
-    Building2,
-} from "lucide-react";
+import { PlusCircle, Search, Clock, Users, Loader2, Building2 } from "lucide-react";
 
 interface TenderItem {
     id: string;
@@ -50,7 +43,7 @@ export default function TendersPage() {
                         (o: any) =>
                             o.memberStatus === "ACTIVE" &&
                             (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
-                            (o.isVerified || o.verificationStatus === "APPROVED")
+                            (o.isVerified || o.verificationStatus === "APPROVED"),
                     );
                     setCanCreateTender(eligible);
                 })
@@ -68,7 +61,7 @@ export default function TendersPage() {
             .then((json) => {
                 const data = json.data || json; // fallback for backwards compatibility
                 const meta = json.meta || { totalPages: 1 };
-                
+
                 const mapped: TenderItem[] = data.map((t: any) => ({
                     id: t.id,
                     code: t.code,
@@ -80,9 +73,9 @@ export default function TendersPage() {
                     status: t.status,
                     commitDeadline: t.commitDeadline,
                     revealWindowHours: t.revealWindowHours,
-                    participantCount: t.participants?.length || 0,
-                    sealedBidsCount: t.bids?.length || 0,
-                    participantOrgIds: t.participants?.map((p: any) => p.organizationId) || [],
+                    participantCount: t.participantOrgIds?.length || 0,
+                    sealedBidsCount: t.bidCount || 0,
+                    participantOrgIds: t.participantOrgIds || [],
                 }));
                 setTenders(mapped);
                 setTotalPages(meta.totalPages || 1);

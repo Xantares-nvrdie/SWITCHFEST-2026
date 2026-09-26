@@ -1,5 +1,15 @@
 import { db } from "@/db";
-import { tenderCriteria, tenderFields, tenders, bidScores, tenderResults, blockchainTransactions, tenderParticipants, organizationMembers, bids } from "@/db/schema";
+import {
+    tenderCriteria,
+    tenderFields,
+    tenders,
+    bidScores,
+    tenderResults,
+    blockchainTransactions,
+    tenderParticipants,
+    organizationMembers,
+    bids,
+} from "@/db/schema";
 import { eq, sql } from "drizzle-orm";
 import type { TenderModel } from "./model";
 import { contract } from "@/lib/web3";
@@ -7,7 +17,6 @@ import { NotificationService } from "../notifications/service";
 
 export abstract class TenderService {
     static async create(data: TenderModel.createInput & { createdBy: string }) {
-
         const tenderId = crypto.randomUUID();
         const now = new Date();
         const commitDeadlineDate = new Date(data.commitDeadline);
@@ -44,7 +53,7 @@ export abstract class TenderService {
         if (data.description !== undefined) updatePayload.description = data.description;
         if (data.category !== undefined) updatePayload.category = data.category;
         if (data.attachments !== undefined) updatePayload.attachments = data.attachments;
-        
+
         let newCommitDeadline = tender.commitDeadline;
         if (data.commitDeadline !== undefined) {
             newCommitDeadline = new Date(data.commitDeadline);
@@ -125,31 +134,38 @@ export abstract class TenderService {
 
                     // Fetch all users belonging to organizations that have submitted a bid OR joined as participant
                     const [bidMembers, participantMembers] = await Promise.all([
-                        db.select({ userId: organizationMembers.userId })
+                        db
+                            .select({ userId: organizationMembers.userId })
                             .from(bids)
                             .innerJoin(organizationMembers, eq(bids.organizationId, organizationMembers.organizationId))
                             .where(eq(bids.tenderId, tender.id)),
-                        db.select({ userId: organizationMembers.userId })
+                        db
+                            .select({ userId: organizationMembers.userId })
                             .from(tenderParticipants)
-                            .innerJoin(organizationMembers, eq(tenderParticipants.organizationId, organizationMembers.organizationId))
-                            .where(eq(tenderParticipants.tenderId, tender.id))
+                            .innerJoin(
+                                organizationMembers,
+                                eq(tenderParticipants.organizationId, organizationMembers.organizationId),
+                            )
+                            .where(eq(tenderParticipants.tenderId, tender.id)),
                     ]);
-                    
+
                     // Remove duplicate user IDs
-                    const uniqueUserIds = [...new Set([...bidMembers, ...participantMembers].map(m => m.userId))];
-                    
+                    const uniqueUserIds = [...new Set([...bidMembers, ...participantMembers].map((m) => m.userId))];
+
                     if (uniqueUserIds.length > 0) {
-                        const notificationsPayload = uniqueUserIds.map(userId => ({
+                        const notificationsPayload = uniqueUserIds.map((userId) => ({
                             userId: userId,
                             title: "Fase Reveal Dimulai!",
                             message: `Waktu commit untuk tender "${tender.title}" telah berakhir. Segera lakukan Dekripsi (Reveal) penawaran Anda sebelum Reveal Deadline berakhir!`,
                             type: "INFO" as const,
-                            link: `/tenders/${tender.id}`
+                            link: `/tenders/${tender.id}`,
                         }));
                         await NotificationService.createMany(notificationsPayload);
-                        console.log(`[BulkUpdate] Sent reveal notification to ${uniqueUserIds.length} user(s) for tender ${tender.id}`);
+                        console.log(
+                            `[BulkUpdate] Sent reveal notification to ${uniqueUserIds.length} user(s) for tender ${tender.id}`,
+                        );
                     }
-                    
+
                     // Notifikasi juga untuk panitia pembuat tender
                     if (creatorId) {
                         await NotificationService.create({
@@ -157,9 +173,11 @@ export abstract class TenderService {
                             title: "Fase Reveal Dimulai",
                             message: `Waktu pengumpulan (commit) untuk tender "${tender.title}" telah berakhir. Saat ini vendor sedang melakukan dekripsi penawaran mereka.`,
                             type: "INFO",
-                            link: `/tenders/${tender.id}`
+                            link: `/tenders/${tender.id}`,
                         });
-                        console.log(`[BulkUpdate] Sent reveal notification to creator ${creatorId} for tender ${tender.id}`);
+                        console.log(
+                            `[BulkUpdate] Sent reveal notification to creator ${creatorId} for tender ${tender.id}`,
+                        );
                     }
                 }
             }
@@ -183,9 +201,11 @@ export abstract class TenderService {
                             title: "Fase Scoring Terbuka",
                             message: `Waktu reveal untuk tender "${tender.title}" telah berakhir. Anda sekarang dapat mulai memberikan penilaian (Scoring) kepada para vendor yang sah.`,
                             type: "INFO",
-                            link: `/tenders/${tender.id}`
+                            link: `/tenders/${tender.id}`,
                         });
-                        console.log(`[BulkUpdate] Sent scoring notification to creator ${creatorId} for tender ${tender.id}`);
+                        console.log(
+                            `[BulkUpdate] Sent scoring notification to creator ${creatorId} for tender ${tender.id}`,
+                        );
                     }
                 }
             }
@@ -196,19 +216,21 @@ export abstract class TenderService {
         }
     }
 
-    private static evaluateStatusInMemory<T extends { status: string, commitDeadline: Date | string, revealDeadline: Date | string | null }>(tender: T): T {
+    private static evaluateStatusInMemory<
+        T extends { status: string; commitDeadline: Date | string; revealDeadline: Date | string | null },
+    >(tender: T): T {
         if (!tender) return tender;
         const now = new Date();
         const commitDate = new Date(tender.commitDeadline);
         const revealDate = tender.revealDeadline ? new Date(tender.revealDeadline) : null;
-        
+
         let newStatus = tender.status;
         if (tender.status === "OPEN" && commitDate < now) {
             newStatus = "REVEAL";
         } else if (tender.status === "REVEAL" && revealDate && revealDate < now) {
             newStatus = "SCORING";
         }
-        
+
         if (newStatus !== tender.status) {
             return { ...tender, status: newStatus };
         }
@@ -216,12 +238,10 @@ export abstract class TenderService {
     }
 
     static async getAll(page = 1, limit = 20) {
-        // Fire and forget bulk updates to prevent pool starvation
-        TenderService.performBulkStatusUpdates().catch(console.error);
-
         const offset = (page - 1) * limit;
 
-        const results = await db.execute(sql`
+        const [results, countResult] = await Promise.all([
+            db.execute(sql`
             SELECT 
                 t.id, t.code, t.title, t.description, t.category, t.status, 
                 t.commit_deadline as "commitDeadline", t.reveal_deadline as "revealDeadline", 
@@ -229,26 +249,26 @@ export abstract class TenderService {
                 t.organization_id as "organizationId",
                 json_build_object('id', o.id, 'name', o.name) as organization,
                 COALESCE((
-                    SELECT json_agg(json_build_object('organizationId', p.organization_id)) 
+                    SELECT array_agg(p.organization_id)
                     FROM tender_participants p 
                     WHERE p.tender_id = t.id
-                ), '[]'::json) as participants,
-                COALESCE((
-                    SELECT json_agg(json_build_object('id', b.id)) 
+                ), ARRAY[]::text[]) as "participantOrgIds",
+                (
+                    SELECT count(*)::int
                     FROM bids b 
                     WHERE b.tender_id = t.id
-                ), '[]'::json) as bids
+                ) as "bidCount"
             FROM tenders t
             LEFT JOIN organizations o ON t.organization_id = o.id
             ORDER BY t.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
-        `);
-        
-        const countResult = await db.execute(sql`SELECT count(*) from tenders`);
+            `),
+            db.execute(sql`SELECT count(*) FROM tenders`),
+        ]);
+
         const rowsCount = (countResult as any).rows || countResult;
         const total = parseInt(rowsCount[0]?.count || "0", 10);
 
-        // node-postgres returns rows array
         const rows = (results as any).rows || results;
         const mappedData = rows.map((t: any) => TenderService.evaluateStatusInMemory(t));
 
@@ -258,8 +278,8 @@ export abstract class TenderService {
                 page,
                 limit,
                 total,
-                totalPages: Math.ceil(total / limit)
-            }
+                totalPages: Math.ceil(total / limit),
+            },
         };
     }
 
@@ -273,9 +293,7 @@ export abstract class TenderService {
         });
 
         if (!tender) return null;
-        
-        // Ensure accurate status
-        await TenderService.performBulkStatusUpdates().catch(console.error);
+
         tender = TenderService.evaluateStatusInMemory(tender as any);
 
         const [fields, criteria, participants] = await Promise.all([
@@ -290,7 +308,7 @@ export abstract class TenderService {
                 with: {
                     organization: true,
                 },
-            })
+            }),
         ]);
 
         return {
@@ -316,16 +334,24 @@ export abstract class TenderService {
                 try {
                     const { provider, relayerWallet, contract } = await import("@/lib/web3");
                     const nonce = await provider.getTransactionCount(relayerWallet.address, "latest");
-                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000), { nonce });
+                    const tx = await contract.createTender(id, Math.floor(tender.commitDeadline.getTime() / 1000), {
+                        nonce,
+                    });
                     // Fire and forget mining wait
                     tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
                 } catch (err: any) {
-                    if (err.reason === "Tender already exists" || (err.message && err.message.includes("Tender already exists"))) {
+                    if (
+                        err.reason === "Tender already exists" ||
+                        (err.message && err.message.includes("Tender already exists"))
+                    ) {
                         console.warn("Tender already exists on blockchain, continuing with status update.");
                     } else {
                         console.error("Failed to create tender on smart contract:", err);
                         console.error("Error details:", err.message, err.stack);
-                        throw new Error("Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik. Detail: " + (err.message || ""));
+                        throw new Error(
+                            "Gagal mendaftarkan tender ke Blockchain. Pastikan koneksi Hardhat Node berjalan dengan baik. Detail: " +
+                                (err.message || ""),
+                        );
                     }
                 }
             }
@@ -341,23 +367,23 @@ export abstract class TenderService {
         if (status === "REVEAL") {
             const tenderInfo = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
             const allBids = await db.query.bids.findMany({
-                where: (b, { eq }) => eq(b.tenderId, id)
+                where: (b, { eq }) => eq(b.tenderId, id),
             });
-            
-            const orgIds = allBids.map(b => b.organizationId);
+
+            const orgIds = allBids.map((b) => b.organizationId);
             if (orgIds.length > 0) {
                 const members = await db.query.organizationMembers.findMany({
-                    where: (m, { inArray, eq, and }) => and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE"))
+                    where: (m, { inArray, eq, and }) => and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE")),
                 });
-                
-                const notificationsPayload = members.map(member => ({
+
+                const notificationsPayload = members.map((member) => ({
                     userId: member.userId,
                     title: "Fase Reveal Dibuka!",
                     message: `Tender ${tenderInfo?.code} telah memasuki fase REVEAL. Segera decrypt dokumen penawaran Anda!`,
                     type: "INFO" as const,
-                    link: `/tenders/${id}`
+                    link: `/tenders/${id}`,
                 }));
-                
+
                 await NotificationService.createMany(notificationsPayload);
             }
         }
@@ -437,9 +463,15 @@ export abstract class TenderService {
             // B. Send Final Result to Smart Contract
             let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
             try {
-                const winningBid = await db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, payload.winningBidId) });
+                const winningBid = await db.query.bids.findFirst({
+                    where: (b, { eq }) => eq(b.id, payload.winningBidId),
+                });
                 if (winningBid) {
-                    const scTx = await contract.finalizeTender(tenderId, winningBid.organizationId, payload.finalScore.toString());
+                    const scTx = await contract.finalizeTender(
+                        tenderId,
+                        winningBid.organizationId,
+                        payload.finalScore.toString(),
+                    );
                     const receipt = await scTx.wait();
                     txHash = receipt.hash;
                 }
@@ -472,35 +504,39 @@ export abstract class TenderService {
                 metadata: {
                     action: "finalize",
                     winningBidId: payload.winningBidId,
-                    finalScore: payload.finalScore
+                    finalScore: payload.finalScore,
                 },
                 createdAt: now,
             });
 
             // D. Update Tender Status
-            await tx.update(tenders).set({
-                status: "COMPLETED",
-                completedAt: now,
-                updatedAt: now,
-            }).where(eq(tenders.id, tenderId));
+            await tx
+                .update(tenders)
+                .set({
+                    status: "COMPLETED",
+                    completedAt: now,
+                    updatedAt: now,
+                })
+                .where(eq(tenders.id, tenderId));
         });
 
         // E. Send Notifications
         try {
-            const bidIds = payload.bids.map(b => b.bidId);
+            const bidIds = payload.bids.map((b) => b.bidId);
             if (bidIds.length > 0) {
                 const allBids = await db.query.bids.findMany({
-                    where: (b, { inArray }) => inArray(b.id, bidIds)
+                    where: (b, { inArray }) => inArray(b.id, bidIds),
                 });
-                const orgIds = allBids.map(b => b.organizationId);
-                
+                const orgIds = allBids.map((b) => b.organizationId);
+
                 if (orgIds.length > 0) {
                     const members = await db.query.organizationMembers.findMany({
-                        where: (m, { inArray, eq, and }) => and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE"))
+                        where: (m, { inArray, eq, and }) =>
+                            and(inArray(m.organizationId, orgIds), eq(m.status, "ACTIVE")),
                     });
-                    
+
                     const orgToMembers = new Map<string, typeof members>();
-                    members.forEach(m => {
+                    members.forEach((m) => {
                         if (!orgToMembers.has(m.organizationId)) orgToMembers.set(m.organizationId, []);
                         orgToMembers.get(m.organizationId)!.push(m);
                     });
@@ -513,11 +549,11 @@ export abstract class TenderService {
                             notificationsPayload.push({
                                 userId: member.userId,
                                 title: isWinner ? "Selamat! Anda Memenangkan Tender" : "Pengumuman Hasil Tender",
-                                message: isWinner 
+                                message: isWinner
                                     ? `Organisasi Anda terpilih sebagai pemenang untuk tender ${tender.code} dengan skor akhir ${payload.finalScore}.`
                                     : `Tender ${tender.code} telah selesai. Sayang sekali, organisasi Anda belum berhasil kali ini.`,
                                 type: (isWinner ? "SUCCESS" : "INFO") as "SUCCESS" | "INFO",
-                                link: `/tenders/${tenderId}`
+                                link: `/tenders/${tenderId}`,
                             });
                         }
                     }
@@ -547,20 +583,20 @@ export abstract class TenderService {
                 with: {
                     organization: true,
                     reveal: true,
-                }
-            })
+                },
+            }),
         ]);
 
         if (!tender || tender.status !== "COMPLETED") {
             throw new Error("Tender is not completed yet or not found");
         }
 
-        const bidIds = allBids.map(b => b.id);
-        
+        const bidIds = allBids.map((b) => b.id);
+
         let allScores: any[] = [];
         if (bidIds.length > 0) {
             allScores = await db.query.bidScores.findMany({
-                where: (s, { inArray }) => inArray(s.bidId, bidIds)
+                where: (s, { inArray }) => inArray(s.bidId, bidIds),
             });
         }
 
@@ -569,7 +605,7 @@ export abstract class TenderService {
             result,
             transaction: tx,
             bids: allBids,
-            scores: allScores
+            scores: allScores,
         };
     }
 }

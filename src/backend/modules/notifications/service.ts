@@ -1,8 +1,17 @@
 import { db } from "@/db";
 import { notifications } from "@/db/schema";
-import { desc, eq, and } from "drizzle-orm";
+import { desc, eq, and, sql } from "drizzle-orm";
 
 export class NotificationService {
+    static async getUnreadCount(userId: string) {
+        const [result] = await db
+            .select({ count: sql<number>`count(*)::int` })
+            .from(notifications)
+            .where(and(eq(notifications.userId, userId), eq(notifications.isRead, false)));
+
+        return result?.count ?? 0;
+    }
+
     static async getUserNotifications(userId: string) {
         return await db
             .select()
@@ -13,25 +22,25 @@ export class NotificationService {
     }
 
     static async markAsRead(notificationId: string, userId: string) {
-        await db.update(notifications)
+        await db
+            .update(notifications)
             .set({ isRead: true })
-            .where(
-                and(
-                    eq(notifications.id, notificationId),
-                    eq(notifications.userId, userId)
-                )
-            );
+            .where(and(eq(notifications.id, notificationId), eq(notifications.userId, userId)));
         return { success: true };
     }
 
     static async markAllAsRead(userId: string) {
-        await db.update(notifications)
-            .set({ isRead: true })
-            .where(eq(notifications.userId, userId));
+        await db.update(notifications).set({ isRead: true }).where(eq(notifications.userId, userId));
         return { success: true };
     }
 
-    static async create(data: { userId: string, title: string, message: string, type: "INFO" | "SUCCESS" | "WARNING", link?: string }) {
+    static async create(data: {
+        userId: string;
+        title: string;
+        message: string;
+        type: "INFO" | "SUCCESS" | "WARNING";
+        link?: string;
+    }) {
         const id = crypto.randomUUID();
         await db.insert(notifications).values({
             id,
@@ -45,10 +54,18 @@ export class NotificationService {
         return { id };
     }
 
-    static async createMany(data: Array<{ userId: string, title: string, message: string, type: "INFO" | "SUCCESS" | "WARNING", link?: string }>) {
+    static async createMany(
+        data: Array<{
+            userId: string;
+            title: string;
+            message: string;
+            type: "INFO" | "SUCCESS" | "WARNING";
+            link?: string;
+        }>,
+    ) {
         if (data.length === 0) return { count: 0 };
         const now = new Date();
-        const payload = data.map(item => ({
+        const payload = data.map((item) => ({
             id: crypto.randomUUID(),
             userId: item.userId,
             title: item.title,
