@@ -37,7 +37,8 @@ import {
     RefreshCw,
     FileText,
     FileUp,
-    Edit3
+    Edit3,
+    Trash2
 } from "lucide-react";
 
 interface TenderData {
@@ -78,7 +79,7 @@ export default function TenderDetailPage() {
 
     // Edit Tender State
     const [isEditingTender, setIsEditingTender] = useState(false);
-    const [editTenderData, setEditTenderData] = useState<Partial<TenderData>>({});
+    const [editTenderData, setEditTenderData] = useState<any>({});
     const [isSavingTender, setIsSavingTender] = useState(false);
 
     // Vendor Organization Selection
@@ -152,11 +153,43 @@ export default function TenderDetailPage() {
         setIsSavingTender(true);
         try {
             const payload: any = { ...editTenderData };
-            // Ensure commitDeadline is a full ISO string (or combined with time if using datetime-local)
+            
+            // Upload new attachments
+            if (payload.attachments && Array.isArray(payload.attachments)) {
+                const finalAttachments = [];
+                for (const att of payload.attachments) {
+                    if (att.file) {
+                        const fileExt = att.file.name.split('.').pop();
+                        const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
+                        const { data, error } = await supabase.storage
+                            .from("attachments")
+                            .upload(`tenders/${fileName}`, att.file);
+                        
+                        if (error) {
+                            console.error("Gagal mengunggah file:", error);
+                            continue;
+                        }
+                        const { data: { publicUrl } } = supabase.storage
+                            .from("attachments")
+                            .getPublicUrl(`tenders/${fileName}`);
+                        
+                        finalAttachments.push({ name: att.name, url: publicUrl });
+                    } else {
+                        finalAttachments.push({ name: att.name, url: att.url });
+                    }
+                }
+                payload.attachments = finalAttachments;
+            }
+
+            // Ensure commitDeadline is a full ISO string
             if (payload.commitDeadline) {
                 payload.commitDeadline = new Date(payload.commitDeadline).toISOString();
             }
-            if (payload.revealWindowHours) {
+            if (payload.revealDeadline) {
+                const diffMs = new Date(payload.revealDeadline).getTime() - new Date(payload.commitDeadline || tender?.commitDeadline || Date.now()).getTime();
+                payload.revealWindowHours = Math.max(1, Math.round(diffMs / (1000 * 60 * 60)));
+                delete payload.revealDeadline;
+            } else if (payload.revealWindowHours) {
                 payload.revealWindowHours = Number(payload.revealWindowHours);
             }
 
@@ -709,21 +742,25 @@ export default function TenderDetailPage() {
                                 </button>
                                 <button
                                     onClick={() => {
-                                        // Set initial values for the form, mapping date to YYYY-MM-DDThh:mm format for datetime-local
-                                        let localDeadline = "";
+                                        let localCommit = "";
+                                        let localReveal = "";
                                         if (tender.commitDeadline) {
                                             const d = new Date(tender.commitDeadline);
-                                            // To local string in ISO format for input
                                             const offset = d.getTimezoneOffset() * 60000;
-                                            localDeadline = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+                                            localCommit = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+                                        }
+                                        if (tender.revealDeadline) {
+                                            const d = new Date(tender.revealDeadline);
+                                            const offset = d.getTimezoneOffset() * 60000;
+                                            localReveal = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
                                         }
                                         setEditTenderData({
                                             title: tender.title,
                                             description: tender.description,
                                             category: tender.category,
-                                            commitDeadline: localDeadline,
-                                            revealWindowHours: tender.revealDeadline ? 
-                                                Math.round((new Date(tender.revealDeadline).getTime() - new Date(tender.commitDeadline).getTime()) / (60*60*1000)) : 48
+                                            commitDeadline: localCommit,
+                                            revealDeadline: localReveal,
+                                            attachments: tender.attachments ? [...tender.attachments] : []
                                         });
                                         setIsEditingTender(true);
                                     }}
@@ -1414,12 +1451,39 @@ export default function TenderDetailPage() {
                                 <input type="datetime-local" value={editTenderData.commitDeadline || ""} onChange={e => setEditTenderData({ ...editTenderData, commitDeadline: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Durasi Waktu Ungkap (Reveal Window dalam Jam)</label>
-                                <input type="number" min="1" value={editTenderData.revealWindowHours || 48} onChange={e => setEditTenderData({ ...editTenderData, revealWindowHours: Number(e.target.value) })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Batas Waktu Buka Penawaran (Reveal Deadline)</label>
+                                <input type="datetime-local" value={editTenderData.revealDeadline || ""} onChange={e => setEditTenderData({ ...editTenderData, revealDeadline: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Deskripsi</label>
                                 <textarea rows={4} value={editTenderData.description || ""} onChange={e => setEditTenderData({ ...editTenderData, description: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] resize-none" />
+                            </div>
+                            <div className="space-y-2 pt-2 border-t border-[var(--border)]">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Lampiran Dokumen</label>
+                                <div className="space-y-2">
+                                    {editTenderData.attachments?.map((att: any, idx: number) => (
+                                        <div key={idx} className="flex items-center justify-between px-4 py-2 rounded-xl border border-[var(--border)] bg-[var(--surface)] text-sm">
+                                            <span className="truncate flex-1 text-[var(--text-secondary)]">{att.name}</span>
+                                            <button type="button" onClick={() => {
+                                                const newAtt = [...editTenderData.attachments];
+                                                newAtt.splice(idx, 1);
+                                                setEditTenderData({ ...editTenderData, attachments: newAtt });
+                                            }} className="text-red-500 hover:text-red-700 p-1"><Trash2 className="w-4 h-4" /></button>
+                                        </div>
+                                    ))}
+                                    <label className="flex items-center justify-center gap-2 px-4 py-3 border border-dashed border-[var(--border-strong)] rounded-xl bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:bg-[var(--surface)] hover:text-[var(--accent)] hover:border-[var(--accent)] transition-colors cursor-pointer text-sm">
+                                        <FileUp className="w-4 h-4" />
+                                        <span>Pilih File PDF/DOC</span>
+                                        <input type="file" className="hidden" accept=".pdf,.doc,.docx,.xls,.xlsx" onChange={(e) => {
+                                            if (e.target.files && e.target.files[0]) {
+                                                const file = e.target.files[0];
+                                                const atts = editTenderData.attachments || [];
+                                                setEditTenderData({ ...editTenderData, attachments: [...atts, { name: file.name, url: "", file }] });
+                                            }
+                                            e.target.value = "";
+                                        }} />
+                                    </label>
+                                </div>
                             </div>
                         </div>
                         <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3 bg-[var(--surface)]">

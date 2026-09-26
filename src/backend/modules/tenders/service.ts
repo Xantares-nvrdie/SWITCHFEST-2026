@@ -43,6 +43,7 @@ export abstract class TenderService {
         if (data.title !== undefined) updatePayload.title = data.title;
         if (data.description !== undefined) updatePayload.description = data.description;
         if (data.category !== undefined) updatePayload.category = data.category;
+        if (data.attachments !== undefined) updatePayload.attachments = data.attachments;
         
         let newCommitDeadline = tender.commitDeadline;
         if (data.commitDeadline !== undefined) {
