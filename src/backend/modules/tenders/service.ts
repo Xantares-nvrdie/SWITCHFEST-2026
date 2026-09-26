@@ -34,6 +34,36 @@ export abstract class TenderService {
         return { id: tenderId };
     }
 
+    static async update(id: string, data: TenderModel.updateInput) {
+        const tender = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, id) });
+        if (!tender) throw new Error("Tender not found");
+        if (tender.status !== "DRAFT") throw new Error("Only tenders in DRAFT status can be updated");
+
+        const updatePayload: any = { updatedAt: new Date() };
+        if (data.title !== undefined) updatePayload.title = data.title;
+        if (data.description !== undefined) updatePayload.description = data.description;
+        if (data.category !== undefined) updatePayload.category = data.category;
+        
+        let newCommitDeadline = tender.commitDeadline;
+        if (data.commitDeadline !== undefined) {
+            newCommitDeadline = new Date(data.commitDeadline);
+            updatePayload.commitDeadline = newCommitDeadline;
+        }
+
+        let newRevealWindow = tender.revealWindowHours;
+        if (data.revealWindowHours !== undefined) {
+            newRevealWindow = data.revealWindowHours;
+            updatePayload.revealWindowHours = newRevealWindow;
+        }
+
+        if (data.commitDeadline !== undefined || data.revealWindowHours !== undefined) {
+            updatePayload.revealDeadline = new Date(newCommitDeadline.getTime() + newRevealWindow * 60 * 60 * 1000);
+        }
+
+        await db.update(tenders).set(updatePayload).where(eq(tenders.id, id));
+        return { id };
+    }
+
     static isBulkUpdating = false;
 
     static async performBulkStatusUpdates() {

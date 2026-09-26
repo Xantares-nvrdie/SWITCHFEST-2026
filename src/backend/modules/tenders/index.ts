@@ -111,6 +111,61 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
         },
     )
 
+    // ── Update Tender (Requires Officer / Admin of Tender Org, and DRAFT status) ──
+    .patch(
+        "/:id",
+        async ({ params, body, user, set }) => {
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
+
+            const tender = await db.query.tenders.findFirst({
+                where: (t, { eq }) => eq(t.id, params.id),
+            });
+
+            if (!tender) {
+                set.status = 404;
+                return { message: "Tender not found" };
+            }
+
+            const member = await db.query.organizationMembers.findFirst({
+                where: (m, { eq, and }) =>
+                    and(eq(m.organizationId, tender.organizationId), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
+            });
+
+            if (!member || (member.role !== "PROCUREMENT_OFFICER" && member.role !== "ORGANIZATION_ADMIN")) {
+                set.status = 403;
+                return { message: "Forbidden: Only Procurement Officers or Admins of this tender's organization can update it" };
+            }
+
+            try {
+                await TenderService.update(params.id, body);
+                
+                await AuditLogService.create({
+                    tenderId: params.id,
+                    organizationId: tender.organizationId,
+                    userId: user.id,
+                    action: "UPDATE_TENDER",
+                    description: `Data tender diperbarui`,
+                });
+                
+                return { message: "Tender updated successfully" };
+            } catch (err: any) {
+                set.status = 400;
+                return { message: err.message };
+            }
+        },
+        {
+            body: TenderModel.updateBody,
+            detail: {
+                summary: "Update tender",
+                description: "Mengubah informasi tender yang masih dalam status DRAFT.",
+                tags: ["Tenders"],
+            },
+        }
+    )
+
     // ── Update Status (Requires Officer / Admin of Tender Org) ────────────────
     .patch(
         "/:id/status",

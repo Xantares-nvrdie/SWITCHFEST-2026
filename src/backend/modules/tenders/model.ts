@@ -12,6 +12,13 @@ export namespace TenderModel {
         commitDeadline: t.String({ description: "ISO 8601 Timestamp string" }),
         revealWindowHours: t.Optional(t.Number({ default: 48 })),
     });
+    export const updateBody = t.Object({
+        title: t.Optional(t.String({ minLength: 3 })),
+        description: t.Optional(t.String()),
+        category: t.Optional(t.String()),
+        commitDeadline: t.Optional(t.String({ description: "ISO 8601 Timestamp string" })),
+        revealWindowHours: t.Optional(t.Number({ minimum: 1 })),
+    });
 
 
     export const updateStatusBody = t.Object({
@@ -67,6 +74,7 @@ export namespace TenderModel {
     });
 
     export type createInput = typeof createBody.static;
+    export type updateInput = typeof updateBody.static;
     export type updateStatusInput = typeof updateStatusBody.static;
     export type addFieldInput = typeof addFieldBody.static;
     export type addCriterionInput = typeof addCriterionBody.static;

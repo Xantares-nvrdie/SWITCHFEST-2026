@@ -74,6 +74,12 @@ export default function TenderDetailPage() {
 
     const [tender, setTender] = useState<TenderData | null>(null);
     const [loading, setLoading] = useState(true);
+
+    // Edit Tender State
+    const [isEditingTender, setIsEditingTender] = useState(false);
+    const [editTenderData, setEditTenderData] = useState<Partial<TenderData>>({});
+    const [isSavingTender, setIsSavingTender] = useState(false);
+
     // Vendor Organization Selection
     const [userOrgs, setUserOrgs] = useState<OrgOption[]>([]);
     const [selectedOrgId, setSelectedOrgId] = useState<string>("");
@@ -140,6 +146,38 @@ export default function TenderDetailPage() {
             localStorage.setItem(`tenderseal_draft_scores_${tenderId}`, JSON.stringify(manualScores));
         }
     }, [manualScores, tenderId]);
+
+    const handleSaveEditTender = async () => {
+        setIsSavingTender(true);
+        try {
+            const payload: any = { ...editTenderData };
+            // Ensure commitDeadline is a full ISO string (or combined with time if using datetime-local)
+            if (payload.commitDeadline) {
+                payload.commitDeadline = new Date(payload.commitDeadline).toISOString();
+            }
+            if (payload.revealWindowHours) {
+                payload.revealWindowHours = Number(payload.revealWindowHours);
+            }
+
+            const res = await fetch(`/api/tenders/${tenderId}`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify(payload)
+            });
+            if (res.ok) {
+                alert("Tender berhasil diperbarui!");
+                setIsEditingTender(false);
+                fetchData();
+            } else {
+                const err = await res.json();
+                alert(err.message || "Gagal memperbarui tender");
+            }
+        } catch (e: any) {
+            alert("Error: " + e.message);
+        } finally {
+            setIsSavingTender(false);
+        }
+    };
 
     const handleManualScoreChange = (bidId: string, criteriaId: string, val: string, maxScore: number) => {
         let num = Number(val);
@@ -666,9 +704,33 @@ export default function TenderDetailPage() {
                                     }}
                                     className="px-4 py-2 bg-[var(--text-primary)] hover:opacity-90 text-white text-xs font-bold rounded-lg transition-all flex items-center gap-2"
                                 >
-                                    <ShieldCheck className="w-4 h-4" /> Publikasikan ke Blockchain (Set OPEN)
+                                    <ShieldCheck className="w-4 h-4" /> Publikasikan (Set OPEN)
                                 </button>
-                                <span className="text-[10px] text-[var(--text-tertiary)] max-w-xs">Setelah dipublikasikan, tender tidak dapat diubah dan vendor dapat mulai mengirim Sealed Bid.</span>
+                                <button
+                                    onClick={() => {
+                                        // Set initial values for the form, mapping date to YYYY-MM-DDThh:mm format for datetime-local
+                                        let localDeadline = "";
+                                        if (tender.commitDeadline) {
+                                            const d = new Date(tender.commitDeadline);
+                                            // To local string in ISO format for input
+                                            const offset = d.getTimezoneOffset() * 60000;
+                                            localDeadline = (new Date(d.getTime() - offset)).toISOString().slice(0, 16);
+                                        }
+                                        setEditTenderData({
+                                            title: tender.title,
+                                            description: tender.description,
+                                            category: tender.category,
+                                            commitDeadline: localDeadline,
+                                            revealWindowHours: tender.revealDeadline ? 
+                                                Math.round((new Date(tender.revealDeadline).getTime() - new Date(tender.commitDeadline).getTime()) / (60*60*1000)) : 48
+                                        });
+                                        setIsEditingTender(true);
+                                    }}
+                                    className="px-4 py-2 bg-[var(--surface-secondary)] hover:bg-[var(--border)] text-[var(--text-primary)] text-xs font-bold rounded-lg transition-all flex items-center gap-2"
+                                >
+                                    <Edit3 className="w-4 h-4" /> Edit Detail
+                                </button>
+                                <span className="text-[10px] text-[var(--text-tertiary)] max-w-xs">Setelah dipublikasikan, tender tidak dapat diubah lagi.</span>
                             </div>
                         )}
                     </div>
@@ -1324,6 +1386,50 @@ export default function TenderDetailPage() {
                             <p className="text-[var(--text-tertiary)]">Gagal memuat data audit.</p>
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Edit Tender Modal */}
+            {isEditingTender && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-white rounded-2xl w-full max-w-lg shadow-2xl overflow-hidden flex flex-col max-h-[90vh]">
+                        <div className="p-5 border-b border-[var(--border)] flex justify-between items-center bg-[var(--surface)]">
+                            <h3 className="font-bold text-[var(--text-primary)]">Edit Detail Tender</h3>
+                            <button onClick={() => setIsEditingTender(false)} className="text-[var(--text-tertiary)] hover:text-[var(--text-primary)]">
+                                &times;
+                            </button>
+                        </div>
+                        <div className="p-6 overflow-y-auto space-y-4">
+                            <div className="space-y-1.5">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Judul Tender</label>
+                                <input type="text" value={editTenderData.title || ""} onChange={e => setEditTenderData({ ...editTenderData, title: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Kategori</label>
+                                <input type="text" value={editTenderData.category || ""} onChange={e => setEditTenderData({ ...editTenderData, category: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Batas Waktu Pengumpulan (Commit Deadline)</label>
+                                <input type="datetime-local" value={editTenderData.commitDeadline || ""} onChange={e => setEditTenderData({ ...editTenderData, commitDeadline: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Durasi Waktu Ungkap (Reveal Window dalam Jam)</label>
+                                <input type="number" min="1" value={editTenderData.revealWindowHours || 48} onChange={e => setEditTenderData({ ...editTenderData, revealWindowHours: Number(e.target.value) })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)]" />
+                            </div>
+                            <div className="space-y-1.5">
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Deskripsi</label>
+                                <textarea rows={4} value={editTenderData.description || ""} onChange={e => setEditTenderData({ ...editTenderData, description: e.target.value })} className="w-full text-[13px] bg-[var(--surface-secondary)] border border-[var(--border)] px-4 py-2.5 rounded-xl focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/50 focus:border-[var(--accent)] resize-none" />
+                            </div>
+                        </div>
+                        <div className="p-5 border-t border-[var(--border)] flex justify-end gap-3 bg-[var(--surface)]">
+                            <button onClick={() => setIsEditingTender(false)} className="px-4 py-2 text-[13px] font-semibold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] rounded-lg">
+                                Batal
+                            </button>
+                            <button onClick={handleSaveEditTender} disabled={isSavingTender} className="px-5 py-2 text-[13px] font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 rounded-lg flex items-center gap-2">
+                                {isSavingTender ? <RefreshCw className="w-4 h-4 animate-spin" /> : <Save className="w-4 h-4" />} Simpan
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </div>
