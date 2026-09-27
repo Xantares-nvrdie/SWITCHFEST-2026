@@ -4,6 +4,7 @@ import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
 import { NotificationBell } from "@/components/NotificationBell";
+import { ThemeToggleButton } from "@/components/ui/skiper-ui/skiper26";
 import { useSession, signOut } from "@/lib/auth-client";
 import {
     FileText,
@@ -123,6 +124,7 @@ export default function Navbar() {
 
                 {/* Kanan: Autentikasi */}
                 <div className="flex items-center gap-4">
+                    <ThemeToggleButton className="!w-8 !h-8 !p-1.5" />
                     {isPending ? (
                         <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
                     ) : session?.user ? (

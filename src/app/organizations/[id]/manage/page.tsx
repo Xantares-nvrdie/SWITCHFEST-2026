@@ -515,7 +515,7 @@ export default function OrgManagePage() {
 
                             <div className="flex items-center gap-3 pt-2">
                                 <button onClick={handleGenerateInvite} disabled={isGenerating}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white disabled:opacity-50 transition-all hover:opacity-90">
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] disabled:opacity-50 transition-all hover:opacity-90">
                                     {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
                                     Generate Kode
                                 </button>
