@@ -50,7 +50,7 @@
         "@types/react": "^19",
         "@types/react-dom": "^19",
         "baseline-browser-mapping": "^2.11.24",
-        "drizzle-kit": "^0.30.5",
+        "drizzle-kit": "0.31.11",
         "tailwindcss": "^4",
         "typescript": "^5"
     }
