@@ -1631,7 +1631,7 @@ export default function TenderDetailPage() {
                                                             Rp {Number(payload[f.key] || 0).toLocaleString("id-ID")}
                                                         </p>
                                                     ) : (
-                                                        <p className="text-sm text-[var(--text-secondary)] whitespace-pre-wrap">
+                                                        <p className="text-sm text-[var(--text-primary)] whitespace-pre-wrap">
                                                             {payload[f.key] || "-"}
                                                         </p>
                                                     )}
