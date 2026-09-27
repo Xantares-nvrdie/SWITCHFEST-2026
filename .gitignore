@@ -12,6 +12,7 @@
 /coverage
 /.nyc_output
 
+
 # next.js & build output
 /.next/
 /out/
@@ -65,3 +66,4 @@ Thumbs.db
 
 # Temporary files
 *.tmp
+src/db/seed.ts
