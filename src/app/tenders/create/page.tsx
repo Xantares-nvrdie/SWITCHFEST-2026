@@ -1328,7 +1328,7 @@ function StepBasicInfo({
                             </div>
                         </div>
                         <p className="text-[11px] text-[var(--text-tertiary)]">
-                            Waktu vendor untuk decrypt dan ungkap penawaran
+                            Waktu vendor untuk decrypt dan ungkap penawaran (Dihitung setelah Batas Akhir Submit)
                         </p>
                     </div>
                 </div>
