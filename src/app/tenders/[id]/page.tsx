@@ -198,7 +198,7 @@ export default function TenderDetailPage() {
                         const fileExt = att.file.name.split(".").pop();
                         const fileName = `${Date.now()}_${Math.random().toString(36).substring(7)}.${fileExt}`;
                         const { data, error } = await supabase.storage
-                            .from("attachments")
+                            .from("tender-public-docs")
                             .upload(`tenders/${fileName}`, att.file);
 
                         if (error) {
@@ -207,7 +207,7 @@ export default function TenderDetailPage() {
                         }
                         const {
                             data: { publicUrl },
-                        } = supabase.storage.from("attachments").getPublicUrl(`tenders/${fileName}`);
+                        } = supabase.storage.from("tender-public-docs").getPublicUrl(`tenders/${fileName}`);
 
                         finalAttachments.push({ name: att.name, url: publicUrl });
                     } else {
