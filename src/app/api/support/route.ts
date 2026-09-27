@@ -4,6 +4,7 @@ import { supportTickets, user, notifications } from "@/db/schema";
 import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { headers } from "next/headers";
+import { randomUUID } from "crypto";
 
 export async function POST(request: Request) {
     try {
@@ -33,7 +34,7 @@ export async function POST(request: Request) {
         const admins = await db.select().from(user).where(eq(user.role, "admin"));
         if (admins.length > 0) {
             const newNotifs = admins.map(admin => ({
-                id: crypto.randomUUID(),
+                id: randomUUID(),
                 userId: admin.id,
                 title: "Tiket Dukungan Baru",
                 message: `Ada tiket baru dari ${fullName} mengenai: ${category}.`,

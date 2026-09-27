@@ -68,7 +68,7 @@ export default function SupportPage() {
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {success && (
                                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm font-medium">
-                                    Tiket bantuan Anda berhasil dikirim! Tim kami akan membalas melalui email Anda
+                                    Tiket bantuan Anda berhasil dikirim! Tim kami akan membalas melalui email Anda atau notifikasi
                                     secepatnya.
                                 </div>
                             )}
