@@ -1123,7 +1123,7 @@ export default function TenderDetailPage() {
                                                             key={f.key}
                                                             className="bg-[var(--surface-secondary)] p-3 rounded-lg border border-[var(--border)] flex flex-col gap-1 shadow-sm"
                                                         >
-                                                            <span className="text-[10px] text-slate-500 font-bold uppercase tracking-wider">
+                                                            <span className="text-[10px] text-[var(--text-tertiary)] font-bold uppercase tracking-wider">
                                                                 {f.name}
                                                             </span>
                                                             {f.type.toLowerCase() === "file" &&
@@ -1142,7 +1142,7 @@ export default function TenderDetailPage() {
                                                                     Terenkripsi
                                                                 </button>
                                                             ) : (
-                                                                <span className="text-xs font-mono text-slate-700 whitespace-pre-wrap">
+                                                                <span className="text-xs font-mono text-[var(--text-primary)] whitespace-pre-wrap">
                                                                     {String(viewResult.decryptedPayload[f.key] || "-")}
                                                                 </span>
                                                             )}
@@ -1428,14 +1428,14 @@ export default function TenderDetailPage() {
                                     </div>
                                     {revealResult.isValid && !!revealResult.decryptedPayload && (
                                         <div className="mt-4 p-4 bg-[var(--surface-secondary)] rounded-xl border border-teal-500/20 flex flex-col gap-4">
-                                            <h4 className="text-xs font-bold text-teal-800 uppercase tracking-wider border-b border-teal-500/20 pb-2 mb-2">
+                                            <h4 className="text-xs font-bold text-[var(--text-primary)] uppercase tracking-wider border-b border-teal-500/20 pb-2 mb-2">
                                                 Isi Penawaran Anda
                                             </h4>
                                             {tender.fields?.map((f: any) => {
                                                 const val = (revealResult.decryptedPayload as any)[f.key];
                                                 return (
                                                     <div key={f.key} className="space-y-1">
-                                                        <span className="text-[10px] font-semibold text-teal-600 uppercase tracking-wider">
+                                                        <span className="text-[10px] font-semibold text-[var(--text-tertiary)] uppercase tracking-wider">
                                                             {f.name}
                                                         </span>
                                                         {f.type.toLowerCase() === "file" ? (
@@ -1452,7 +1452,7 @@ export default function TenderDetailPage() {
                                                                             Dokumen Anda
                                                                         </button>
                                                                     ) : (
-                                                                        <span className="text-xs font-mono text-slate-700 whitespace-pre-wrap">
+                                                                        <span className="text-xs font-mono text-[var(--text-primary)] whitespace-pre-wrap">
                                                                             {String(val || "-")}
                                                                         </span>
                                                                     )
