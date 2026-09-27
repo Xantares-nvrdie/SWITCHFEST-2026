@@ -27,6 +27,45 @@ interface DashboardStats {
     totalBids: number;
 }
 
+const TypewriterText = ({ phrases }: { phrases: string[] }) => {
+    const [currentPhraseIndex, setCurrentPhraseIndex] = useState(0);
+    const [currentText, setCurrentText] = useState("");
+    const [isDeleting, setIsDeleting] = useState(false);
+
+    useEffect(() => {
+        let timeout: NodeJS.Timeout;
+        const currentFullPhrase = phrases[currentPhraseIndex];
+
+        if (!isDeleting) {
+            if (currentText === currentFullPhrase) {
+                timeout = setTimeout(() => setIsDeleting(true), 2000);
+            } else {
+                timeout = setTimeout(() => {
+                    setCurrentText(currentFullPhrase.substring(0, currentText.length + 1));
+                }, 60);
+            }
+        } else {
+            if (currentText === "") {
+                setIsDeleting(false);
+                setCurrentPhraseIndex((prev) => (prev + 1) % phrases.length);
+            } else {
+                timeout = setTimeout(() => {
+                    setCurrentText(currentFullPhrase.substring(0, currentText.length - 1));
+                }, 30);
+            }
+        }
+
+        return () => clearTimeout(timeout);
+    }, [currentText, isDeleting, currentPhraseIndex, phrases]);
+
+    return (
+        <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)] whitespace-nowrap overflow-hidden">
+            {currentText}
+            <span className="animate-pulse">_</span>
+        </span>
+    );
+};
+
 export default function HomePage() {
     const { data: session } = useSession();
     const [loading, setLoading] = useState(true);
@@ -90,12 +129,15 @@ export default function HomePage() {
                             initial="hidden"
                             animate="visible"
                             variants={stagger}
-                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-[var(--border)]"
+                            className="inline-flex items-center gap-2 px-4 py-2 rounded-full glass-panel border border-[var(--border)] min-w-[320px]"
                         >
-                            <div className="w-2 h-2 rounded-full bg-[var(--accent)] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
-                            <span className="text-xs font-semibold uppercase tracking-wider text-[var(--text-secondary)]">
-                                Sistem Aktif & Terlindungi
-                            </span>
+                            <div className="w-2 h-2 shrink-0 rounded-full bg-[var(--accent)] shadow-[0_0_8px_rgba(16,185,129,0.8)]" />
+                            <TypewriterText phrases={[
+                                "Sistem Aktif & Terlindungi",
+                                "Zero-Knowledge Encryption",
+                                "Didukung oleh Blockchain",
+                                "100% Bebas Manipulasi Data"
+                            ]} />
                         </motion.div>
 
                         <motion.h1
