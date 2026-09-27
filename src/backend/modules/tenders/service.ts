@@ -246,8 +246,24 @@ export abstract class TenderService {
         return tender;
     }
 
-    static async getAll(page = 1, limit = 20) {
+    static async getAll(params: { page?: number; limit?: number; search?: string; status?: string; myOrgIds?: string[] }) {
+        const { page = 1, limit = 20, search, status, myOrgIds } = params;
         const offset = (page - 1) * limit;
+
+        const conditions = [];
+        if (search) {
+            conditions.push(sql`(t.title ILIKE ${'%' + search + '%'} OR t.code ILIKE ${'%' + search + '%'} OR o.name ILIKE ${'%' + search + '%'})`);
+        }
+        if (status && status !== 'ALL') {
+            conditions.push(sql`t.status = ${status}`);
+        }
+        if (myOrgIds && myOrgIds.length > 0) {
+            conditions.push(sql`(t.organization_id = ANY(${myOrgIds}) OR EXISTS (SELECT 1 FROM tender_participants p WHERE p.tender_id = t.id AND p.organization_id = ANY(${myOrgIds})))`);
+        }
+
+        const whereClause = conditions.length > 0 
+            ? sql`WHERE ${sql.join(conditions, sql` AND `)}` 
+            : sql``;
 
         const [results, countResult] = await Promise.all([
             db.execute(sql`
@@ -269,10 +285,16 @@ export abstract class TenderService {
                 ) as "bidCount"
             FROM tenders t
             LEFT JOIN organizations o ON t.organization_id = o.id
+            ${whereClause}
             ORDER BY t.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
             `),
-            db.execute(sql`SELECT count(*) FROM tenders`),
+            db.execute(sql`
+            SELECT count(*) 
+            FROM tenders t
+            LEFT JOIN organizations o ON t.organization_id = o.id
+            ${whereClause}
+            `),
         ]);
 
         const rowsCount = (countResult as any).rows || countResult;

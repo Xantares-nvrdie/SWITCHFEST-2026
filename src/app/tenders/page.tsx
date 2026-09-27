@@ -34,6 +34,8 @@ export default function TendersPage() {
     const [page, setPage] = useState(1);
     const [totalPages, setTotalPages] = useState(1);
 
+    const [debouncedSearch, setDebouncedSearch] = useState("");
+
     useEffect(() => {
         if (session?.user) {
             fetch("/api/organizations/me")
@@ -52,9 +54,39 @@ export default function TendersPage() {
         }
     }, [session?.user]);
 
+    // Debounce search query
     useEffect(() => {
+        const handler = setTimeout(() => {
+            setDebouncedSearch(searchQuery);
+        }, 300);
+        return () => clearTimeout(handler);
+    }, [searchQuery]);
+
+    // Reset page to 1 when filters change
+    useEffect(() => {
+        setPage(1);
+    }, [debouncedSearch, statusFilter, activeTab]);
+
+    // Fetch data from backend with filters
+    useEffect(() => {
+        // Wait for myOrgIds if "my" tab is selected
+        if (activeTab === "my" && myOrgIds.length === 0 && session?.user) {
+            // Still loading orgs or user has no orgs
+            setTenders([]);
+            setTotalPages(1);
+            setLoading(false);
+            return;
+        }
+
         setLoading(true);
-        fetch(`/api/tenders?page=${page}&limit=12`)
+        let url = `/api/tenders?page=${page}&limit=12`;
+        if (debouncedSearch) url += `&search=${encodeURIComponent(debouncedSearch)}`;
+        if (statusFilter !== "ALL") url += `&status=${statusFilter}`;
+        if (activeTab === "my" && myOrgIds.length > 0) {
+            url += `&myOrgIds=${myOrgIds.join(",")}`;
+        }
+
+        fetch(url)
             .then(async (r) => {
                 if (!r.ok) return { data: [], meta: { totalPages: 1 } };
                 return await r.json();
@@ -83,19 +115,9 @@ export default function TendersPage() {
             })
             .catch(console.error)
             .finally(() => setLoading(false));
-    }, [page]);
+    }, [page, debouncedSearch, statusFilter, activeTab, myOrgIds, session?.user]);
 
-    const filteredTenders = tenders.filter((t) => {
-        const isMine = myOrgIds.includes(t.organizationId) || t.participantOrgIds.some((id) => myOrgIds.includes(id));
-        if (activeTab === "my" && !isMine) return false;
-
-        const matchesStatus = statusFilter === "ALL" || t.status === statusFilter;
-        const matchesSearch =
-            t.title.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.code.toLowerCase().includes(searchQuery.toLowerCase()) ||
-            t.organizationName.toLowerCase().includes(searchQuery.toLowerCase());
-        return matchesStatus && matchesSearch;
-    });
+    const filteredTenders = tenders; // Keep variable name for JSX compatibility
 
     const statusLabels: Record<string, string> = {
         ALL: "Semua",
