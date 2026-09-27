@@ -3,6 +3,7 @@
 import Link from "next/link";
 import { useRouter, usePathname } from "next/navigation";
 import { useState, useEffect } from "react";
+import { motion, AnimatePresence } from "framer-motion";
 import { NotificationBell } from "@/components/NotificationBell";
 import { ThemeToggleButton } from "@/components/ui/skiper-ui/skiper26";
 import { useSession, signOut } from "@/lib/auth-client";
@@ -152,45 +153,53 @@ export default function Navbar() {
             </div>
 
             {/* Mobile Dropdown Menu */}
-            {isMobileMenuOpen && (
-                <div className="md:hidden border-t border-[var(--border-light)] bg-[var(--background)]/95 backdrop-blur-md absolute w-full max-h-[calc(100vh-64px)] overflow-y-auto shadow-xl">
-                    <nav className="flex flex-col p-4 space-y-2">
-                        {navItems.map((item) => {
-                            const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
-                            return (
-                                <Link
-                                    key={item.href}
-                                    href={item.href}
-                                    onClick={() => setIsMobileMenuOpen(false)}
-                                    className={`px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 ${
-                                        isActive
-                                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] font-semibold"
-                                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
-                                    }`}
-                                >
-                                    <item.icon className="w-5 h-5" />
-                                    {item.label}
-                                </Link>
-                            );
-                        })}
-                        {session?.user && (
-                            <>
-                                <div className="h-px bg-[var(--border-light)] my-2" />
-                                <button
-                                    onClick={() => {
-                                        setIsMobileMenuOpen(false);
-                                        handleLogout();
-                                    }}
-                                    className="px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 text-red-500 hover:bg-red-500/10 w-full text-left"
-                                >
-                                    <LogOut className="w-5 h-5" />
-                                    Keluar
-                                </button>
-                            </>
-                        )}
-                    </nav>
-                </div>
-            )}
+            <AnimatePresence>
+                {isMobileMenuOpen && (
+                    <motion.div
+                        initial={{ opacity: 0, y: -10 }}
+                        animate={{ opacity: 1, y: 0 }}
+                        exit={{ opacity: 0, y: -10 }}
+                        transition={{ duration: 0.2 }}
+                        className="md:hidden border-t border-[var(--border-light)] bg-[var(--background)]/95 backdrop-blur-md absolute w-full max-h-[calc(100vh-64px)] overflow-y-auto shadow-xl"
+                    >
+                        <nav className="flex flex-col p-4 space-y-2">
+                            {navItems.map((item) => {
+                                const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
+                                return (
+                                    <Link
+                                        key={item.href}
+                                        href={item.href}
+                                        onClick={() => setIsMobileMenuOpen(false)}
+                                        className={`px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 ${
+                                            isActive
+                                                ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] font-semibold"
+                                                : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
+                                        }`}
+                                    >
+                                        <item.icon className="w-5 h-5" />
+                                        {item.label}
+                                    </Link>
+                                );
+                            })}
+                            {session?.user && (
+                                <>
+                                    <div className="h-px bg-[var(--border-light)] my-2" />
+                                    <button
+                                        onClick={() => {
+                                            setIsMobileMenuOpen(false);
+                                            handleLogout();
+                                        }}
+                                        className="px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 text-red-500 hover:bg-red-500/10 w-full text-left"
+                                    >
+                                        <LogOut className="w-5 h-5" />
+                                        Keluar
+                                    </button>
+                                </>
+                            )}
+                        </nav>
+                    </motion.div>
+                )}
+            </AnimatePresence>
         </header>
     );
 }
