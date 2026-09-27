@@ -244,7 +244,7 @@ export default function RegisterPage() {
                         id="register-submit"
                         type="submit"
                         disabled={isLoading || passwordMismatch}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-colors disabled:opacity-50 disabled:cursor-not-allowed shadow-md shadow-[var(--accent-light)]"
                     >
                         {isLoading ? (
                             <>
