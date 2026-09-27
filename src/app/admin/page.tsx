@@ -681,8 +681,8 @@ export default function AdminDashboardPage() {
 
             {/* Resolve Ticket Modal */}
             {resolvingTicket && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
-                    <div className="card max-w-md w-full p-6 space-y-4">
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/50 backdrop-blur-sm">
+                    <div className="bg-[var(--background)] border border-[var(--border)] rounded-2xl shadow-2xl max-w-md w-full p-6 space-y-4">
                         <div className="flex items-center gap-2">
                             <CheckCircle2 className="w-5 h-5 text-[var(--accent)]" />
                             <h3 className="text-[16px] font-bold text-[var(--text-primary)]">Selesaikan Tiket</h3>
