@@ -36,8 +36,13 @@ export default function TendersPage() {
 
     const [debouncedSearch, setDebouncedSearch] = useState("");
 
+    const isSysAdmin = (session?.user as any)?.role === "admin";
+
     useEffect(() => {
         if (session?.user) {
+            if (isSysAdmin) {
+                setCanCreateTender(true);
+            }
             fetch("/api/organizations/me")
                 .then((r) => r.json())
                 .then((data) => {
@@ -48,7 +53,9 @@ export default function TendersPage() {
                             (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
                             (o.isVerified || o.verificationStatus === "APPROVED"),
                     );
-                    setCanCreateTender(eligible);
+                    if (eligible || isSysAdmin) {
+                        setCanCreateTender(true);
+                    }
                 })
                 .catch(() => {});
         }

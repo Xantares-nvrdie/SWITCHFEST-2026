@@ -964,12 +964,12 @@ export default function CreateTenderPage() {
 
 function StepIndicator({ current }: { current: number }) {
     return (
-        <div className="flex items-center gap-0">
+        <div className="flex items-start gap-0 w-full">
             {STEPS.map((s, i) => (
-                <div key={s.id} className="flex items-center flex-1">
-                    <div className="flex flex-col items-center gap-1.5 flex-1">
+                <div key={s.id} className="flex items-start flex-1">
+                    <div className="flex flex-col items-center gap-2 flex-1">
                         <div
-                            className={`w-9 h-9 rounded-md flex items-center justify-center border-2 transition-all duration-300 ${
+                            className={`w-9 h-9 rounded-md flex items-center justify-center border-2 transition-all duration-300 shrink-0 ${
                                 current > s.id
                                     ? "bg-[var(--text-primary)] border-[var(--text-primary)] text-[var(--surface)]"
                                     : current === s.id
@@ -980,7 +980,7 @@ function StepIndicator({ current }: { current: number }) {
                             {current > s.id ? <Check className="w-4 h-4" /> : s.icon}
                         </div>
                         <span
-                            className={`text-[10px] font-bold font-mono tracking-wide uppercase transition-colors ${
+                            className={`text-[10px] font-bold font-mono tracking-wide uppercase transition-colors text-center ${
                                 current === s.id
                                     ? "text-[var(--text-primary)]"
                                     : current > s.id
@@ -993,7 +993,7 @@ function StepIndicator({ current }: { current: number }) {
                     </div>
                     {i < STEPS.length - 1 && (
                         <div
-                            className={`h-0.5 flex-1 mx-2 mb-5 rounded-full transition-all duration-500 ${current > s.id ? "bg-[var(--text-primary)]" : "bg-[var(--surface-secondary)]"}`}
+                            className={`h-0.5 flex-1 mx-1 sm:mx-2 mt-[17px] rounded-full transition-all duration-500 ${current > s.id ? "bg-[var(--text-primary)]" : "bg-[var(--surface-secondary)]"}`}
                         />
                     )}
                 </div>

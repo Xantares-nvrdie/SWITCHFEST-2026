@@ -192,10 +192,10 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 w-[calc(100%+2rem)] md:w-auto scrollbar-hide">
                     <button
                         onClick={() => setActiveTab("organizations")}
-                        className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                        className={`whitespace-nowrap px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
                             activeTab === "organizations"
                                 ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
                                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
@@ -205,7 +205,7 @@ export default function AdminDashboardPage() {
                     </button>
                     <button
                         onClick={() => setActiveTab("tickets")}
-                        className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                        className={`whitespace-nowrap px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
                             activeTab === "tickets"
                                 ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
                                 : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
@@ -218,7 +218,7 @@ export default function AdminDashboardPage() {
                             if (activeTab === "organizations") fetchOrgs();
                             else fetchTickets();
                         }}
-                        className="ml-2 self-start md:self-auto px-4 py-2 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
+                        className="whitespace-nowrap ml-2 self-start md:self-auto px-4 py-2 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
                     >
                         <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
                         Refresh
@@ -705,21 +705,21 @@ export default function AdminDashboardPage() {
                             />
                         </div>
 
-                        <div className="flex justify-end gap-3 pt-2">
+                        <div className="flex flex-col-reverse sm:flex-row justify-end gap-3 pt-2">
                             <button
                                 type="button"
                                 onClick={() => {
                                     setResolvingTicket(null);
                                     setReplyMessage("");
                                 }}
-                                className="px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
                             >
                                 Batal
                             </button>
                             <button
                                 type="button"
                                 onClick={() => handleResolveTicket(resolvingTicket.id, "CLOSED", replyMessage)}
-                                className="px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-semibold text-[13px] transition-colors flex items-center gap-2 shadow-md shadow-[var(--accent-light)]"
+                                className="w-full sm:w-auto px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-semibold text-[13px] transition-colors flex items-center justify-center gap-2 shadow-md shadow-[var(--accent-light)]"
                             >
                                 {actionLoadingId === resolvingTicket.id ? (
                                     <Loader2 className="w-4 h-4 animate-spin" />

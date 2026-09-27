@@ -116,7 +116,7 @@ export default function ProfilePage() {
     };
 
     return (
-        <div className="max-w-3xl mx-auto py-12 space-y-8 animate-fade-in">
+        <div className="max-w-3xl mx-auto px-6 md:px-8 py-8 md:py-12 space-y-8 animate-fade-in">
             <div className="space-y-1">
                 <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)]">Profil Saya</h1>
                 <p className="text-[15px] text-[var(--text-secondary)]">

@@ -145,7 +145,7 @@ export default function HomePage() {
                             initial="hidden"
                             animate="visible"
                             variants={stagger}
-                            className="font-display text-[64px] sm:text-[80px] font-bold tracking-tighter text-[var(--text-primary)] leading-[1.05]"
+                            className="font-display text-[44px] md:text-[64px] lg:text-[80px] font-bold tracking-tighter text-[var(--text-primary)] leading-[1.05]"
                         >
                             Platform Pengadaan
                             <br />

@@ -34,28 +34,6 @@ export default function Navbar() {
         router.push("/login");
     };
 
-    const [canCreateTender, setCanCreateTender] = useState(false);
-
-    useEffect(() => {
-        if (session?.user) {
-            fetch("/api/organizations/me")
-                .then(async (r) => {
-                    if (!r.ok) return [];
-                    return await r.json();
-                })
-                .then((data) => {
-                    const eligible = data.some(
-                        (o: any) =>
-                            o.memberStatus === "ACTIVE" &&
-                            (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
-                            (o.isVerified || o.verificationStatus === "APPROVED"),
-                    );
-                    setCanCreateTender(eligible);
-                })
-                .catch(() => {});
-        }
-    }, [session?.user]);
-
     const isSysAdmin = (session?.user as any)?.role === "admin";
 
     const navItems = [
@@ -86,20 +64,6 @@ export default function Navbar() {
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-1.5">
-                        {canCreateTender && (
-                            <Link
-                                href="/tenders/create"
-                                className={`px-4 py-2 rounded-full text-[13px] font-semibold transition-all flex items-center gap-2 ${
-                                    pathname === "/tenders/create"
-                                        ? "bg-[var(--accent)] text-white shadow-md shadow-[var(--accent-light)]"
-                                        : "text-[var(--accent)] hover:bg-[var(--accent-light)]"
-                                }`}
-                            >
-                                <PlusCircle className="w-4 h-4" />
-                                Buat Tender
-                            </Link>
-                        )}
-
                         {navItems.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                             return (
@@ -120,17 +84,18 @@ export default function Navbar() {
                     </nav>
                 </div>
 
-                {/* Kanan: Autentikasi */}
-                <div className="flex items-center gap-4">
+                {/* Kanan: Autentikasi & Menu */}
+                <div className="flex items-center gap-2 sm:gap-4">
                     <ThemeToggleButton className="!w-8 !h-8 !p-1.5" />
+                    
                     {isPending ? (
                         <Loader2 className="w-4 h-4 text-[var(--text-tertiary)] animate-spin" />
                     ) : session?.user ? (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-1 sm:gap-3">
                             <NotificationBell />
                             <Link
                                 href="/profile"
-                                className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-full hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)] cursor-pointer"
+                                className="flex items-center gap-2.5 pl-2 sm:pl-3 pr-2 py-1.5 rounded-full hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)] cursor-pointer"
                             >
                                 <span className="text-[13px] text-[var(--text-primary)] font-medium max-w-[120px] truncate hidden sm:inline">
                                     {session.user.name}
@@ -142,7 +107,7 @@ export default function Navbar() {
                                         className="w-7 h-7 rounded-full object-cover border border-[var(--border)]"
                                     />
                                 ) : (
-                                    <div className="w-7 h-7 rounded-full bg-[var(--text-primary)] flex items-center justify-center shadow-inner">
+                                    <div className="w-7 h-7 rounded-full bg-[var(--text-primary)] flex items-center justify-center shadow-inner shrink-0">
                                         <span className="text-[10px] font-bold text-white uppercase tracking-wider">
                                             {session.user.name.substring(0, 2)}
                                         </span>
@@ -151,38 +116,38 @@ export default function Navbar() {
                             </Link>
                             <button
                                 onClick={handleLogout}
-                                className="flex items-center gap-1.5 p-2 rounded-full text-[var(--text-tertiary)] hover:text-[var(--color-rose)] hover:bg-[rgba(225,29,72,0.1)] transition-colors"
+                                className="hidden sm:flex items-center gap-1.5 p-2 rounded-full text-[var(--text-tertiary)] hover:text-[var(--color-rose)] hover:bg-[rgba(225,29,72,0.1)] transition-colors"
                                 title="Keluar"
                             >
                                 <LogOut className="w-4 h-4" />
                             </button>
                         </div>
                     ) : (
-                        <div className="flex items-center gap-3">
+                        <div className="flex items-center gap-2 sm:gap-3">
                             <Link
                                 href="/login"
-                                className="px-4 py-2 rounded-full text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                                className="hidden sm:block px-4 py-2 rounded-full text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
                             >
                                 Masuk
                             </Link>
                             <Link
                                 href="/register"
-                                className="px-5 py-2 rounded-full text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:scale-105 transition-transform shadow-md"
+                                className="px-4 sm:px-5 py-2 rounded-full text-[12px] sm:text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:scale-105 transition-transform shadow-md"
                             >
                                 Daftar
                             </Link>
                         </div>
                     )}
-                </div>
 
-                {/* Hamburger Menu (Mobile) */}
-                <div className="md:hidden flex items-center ml-4">
-                    <button
-                        onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-                        className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
-                    >
-                        {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
-                    </button>
+                    {/* Hamburger Menu (Mobile) */}
+                    <div className="md:hidden flex items-center ml-1">
+                        <button
+                            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+                            className="p-2 -mr-2 text-[var(--text-secondary)] hover:text-[var(--text-primary)] transition-colors"
+                        >
+                            {isMobileMenuOpen ? <X className="w-6 h-6" /> : <Menu className="w-6 h-6" />}
+                        </button>
+                    </div>
                 </div>
             </div>
 
@@ -190,20 +155,6 @@ export default function Navbar() {
             {isMobileMenuOpen && (
                 <div className="md:hidden border-t border-[var(--border-light)] bg-[var(--background)]/95 backdrop-blur-md absolute w-full max-h-[calc(100vh-64px)] overflow-y-auto shadow-xl">
                     <nav className="flex flex-col p-4 space-y-2">
-                        {canCreateTender && (
-                            <Link
-                                href="/tenders/create"
-                                onClick={() => setIsMobileMenuOpen(false)}
-                                className={`px-4 py-3 rounded-xl text-[14px] font-semibold transition-all flex items-center gap-3 ${
-                                    pathname === "/tenders/create"
-                                        ? "bg-[var(--accent)] text-white"
-                                        : "bg-[var(--accent)]/10 text-[var(--accent)]"
-                                }`}
-                            >
-                                <PlusCircle className="w-5 h-5" />
-                                Buat Tender
-                            </Link>
-                        )}
                         {navItems.map((item) => {
                             const isActive = pathname === item.href || pathname.startsWith(item.href + "/");
                             return (
