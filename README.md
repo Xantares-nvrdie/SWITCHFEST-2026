@@ -1,5 +1,5 @@
 <div align="center">
-  <img src="./public/assets/logo-black.png" alt="TenderSeal Logo" width="120" />
+  <img width="240" alt="TenderSeal Logo" src="https://github.com/user-attachments/assets/a206826d-ae03-42ab-8315-c2a77ece9e6a" />
   <br/>
   <h1>TenderSeal</h1>
   <p><b>Decentralized & Zero-Knowledge e-Procurement System</b></p>
