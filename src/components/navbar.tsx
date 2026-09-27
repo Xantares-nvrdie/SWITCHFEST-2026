@@ -79,12 +79,10 @@ export default function Navbar() {
                 {/* Kiri: Logo + Navigasi */}
                 <div className="flex items-center gap-10">
                     <Link href="/" className="flex items-center gap-2.5 group">
-                        <div className="w-8 h-8 rounded-[10px] bg-[var(--text-primary)] flex items-center justify-center transition-transform group-hover:scale-105 group-hover:shadow-[0_0_15px_rgba(16,185,129,0.4)]">
-                            <ShieldCheck className="w-4.5 h-4.5 text-white" />
+                        <div className="h-8 w-auto flex items-center justify-center transition-transform group-hover:scale-105">
+                            <img src="/assets/logo-black.png" alt="TenderSeal Logo" className="dark:hidden h-full w-auto object-contain" />
+                            <img src="/assets/logo-white.png" alt="TenderSeal Logo" className="hidden dark:block h-full w-auto object-contain" />
                         </div>
-                        <span className="font-display text-[17px] font-bold text-[var(--text-primary)] tracking-tight">
-                            TenderSeal
-                        </span>
                     </Link>
 
                     <nav className="hidden md:flex items-center gap-1.5">
