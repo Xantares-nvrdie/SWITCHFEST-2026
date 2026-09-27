@@ -249,7 +249,7 @@ export default function TutorialPage() {
                                     </div>
                                 </div>
 
-                                <div className="mt-8 p-5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-200 text-sm flex gap-3">
+                                <div className="mt-8 p-5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-200 text-sm flex gap-3">
                                     <CheckCircle2 className="w-5 h-5 text-blue-400 shrink-0" />
                                     <p>
                                         Setelah diterbitkan, dokumen tender akan disiarkan dan tercatat statusnya. Anda
@@ -317,7 +317,7 @@ export default function TutorialPage() {
                                         Peringatan Kehilangan PIN
                                     </h3>
                                     <div className="bento-card border-red-500/30 bg-red-500/10 p-5">
-                                        <p className="text-red-200 text-sm leading-relaxed">
+                                        <p className="text-red-700 dark:text-red-200 text-sm leading-relaxed">
                                             <strong>PERHATIAN:</strong> Karena TenderSeal menganut prinsip
                                             Zero-Knowledge,{" "}
                                             <strong>kami tidak bisa memulihkan PIN Anda jika lupa.</strong> Jika Anda
