@@ -115,31 +115,13 @@ export default function ProfilePage() {
         };
     };
 
-    const handleLogout = async () => {
-        try {
-            await authClient.signOut();
-            router.push("/login");
-        } catch (e) {
-            console.error("Failed to log out", e);
-        }
-    };
-
     return (
         <div className="max-w-3xl mx-auto px-6 md:px-8 py-8 md:py-12 space-y-8 animate-fade-in">
-            <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
-                <div className="space-y-1">
-                    <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)]">Profil Saya</h1>
-                    <p className="text-[15px] text-[var(--text-secondary)]">
-                        Kelola informasi pribadi dan identitas Web3 Anda.
-                    </p>
-                </div>
-                <button
-                    onClick={handleLogout}
-                    className="sm:hidden flex items-center justify-center gap-2 px-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-medium text-[var(--text-secondary)] hover:text-red-500 hover:border-red-500/30 transition-colors w-full"
-                >
-                    <LogOut className="w-4 h-4" />
-                    Keluar dari Akun
-                </button>
+            <div className="space-y-1">
+                <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)]">Profil Saya</h1>
+                <p className="text-[15px] text-[var(--text-secondary)]">
+                    Kelola informasi pribadi dan identitas Web3 Anda.
+                </p>
             </div>
 
             <div className="card p-6 md:p-8 space-y-8">

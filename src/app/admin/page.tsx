@@ -169,12 +169,12 @@ export default function AdminDashboardPage() {
     return (
         <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-16 relative w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Holographic glowing orb background */}
-            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-full md:w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div className="flex items-center gap-3">
-                    <div className="w-10 h-10 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center justify-center shadow-lg">
+                    <div className="w-10 h-10 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center justify-center shadow-lg shrink-0">
                         <ShieldCheck className="w-5 h-5 text-[var(--accent)]" />
                     </div>
                     <div>
@@ -192,7 +192,7 @@ export default function AdminDashboardPage() {
                     </div>
                 </div>
 
-                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 w-[calc(100%+2rem)] md:w-auto scrollbar-hide">
+                <div className="flex items-center gap-3 overflow-x-auto pb-2 -mx-4 px-4 md:mx-0 md:px-0 md:pb-0 scrollbar-hide">
                     <button
                         onClick={() => setActiveTab("organizations")}
                         className={`whitespace-nowrap px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${

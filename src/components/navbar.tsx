@@ -173,6 +173,21 @@ export default function Navbar() {
                                 </Link>
                             );
                         })}
+                        {session?.user && (
+                            <>
+                                <div className="h-px bg-[var(--border-light)] my-2" />
+                                <button
+                                    onClick={() => {
+                                        setIsMobileMenuOpen(false);
+                                        handleLogout();
+                                    }}
+                                    className="px-4 py-3 rounded-xl text-[14px] font-medium transition-all flex items-center gap-3 text-red-500 hover:bg-red-500/10 w-full text-left"
+                                >
+                                    <LogOut className="w-5 h-5" />
+                                    Keluar
+                                </button>
+                            </>
+                        )}
                     </nav>
                 </div>
             )}
