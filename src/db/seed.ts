@@ -30,17 +30,13 @@ async function seed() {
                 adminUser = created.user as unknown as typeof adminUser;
                 console.log(`✅ Admin account created with ID: ${created.user.id}`);
             }
-
         } else {
             console.log(`Admin user ${adminEmail} already exists.`);
         }
 
         // Ensure user.role is set to 'admin'
         if (adminUser) {
-            await db
-                .update(user)
-                .set({ role: "admin", emailVerified: true })
-                .where(eq(user.id, adminUser.id));
+            await db.update(user).set({ role: "admin", emailVerified: true }).where(eq(user.id, adminUser.id));
             console.log(`✅ System Admin role ('admin') enforced for ${adminEmail}!`);
         }
 

@@ -10,19 +10,19 @@ export abstract class BidService {
     static async getBidsForUser(userId: string) {
         const userOrgs = await db.query.organizationMembers.findMany({
             where: (m, { eq, and }) => and(eq(m.userId, userId), eq(m.status, "ACTIVE")),
-            columns: { organizationId: true }
+            columns: { organizationId: true },
         });
-        
-        const orgIds = userOrgs.map(o => o.organizationId);
+
+        const orgIds = userOrgs.map((o) => o.organizationId);
         if (orgIds.length === 0) return [];
-        
+
         return db.query.bids.findMany({
             where: (b, { inArray }) => inArray(b.organizationId, orgIds),
             with: {
                 tender: true,
                 organization: true,
             },
-            orderBy: (b, { desc }) => [desc(b.createdAt)]
+            orderBy: (b, { desc }) => [desc(b.createdAt)],
         });
     }
 
@@ -58,7 +58,7 @@ export abstract class BidService {
         const now = new Date();
 
         const tender = await db.query.tenders.findFirst({
-            where: (t, { eq }) => eq(t.id, tenderId)
+            where: (t, { eq }) => eq(t.id, tenderId),
         });
 
         if (!tender) {
@@ -116,24 +116,25 @@ export abstract class BidService {
         });
 
         // Submit to blockchain via Relayer (Gasless for user) - Fire and forget
-        contract.commitBid(tenderId, data.organizationId, data.commitmentHash)
+        contract
+            .commitBid(tenderId, data.organizationId, data.commitmentHash)
             .then((tx: any) => tx.wait())
             .catch((error: any) => console.error("Relayer failed to commit bid to blockchain:", error));
 
         try {
             const members = await db.query.organizationMembers.findMany({
-                where: (m, { eq, and }) => and(eq(m.organizationId, data.organizationId), eq(m.status, "ACTIVE"))
+                where: (m, { eq, and }) => and(eq(m.organizationId, data.organizationId), eq(m.status, "ACTIVE")),
             });
             const tenderInfo = await db.query.tenders.findFirst({ where: (t, { eq }) => eq(t.id, tenderId) });
-            
-            const notificationsPayload = members.map(member => ({
+
+            const notificationsPayload = members.map((member) => ({
                 userId: member.userId,
                 title: "Penawaran Terkirim",
                 message: `Dokumen penawaran Anda untuk tender ${tenderInfo?.code} berhasil dikirim secara enkripsi.`,
                 type: "SUCCESS" as const,
-                link: `/tenders/${tenderId}`
+                link: `/tenders/${tenderId}`,
             }));
-            
+
             await NotificationService.createMany(notificationsPayload);
         } catch (err) {
             console.error("Failed to send bid notification", err);
@@ -145,7 +146,7 @@ export abstract class BidService {
     static async submitReveal(bidId: string, data: BidModel.submitRevealInput) {
         const existingBid = await db.query.bids.findFirst({
             where: (b, { eq }) => eq(b.id, bidId),
-            with: { 
+            with: {
                 crypto: true,
                 tender: true,
             },
@@ -161,19 +162,19 @@ export abstract class BidService {
 
         const now = new Date();
         const tenderInfo = existingBid.tender;
-        
+
         if (!tenderInfo) {
             throw new Error("Tender not found");
         }
 
         // 1. Validasi Status Tender: Harus berada di fase REVEAL
         if (tenderInfo.status !== "REVEAL" && tenderInfo.status !== "OPEN") {
-             // Jika sudah masuk SCORING atau CLOSED, maka tidak bisa direveal
-             // Catatan: Kadang cron job belum mengubah status dari OPEN ke REVEAL tepat waktu, 
-             // tapi kita harus pastikan belum masuk fase setelahnya (SCORING).
-             if (tenderInfo.status === "SCORING" || tenderInfo.status === "CLOSED" || tenderInfo.status === "DRAFT") {
-                 throw new Error(`Sesi reveal tidak valid karena status tender saat ini adalah ${tenderInfo.status}.`);
-             }
+            // Jika sudah masuk SCORING atau CLOSED, maka tidak bisa direveal
+            // Catatan: Kadang cron job belum mengubah status dari OPEN ke REVEAL tepat waktu,
+            // tapi kita harus pastikan belum masuk fase setelahnya (SCORING).
+            if (tenderInfo.status === "SCORING" || tenderInfo.status === "CLOSED" || tenderInfo.status === "DRAFT") {
+                throw new Error(`Sesi reveal tidak valid karena status tender saat ini adalah ${tenderInfo.status}.`);
+            }
         }
 
         // 2. Validasi Deadline Reveal: Harus belum melewati waktu
@@ -223,7 +224,8 @@ export abstract class BidService {
 
         if (isValid) {
             // Attest reveal on Smart Contract (Relayer signs this) - Fire and forget
-            db.query.bids.findFirst({ where: (b, { eq }) => eq(b.id, bidId) })
+            db.query.bids
+                .findFirst({ where: (b, { eq }) => eq(b.id, bidId) })
                 .then((bidRecord: any) => {
                     if (bidRecord) {
                         return contract.attestReveal(bidRecord.tenderId, bidRecord.organizationId);
@@ -231,23 +233,23 @@ export abstract class BidService {
                 })
                 .then((tx: any) => tx && tx.wait())
                 .catch((err: any) => console.error("Failed to attest reveal on smart contract:", err));
-                
+
             // Send notification to Panitia (Creator) that a vendor has revealed
             try {
                 const tenderInfo = await db.query.tenders.findFirst({
-                    where: (t, { eq }) => eq(t.id, existingBid.tenderId)
+                    where: (t, { eq }) => eq(t.id, existingBid.tenderId),
                 });
                 const orgInfo = await db.query.organizations.findFirst({
-                    where: (o, { eq }) => eq(o.id, existingBid.organizationId)
+                    where: (o, { eq }) => eq(o.id, existingBid.organizationId),
                 });
-                
+
                 if (tenderInfo && tenderInfo.createdBy && orgInfo) {
                     await NotificationService.create({
                         userId: tenderInfo.createdBy,
                         title: "Dekripsi (Reveal) Berhasil!",
                         message: `Vendor ${orgInfo.name} telah berhasil mendekripsi penawaran mereka untuk tender "${tenderInfo.title}". Commitment Hash tervalidasi.`,
                         type: "SUCCESS",
-                        link: `/tenders/${tenderInfo.id}`
+                        link: `/tenders/${tenderInfo.id}`,
                     });
                 }
             } catch (err) {

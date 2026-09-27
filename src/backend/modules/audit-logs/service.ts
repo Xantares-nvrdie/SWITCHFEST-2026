@@ -35,9 +35,9 @@ export abstract class AuditLogService {
             orderBy: (al, { desc }) => [desc(al.createdAt)],
             limit: 100, // For performance, just show latest 100 on the public page
         });
-        
+
         // Map to match frontend expected interface
-        return logs.map(log => ({
+        return logs.map((log) => ({
             id: log.id,
             action: log.action,
             entityType: log.entityType,

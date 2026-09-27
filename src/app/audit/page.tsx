@@ -19,7 +19,7 @@ export default function AuditPage() {
     const [logs, setLogs] = useState<AuditLogItem[]>([]);
     const [loading, setLoading] = useState(true);
     const [currentPage, setCurrentPage] = useState(1);
-    
+
     const ITEMS_PER_PAGE = 10;
 
     useEffect(() => {
@@ -28,8 +28,8 @@ export default function AuditPage() {
 
     useEffect(() => {
         fetch("/api/audit-logs")
-            .then(res => res.json())
-            .then(data => {
+            .then((res) => res.json())
+            .then((data) => {
                 // Ensure data is array
                 if (Array.isArray(data)) {
                     // Sort descending by date
@@ -39,7 +39,7 @@ export default function AuditPage() {
                     setLogs([]);
                 }
             })
-            .catch(err => {
+            .catch((err) => {
                 console.error("Failed to fetch audit logs", err);
                 setLogs([]);
             })
@@ -94,7 +94,9 @@ export default function AuditPage() {
                 {loading ? (
                     <div className="text-center text-sm text-[var(--text-tertiary)] py-12">Memuat log aktivitas...</div>
                 ) : filteredLogs.length === 0 ? (
-                    <div className="text-center text-sm text-[var(--text-tertiary)] py-12">Belum ada aktivitas tercatat.</div>
+                    <div className="text-center text-sm text-[var(--text-tertiary)] py-12">
+                        Belum ada aktivitas tercatat.
+                    </div>
                 ) : (
                     <div className="space-y-3">
                         {paginatedLogs.map((log) => (
@@ -128,7 +130,7 @@ export default function AuditPage() {
                                 </div>
 
                                 <span className="text-[11px] font-mono text-[var(--text-tertiary)] self-end md:self-center shrink-0">
-                                    {new Date(log.createdAt).toLocaleString('id-ID')}
+                                    {new Date(log.createdAt).toLocaleString("id-ID")}
                                 </span>
                             </div>
                         ))}
@@ -136,11 +138,16 @@ export default function AuditPage() {
                         {totalPages > 1 && (
                             <div className="flex flex-col sm:flex-row sm:items-center justify-between pt-4 mt-6 border-t border-[var(--border)] gap-4">
                                 <span className="text-[13px] text-[var(--text-tertiary)] font-medium">
-                                    Menampilkan <strong className="text-[var(--text-primary)]">{startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredLogs.length)}</strong> dari <strong className="text-[var(--text-primary)]">{filteredLogs.length}</strong> entri
+                                    Menampilkan{" "}
+                                    <strong className="text-[var(--text-primary)]">
+                                        {startIndex + 1}-{Math.min(startIndex + ITEMS_PER_PAGE, filteredLogs.length)}
+                                    </strong>{" "}
+                                    dari <strong className="text-[var(--text-primary)]">{filteredLogs.length}</strong>{" "}
+                                    entri
                                 </span>
                                 <div className="flex items-center gap-2">
                                     <button
-                                        onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                                        onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                                         disabled={currentPage === 1}
                                         className="px-4 py-2 rounded-lg border border-[var(--border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                     >
@@ -158,10 +165,12 @@ export default function AuditPage() {
                                                 </option>
                                             ))}
                                         </select>
-                                        <span className="text-[13px] text-[var(--text-tertiary)] hidden sm:inline">dari {totalPages}</span>
+                                        <span className="text-[13px] text-[var(--text-tertiary)] hidden sm:inline">
+                                            dari {totalPages}
+                                        </span>
                                     </div>
                                     <button
-                                        onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                                        onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                                         disabled={currentPage === totalPages}
                                         className="px-4 py-2 rounded-lg border border-[var(--border)] text-[13px] font-bold text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] disabled:opacity-30 disabled:cursor-not-allowed transition-all"
                                     >

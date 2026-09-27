@@ -2,11 +2,7 @@ import { redirect } from "next/navigation";
 import { headers } from "next/headers";
 import { auth } from "@/auth";
 
-export default async function AdminLayout({
-    children,
-}: {
-    children: React.ReactNode;
-}) {
+export default async function AdminLayout({ children }: { children: React.ReactNode }) {
     // Perform server-side check
     const session = await auth.api.getSession({
         headers: await headers(),

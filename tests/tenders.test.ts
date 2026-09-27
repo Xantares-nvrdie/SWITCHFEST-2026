@@ -61,7 +61,6 @@ describe("Tenders Module Unit Tests", () => {
         expect(res.status).toBe(401);
     });
 
-
     it("POST /api/tenders/:id/criteria - should block criteria addition without login with 401", async () => {
         const req = new Request("http://localhost/api/tenders/tnd-demo-001/criteria", {
             method: "POST",

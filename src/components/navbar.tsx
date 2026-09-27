@@ -48,7 +48,7 @@ export default function Navbar() {
                         (o: any) =>
                             o.memberStatus === "ACTIVE" &&
                             (o.memberRole === "PROCUREMENT_OFFICER" || o.memberRole === "ORGANIZATION_ADMIN") &&
-                            (o.isVerified || o.verificationStatus === "APPROVED")
+                            (o.isVerified || o.verificationStatus === "APPROVED"),
                     );
                     setCanCreateTender(eligible);
                 })
@@ -130,12 +130,19 @@ export default function Navbar() {
                     ) : session?.user ? (
                         <div className="flex items-center gap-3">
                             <NotificationBell />
-                            <Link href="/profile" className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-full hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)] cursor-pointer">
+                            <Link
+                                href="/profile"
+                                className="flex items-center gap-2.5 pl-3 pr-2 py-1.5 rounded-full hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)] cursor-pointer"
+                            >
                                 <span className="text-[13px] text-[var(--text-primary)] font-medium max-w-[120px] truncate hidden sm:inline">
                                     {session.user.name}
                                 </span>
                                 {session.user.image ? (
-                                    <img src={session.user.image} alt={session.user.name} className="w-7 h-7 rounded-full object-cover border border-[var(--border)]" />
+                                    <img
+                                        src={session.user.image}
+                                        alt={session.user.name}
+                                        className="w-7 h-7 rounded-full object-cover border border-[var(--border)]"
+                                    />
                                 ) : (
                                     <div className="w-7 h-7 rounded-full bg-[var(--text-primary)] flex items-center justify-center shadow-inner">
                                         <span className="text-[10px] font-bold text-white uppercase tracking-wider">
@@ -169,7 +176,7 @@ export default function Navbar() {
                         </div>
                     )}
                 </div>
-                
+
                 {/* Hamburger Menu (Mobile) */}
                 <div className="md:hidden flex items-center ml-4">
                     <button

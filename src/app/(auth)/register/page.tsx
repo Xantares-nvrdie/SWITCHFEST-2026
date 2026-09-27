@@ -4,18 +4,7 @@ import { useState } from "react";
 import Link from "next/link";
 import { useRouter } from "next/navigation";
 import { signUp } from "@/lib/auth-client";
-import {
-    ShieldCheck,
-    Mail,
-    Lock,
-    User,
-    Loader2,
-    AlertCircle,
-    Eye,
-    EyeOff,
-    CheckCircle2,
-    Info,
-} from "lucide-react";
+import { ShieldCheck, Mail, Lock, User, Loader2, AlertCircle, Eye, EyeOff, CheckCircle2, Info } from "lucide-react";
 
 function PasswordStrength({ password }: { password: string }) {
     const checks = [
@@ -98,7 +87,8 @@ export default function RegisterPage() {
         router.refresh();
     };
 
-    const inputClass = "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
+    const inputClass =
+        "w-full pl-9 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
 
     return (
         <div className="w-full max-w-sm">
@@ -109,9 +99,7 @@ export default function RegisterPage() {
                         <ShieldCheck className="w-5 h-5 text-white" />
                     </div>
                     <div className="text-center">
-                        <h1 className="text-[20px] font-bold text-[var(--text-primary)] tracking-tight">
-                            Buat Akun
-                        </h1>
+                        <h1 className="text-[20px] font-bold text-[var(--text-primary)] tracking-tight">Buat Akun</h1>
                         <p className="text-[13px] text-[var(--text-tertiary)] mt-1">
                             Daftar untuk mengakses pengadaan digital terenkripsi.
                         </p>
@@ -122,7 +110,9 @@ export default function RegisterPage() {
                 <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[12px] bg-blue-50 border border-blue-100 text-blue-700">
                     <Info className="w-4 h-4 mt-0.5 shrink-0" />
                     <span>
-                        Setelah pendaftaran, Anda bisa <span className="font-medium">membuat atau bergabung dengan organisasi</span> untuk mulai menggunakan TenderSeal.
+                        Setelah pendaftaran, Anda bisa{" "}
+                        <span className="font-medium">membuat atau bergabung dengan organisasi</span> untuk mulai
+                        menggunakan TenderSeal.
                     </span>
                 </div>
 
@@ -137,7 +127,10 @@ export default function RegisterPage() {
                 <form onSubmit={handleSubmit} className="space-y-4">
                     {/* Nama */}
                     <div className="space-y-1.5">
-                        <label htmlFor="reg-name" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="reg-name"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Nama Lengkap
                         </label>
                         <div className="relative">
@@ -157,7 +150,10 @@ export default function RegisterPage() {
 
                     {/* Email */}
                     <div className="space-y-1.5">
-                        <label htmlFor="reg-email" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="reg-email"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Email
                         </label>
                         <div className="relative">
@@ -177,7 +173,10 @@ export default function RegisterPage() {
 
                     {/* Kata Sandi */}
                     <div className="space-y-1.5">
-                        <label htmlFor="reg-password" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="reg-password"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Kata Sandi
                         </label>
                         <div className="relative">
@@ -206,7 +205,10 @@ export default function RegisterPage() {
 
                     {/* Konfirmasi */}
                     <div className="space-y-1.5">
-                        <label htmlFor="reg-confirm" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="reg-confirm"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Konfirmasi Kata Sandi
                         </label>
                         <div className="relative">
@@ -257,7 +259,9 @@ export default function RegisterPage() {
 
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-[var(--border)]" />
-                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">atau</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">
+                        atau
+                    </span>
                     <div className="flex-1 h-px bg-[var(--border)]" />
                 </div>
 

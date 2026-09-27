@@ -194,10 +194,10 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
             body: OrganizationModel.updateMemberBody,
             detail: {
                 summary: "Update organization member",
-                description: "Memperbarui role atau status keanggotaan seseorang dalam organisasi (Hanya Admin Organisasi).",
+                description:
+                    "Memperbarui role atau status keanggotaan seseorang dalam organisasi (Hanya Admin Organisasi).",
             },
         },
     );
-
 
 export default organizationsModule;

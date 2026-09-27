@@ -92,8 +92,12 @@ export default function AdminDashboardPage() {
 
     // Derived statistics
     const totalCount = orgs.length;
-    const pendingCount = orgs.filter((o) => (o.verificationStatus ?? (o.isVerified ? "APPROVED" : "PENDING")) === "PENDING").length;
-    const approvedCount = orgs.filter((o) => (o.verificationStatus ?? (o.isVerified ? "APPROVED" : "PENDING")) === "APPROVED").length;
+    const pendingCount = orgs.filter(
+        (o) => (o.verificationStatus ?? (o.isVerified ? "APPROVED" : "PENDING")) === "PENDING",
+    ).length;
+    const approvedCount = orgs.filter(
+        (o) => (o.verificationStatus ?? (o.isVerified ? "APPROVED" : "PENDING")) === "APPROVED",
+    ).length;
     const rejectedCount = orgs.filter((o) => o.verificationStatus === "REJECTED").length;
 
     const filteredOrgs = orgs.filter((org) => {
@@ -110,13 +114,9 @@ export default function AdminDashboardPage() {
     });
 
     return (
-        <motion.div 
-        initial={{ opacity: 0, y: 20 }}
-        animate={{ opacity: 1, y: 0 }}
-        className="space-y-8 pb-16 relative"
-    >
-        {/* Holographic glowing orb background */}
-        <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-16 relative">
+            {/* Holographic glowing orb background */}
+            <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
@@ -126,7 +126,9 @@ export default function AdminDashboardPage() {
                     </div>
                     <div>
                         <div className="flex items-center gap-2">
-                            <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">Admin Approval</h1>
+                            <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">
+                                Admin Approval
+                            </h1>
                             <span className="text-[10px] font-bold uppercase tracking-wider px-2 py-0.5 rounded-full bg-[var(--text-primary)] text-[var(--background)]">
                                 Sistem
                             </span>
@@ -150,7 +152,7 @@ export default function AdminDashboardPage() {
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bento-card p-6 border-[var(--border)] bg-[var(--surface-secondary)] relative overflow-hidden group">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
-                        <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-[var(--text-tertiary)]">Total Organisasi</span>
                         <Building2 className="w-4 h-4 text-[var(--text-tertiary)]" />
                     </div>
@@ -160,7 +162,7 @@ export default function AdminDashboardPage() {
 
                 <div className="bento-card p-6 border-amber-500/20 bg-amber-500/5 relative overflow-hidden group">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
-                        <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-amber-500 flex items-center gap-1.5">
                             <span className="w-2 h-2 rounded-full bg-amber-400 animate-ping" />
                             Pending Approval
@@ -173,7 +175,7 @@ export default function AdminDashboardPage() {
 
                 <div className="bento-card p-6 border-[var(--accent)]/20 bg-[var(--accent)]/5 relative overflow-hidden group">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
-                        <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-[var(--accent)]">Terverifikasi (Approved)</span>
                         <CheckCircle2 className="w-4 h-4 text-[var(--accent)]" />
                     </div>
@@ -183,7 +185,7 @@ export default function AdminDashboardPage() {
 
                 <div className="bento-card p-6 border-red-500/20 bg-red-500/5 relative overflow-hidden group">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
-                        <div className="flex items-center justify-between relative z-10">
+                    <div className="flex items-center justify-between relative z-10">
                         <span className="text-[12px] font-medium text-red-500">Ditolak (Rejected)</span>
                         <XCircle className="w-4 h-4 text-red-500" />
                     </div>
@@ -242,7 +244,9 @@ export default function AdminDashboardPage() {
             ) : filteredOrgs.length === 0 ? (
                 <div className="text-center py-16 card space-y-3">
                     <ShieldCheck className="w-10 h-10 text-[var(--text-tertiary)] mx-auto" />
-                    <h3 className="text-[15px] font-semibold text-[var(--text-secondary)]">Tidak ada organisasi ditemukan</h3>
+                    <h3 className="text-[15px] font-semibold text-[var(--text-secondary)]">
+                        Tidak ada organisasi ditemukan
+                    </h3>
                     <p className="text-[13px] text-[var(--text-tertiary)] max-w-sm mx-auto">
                         Tidak ada pengajuan organisasi dengan kriteria filter yang dipilih.
                     </p>
@@ -267,18 +271,24 @@ export default function AdminDashboardPage() {
                                     {/* Left: Info */}
                                     <div className="space-y-3 flex-1 min-w-0">
                                         <div className="flex items-center gap-2 flex-wrap">
-                                            <h3 className="text-[16px] font-bold text-[var(--text-primary)] tracking-tight">{org.name}</h3>
+                                            <h3 className="text-[16px] font-bold text-[var(--text-primary)] tracking-tight">
+                                                {org.name}
+                                            </h3>
 
                                             <span
                                                 className={`text-[10px] font-bold px-2 py-0.5 rounded-full border uppercase ${
                                                     org.type === "BUYER"
                                                         ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/20"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
-                                                        : "bg-purple-500/10 text-purple-400 border-purple-500/20"
+                                                          ? "bg-blue-500/10 text-blue-400 border-blue-500/20"
+                                                          : "bg-purple-500/10 text-purple-400 border-purple-500/20"
                                                 }`}
                                             >
-                                                {org.type === "BUYER" ? "Panitia" : org.type === "VENDOR" ? "Vendor" : "Both"}
+                                                {org.type === "BUYER"
+                                                    ? "Panitia"
+                                                    : org.type === "VENDOR"
+                                                      ? "Vendor"
+                                                      : "Both"}
                                             </span>
 
                                             {/* Status Badge */}
@@ -305,7 +315,9 @@ export default function AdminDashboardPage() {
                                                 <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
                                                     <FileText className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
                                                     <span className="text-[var(--text-tertiary)]">Legal:</span>
-                                                    <span className="font-medium text-[var(--text-primary)]">{org.legalName}</span>
+                                                    <span className="font-medium text-[var(--text-primary)]">
+                                                        {org.legalName}
+                                                    </span>
                                                 </div>
                                             )}
 
@@ -313,7 +325,9 @@ export default function AdminDashboardPage() {
                                                 <div className="flex items-center gap-1.5 text-[var(--text-secondary)]">
                                                     <Hash className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
                                                     <span className="text-[var(--text-tertiary)]">NPWP/NIB:</span>
-                                                    <span className="font-mono font-medium text-[var(--text-primary)]">{org.registrationNumber}</span>
+                                                    <span className="font-mono font-medium text-[var(--text-primary)]">
+                                                        {org.registrationNumber}
+                                                    </span>
                                                 </div>
                                             )}
 
@@ -334,7 +348,9 @@ export default function AdminDashboardPage() {
                                             {org.address && (
                                                 <div className="flex items-center gap-1.5 text-[var(--text-secondary)] col-span-1 sm:col-span-2">
                                                     <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />
-                                                    <span className="text-[var(--text-primary)] truncate">{org.address}</span>
+                                                    <span className="text-[var(--text-primary)] truncate">
+                                                        {org.address}
+                                                    </span>
                                                 </div>
                                             )}
                                         </div>
@@ -424,11 +440,15 @@ export default function AdminDashboardPage() {
                         </div>
 
                         <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
-                            Anda akan menolak pengajuan <span className="font-semibold text-[var(--text-primary)]">{rejectingOrg.name}</span>. Berikan alasan penolakan untuk dicatat di log audit.
+                            Anda akan menolak pengajuan{" "}
+                            <span className="font-semibold text-[var(--text-primary)]">{rejectingOrg.name}</span>.
+                            Berikan alasan penolakan untuk dicatat di log audit.
                         </p>
 
                         <div className="space-y-1.5">
-                            <label className="text-[13px] font-medium text-[var(--text-secondary)]">Alasan Penolakan</label>
+                            <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                Alasan Penolakan
+                            </label>
                             <textarea
                                 rows={3}
                                 value={rejectionReason}

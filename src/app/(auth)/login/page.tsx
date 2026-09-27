@@ -79,7 +79,10 @@ export default function LoginPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label htmlFor="password" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="password"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Kata Sandi
                         </label>
                         <div className="relative">
@@ -125,17 +128,16 @@ export default function LoginPage() {
                 {/* Separator */}
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-[var(--border)]" />
-                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">atau</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">
+                        atau
+                    </span>
                     <div className="flex-1 h-px bg-[var(--border)]" />
                 </div>
 
                 {/* Register */}
                 <p className="text-center text-[13px] text-[var(--text-secondary)]">
                     Belum punya akun?{" "}
-                    <Link
-                        href="/register"
-                        className="font-semibold text-[var(--accent)] hover:underline"
-                    >
+                    <Link href="/register" className="font-semibold text-[var(--accent)] hover:underline">
                         Buat akun
                     </Link>
                 </p>

@@ -120,13 +120,13 @@ export default function TendersPage() {
         hidden: { opacity: 0 },
         visible: {
             opacity: 1,
-            transition: { staggerChildren: 0.05 }
-        }
+            transition: { staggerChildren: 0.05 },
+        },
     };
 
     const itemVariant: any = {
         hidden: { opacity: 0, y: 10 },
-        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } }
+        visible: { opacity: 1, y: 0, transition: { duration: 0.4, ease: "easeOut" } },
     };
 
     return (
@@ -134,17 +134,16 @@ export default function TendersPage() {
             {/* Judul Halaman */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-6 pt-4">
                 <div>
-                    <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Tender</h1>
+                    <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">
+                        Tender
+                    </h1>
                     <p className="text-[16px] text-[var(--text-secondary)] mt-1 font-medium">
                         Eksplorasi dan kelola tender pengadaan digital terenkripsi.
                     </p>
                 </div>
 
                 {canCreateTender && (
-                    <Link
-                        href="/tenders/create"
-                        className="btn-primary px-6 py-3 text-[14px]"
-                    >
+                    <Link href="/tenders/create" className="btn-primary px-6 py-3 text-[14px]">
                         <PlusCircle className="w-4 h-4 mr-2" />
                         Buat Tender Baru
                     </Link>
@@ -214,13 +213,16 @@ export default function TendersPage() {
             ) : filteredTenders.length === 0 ? (
                 <div className="bento-card p-16 text-center space-y-3 flex flex-col items-center border-dashed">
                     <Filter className="w-8 h-8 text-[var(--border)] mb-2" />
-                    <p className="text-[var(--text-primary)] font-display text-[20px] font-semibold tracking-tight">Tidak ada tender ditemukan</p>
+                    <p className="text-[var(--text-primary)] font-display text-[20px] font-semibold tracking-tight">
+                        Tidak ada tender ditemukan
+                    </p>
                     <p className="text-[var(--text-tertiary)] text-[15px] max-w-md mx-auto">
-                        Coba ubah kata kunci pencarian atau pilih status yang berbeda untuk menemukan apa yang Anda cari.
+                        Coba ubah kata kunci pencarian atau pilih status yang berbeda untuk menemukan apa yang Anda
+                        cari.
                     </p>
                 </div>
             ) : (
-                <motion.div 
+                <motion.div
                     variants={stagger}
                     initial="hidden"
                     animate="visible"
@@ -314,7 +316,9 @@ export default function TendersPage() {
                                 </option>
                             ))}
                         </select>
-                        <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">dari {totalPages}</span>
+                        <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">
+                            dari {totalPages}
+                        </span>
                     </div>
                     <button
                         onClick={() => setPage((p) => Math.min(totalPages, p + 1))}

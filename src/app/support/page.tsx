@@ -34,7 +34,7 @@ export default function SupportPage() {
                 const json = await res.json();
                 throw new Error(json.error || "Gagal mengirim tiket");
             }
-            
+
             setSuccess(true);
             (e.target as HTMLFormElement).reset();
         } catch (error: any) {
@@ -48,9 +48,12 @@ export default function SupportPage() {
         <div className="space-y-8 w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12 pt-4 pb-20">
             {/* Header */}
             <div className="flex flex-col gap-2">
-                <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">Support Center</h1>
+                <h1 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">
+                    Support Center
+                </h1>
                 <p className="text-[16px] text-[var(--text-secondary)] mt-1 max-w-2xl">
-                    Tim dukungan teknis TenderSeal siap membantu Anda menyelesaikan kendala operasional, masalah enkripsi, atau kendala verifikasi.
+                    Tim dukungan teknis TenderSeal siap membantu Anda menyelesaikan kendala operasional, masalah
+                    enkripsi, atau kendala verifikasi.
                 </p>
             </div>
 
@@ -61,11 +64,12 @@ export default function SupportPage() {
                         <h2 className="text-xl font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2">
                             <Send className="w-5 h-5 text-[var(--accent)]" /> Kirim Tiket Bantuan
                         </h2>
-                        
+
                         <form onSubmit={handleSubmit} className="space-y-5">
                             {success && (
                                 <div className="p-4 rounded-xl bg-emerald-500/10 border border-emerald-500/20 text-emerald-500 text-sm font-medium">
-                                    Tiket bantuan Anda berhasil dikirim! Tim kami akan membalas melalui email Anda secepatnya.
+                                    Tiket bantuan Anda berhasil dikirim! Tim kami akan membalas melalui email Anda
+                                    secepatnya.
                                 </div>
                             )}
                             {errorMsg && (
@@ -76,18 +80,40 @@ export default function SupportPage() {
 
                             <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                                 <div className="space-y-2">
-                                    <label className="text-[13px] font-medium text-[var(--text-secondary)]">Nama Lengkap</label>
-                                    <input name="fullName" required type="text" placeholder="Masukkan nama Anda" className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]" />
+                                    <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                        Nama Lengkap
+                                    </label>
+                                    <input
+                                        name="fullName"
+                                        required
+                                        type="text"
+                                        placeholder="Masukkan nama Anda"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                    />
                                 </div>
                                 <div className="space-y-2">
-                                    <label className="text-[13px] font-medium text-[var(--text-secondary)]">Alamat Email</label>
-                                    <input name="email" required type="email" placeholder="email@organisasi.com" className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]" />
+                                    <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                        Alamat Email
+                                    </label>
+                                    <input
+                                        name="email"
+                                        required
+                                        type="email"
+                                        placeholder="email@organisasi.com"
+                                        className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)]"
+                                    />
                                 </div>
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[13px] font-medium text-[var(--text-secondary)]">Kategori Kendala</label>
-                                <select name="category" required className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none">
+                                <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                    Kategori Kendala
+                                </label>
+                                <select
+                                    name="category"
+                                    required
+                                    className="w-full px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none"
+                                >
                                     <option>Kendala Teknis (Platform Error)</option>
                                     <option>Lupa PIN / Gagal Dekripsi</option>
                                     <option>Verifikasi Organisasi Terhambat</option>
@@ -97,13 +123,29 @@ export default function SupportPage() {
                             </div>
 
                             <div className="space-y-2">
-                                <label className="text-[13px] font-medium text-[var(--text-secondary)]">Pesan Detail</label>
-                                <textarea name="message" required rows={5} placeholder="Jelaskan kendala Anda secara rinci..." className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"></textarea>
+                                <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                    Pesan Detail
+                                </label>
+                                <textarea
+                                    name="message"
+                                    required
+                                    rows={5}
+                                    placeholder="Jelaskan kendala Anda secara rinci..."
+                                    className="w-full px-4 py-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] resize-none"
+                                ></textarea>
                             </div>
 
                             <div className="pt-2">
-                                <button disabled={loading} type="submit" className="w-full md:w-auto px-8 py-3 rounded-xl bg-[var(--text-primary)] text-[var(--background)] font-bold text-[14px] shadow-md shadow-[var(--border)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50">
-                                    {loading ? <Loader2 className="w-4 h-4 animate-spin" /> : <Send className="w-4 h-4" />} 
+                                <button
+                                    disabled={loading}
+                                    type="submit"
+                                    className="w-full md:w-auto px-8 py-3 rounded-xl bg-[var(--text-primary)] text-[var(--background)] font-bold text-[14px] shadow-md shadow-[var(--border)] hover:opacity-90 transition-opacity flex items-center justify-center gap-2 disabled:opacity-50"
+                                >
+                                    {loading ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Send className="w-4 h-4" />
+                                    )}
                                     {loading ? "Mengirim..." : "Kirim Tiket"}
                                 </button>
                             </div>
@@ -115,29 +157,43 @@ export default function SupportPage() {
                 <div className="space-y-6">
                     <div className="bento-card p-6 relative overflow-hidden group">
                         <div className="absolute -top-10 -right-10 w-32 h-32 bg-[var(--accent)]/10 blur-[40px] rounded-full group-hover:bg-[var(--accent)]/20 transition-all pointer-events-none" />
-                        
+
                         <h3 className="text-lg font-bold text-[var(--text-primary)] mb-6 flex items-center gap-2 relative z-10">
                             <MessageSquare className="w-5 h-5 text-[var(--accent)]" /> Kontak Langsung
                         </h3>
 
                         <div className="space-y-4 relative z-10">
-                            <a href="#" className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-colors group/link">
+                            <a
+                                href="#"
+                                className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-colors group/link"
+                            >
                                 <div className="w-10 h-10 rounded-lg bg-[var(--accent)]/10 flex items-center justify-center border border-[var(--accent)]/30 shrink-0">
                                     <Mail className="w-5 h-5 text-[var(--accent)]" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">Email Support</p>
-                                    <p className="text-[14px] font-semibold text-[var(--text-primary)] group-hover/link:text-[var(--accent)] transition-colors">support@tenderseal.id</p>
+                                    <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                                        Email Support
+                                    </p>
+                                    <p className="text-[14px] font-semibold text-[var(--text-primary)] group-hover/link:text-[var(--accent)] transition-colors">
+                                        support@tenderseal.id
+                                    </p>
                                 </div>
                             </a>
 
-                            <a href="#" className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-colors group/link">
+                            <a
+                                href="#"
+                                className="flex items-center gap-3 p-3 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-colors group/link"
+                            >
                                 <div className="w-10 h-10 rounded-lg bg-blue-500/10 flex items-center justify-center border border-blue-500/30 shrink-0">
                                     <Phone className="w-5 h-5 text-blue-500" />
                                 </div>
                                 <div className="flex-1">
-                                    <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">WhatsApp Enterprise</p>
-                                    <p className="text-[14px] font-semibold text-[var(--text-primary)] group-hover/link:text-blue-500 transition-colors">+62 811 2233 4455</p>
+                                    <p className="text-[11px] font-medium text-[var(--text-tertiary)] uppercase tracking-wider">
+                                        WhatsApp Enterprise
+                                    </p>
+                                    <p className="text-[14px] font-semibold text-[var(--text-primary)] group-hover/link:text-blue-500 transition-colors">
+                                        +62 811 2233 4455
+                                    </p>
                                 </div>
                             </a>
                         </div>
@@ -154,7 +210,9 @@ export default function SupportPage() {
                             </div>
                             <div className="flex items-center justify-between text-[13px] pt-3 border-t border-[var(--border-light)]">
                                 <span className="text-[var(--text-secondary)] font-medium">Sabtu - Minggu</span>
-                                <span className="text-[var(--text-tertiary)] font-bold opacity-50 tracking-wider">TUTUP</span>
+                                <span className="text-[var(--text-tertiary)] font-bold opacity-50 tracking-wider">
+                                    TUTUP
+                                </span>
                             </div>
                         </div>
                     </div>
@@ -162,7 +220,8 @@ export default function SupportPage() {
                     <div className="p-4 rounded-xl bg-amber-500/10 border border-amber-500/30 text-amber-500 text-[12px] flex items-start gap-3">
                         <AlertCircle className="w-5 h-5 shrink-0 mt-0.5" />
                         <p className="leading-relaxed font-medium">
-                            Untuk permohonan pemulihan akun akibat lupa PIN, Anda wajib melampirkan surat permohonan resmi berstempel organisasi.
+                            Untuk permohonan pemulihan akun akibat lupa PIN, Anda wajib melampirkan surat permohonan
+                            resmi berstempel organisasi.
                         </p>
                     </div>
                 </div>

@@ -8,7 +8,9 @@ export const supportTickets = pgTable("support_tickets", {
     email: text("email").notNull(),
     category: text("category").notNull(),
     message: text("message").notNull(),
-    status: text("status", { enum: ["OPEN", "IN_PROGRESS", "CLOSED"] }).default("OPEN").notNull(),
+    status: text("status", { enum: ["OPEN", "IN_PROGRESS", "CLOSED"] })
+        .default("OPEN")
+        .notNull(),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });

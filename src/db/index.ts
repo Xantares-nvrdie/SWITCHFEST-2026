@@ -7,12 +7,14 @@ const globalForDb = globalThis as unknown as {
     conn: Pool | undefined;
 };
 
-const pool = globalForDb.conn ?? new Pool({
-    connectionString: process.env.DATABASE_URL!,
-    max: 3,
-    idleTimeoutMillis: 10000,
-    connectionTimeoutMillis: 10000,
-});
+const pool =
+    globalForDb.conn ??
+    new Pool({
+        connectionString: process.env.DATABASE_URL!,
+        max: 3,
+        idleTimeoutMillis: 10000,
+        connectionTimeoutMillis: 10000,
+    });
 
 if (process.env.NODE_ENV !== "production") globalForDb.conn = pool;
 

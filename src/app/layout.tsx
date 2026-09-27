@@ -7,7 +7,7 @@ import GlobalFooter from "@/components/global-footer";
 import { cn } from "@/lib/utils";
 import { ThemeProvider } from "@/components/theme-provider";
 
-const geist = Geist({subsets:['latin'],variable:'--font-sans'});
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
     subsets: ["latin"],
@@ -21,8 +21,7 @@ const spaceGrotesk = Space_Grotesk({
 
 export const metadata: Metadata = {
     title: "TenderSeal | Cryptographic E-Procurement",
-    description:
-        "Platform pengadaan digital terenkripsi dengan Commit-Reveal Scheme dan Smart Contract Audit Trail.",
+    description: "Platform pengadaan digital terenkripsi dengan Commit-Reveal Scheme dan Smart Contract Audit Trail.",
 };
 
 export default function RootLayout({

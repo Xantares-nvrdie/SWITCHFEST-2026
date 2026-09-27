@@ -15,7 +15,7 @@ export async function POST(request: Request) {
 
         // Try to get session to link ticket to user if logged in
         const session = await auth.api.getSession({
-            headers: await headers()
+            headers: await headers(),
         });
 
         // Insert ticket into DB
@@ -25,7 +25,7 @@ export async function POST(request: Request) {
             email,
             category,
             message,
-            status: "OPEN"
+            status: "OPEN",
         });
 
         return NextResponse.json({ success: true, message: "Tiket berhasil dikirim" }, { status: 201 });

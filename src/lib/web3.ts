@@ -8,13 +8,10 @@ export const CONTRACT_ADDRESS =
     "0x8e0dce737aC922f30bc2fc30d9930657029b6553";
 
 const PRIMARY_RPC = process.env.RPC_URL || "http://127.0.0.1:8545";
-const FALLBACK_RPCS = [
-    "https://rpc.sepolia.org",
-    "https://sepolia.drpc.org",
-    "https://1rpc.io/sepolia",
-];
+const FALLBACK_RPCS = ["https://rpc.sepolia.org", "https://sepolia.drpc.org", "https://1rpc.io/sepolia"];
 
-const RELAYER_PRIVATE_KEY = process.env.RELAYER_PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
+const RELAYER_PRIVATE_KEY =
+    process.env.RELAYER_PRIVATE_KEY || "0xac0974bec39a17e36ba4a6b4d238ff944bacb478cbed5efcae784d7bf4f2ff80";
 
 // Backend provider & relayer wallet — using FallbackProvider for resilience
 function buildProvider(): ethers.JsonRpcProvider {
@@ -31,10 +28,7 @@ export let contract = new ethers.Contract(CONTRACT_ADDRESS, TenderSealABI, relay
  * Menjalankan transaksi smart contract dengan retry + fallback RPC.
  * Mencoba primary RPC terlebih dahulu, lalu fallback jika gagal koneksi.
  */
-export async function sendContractTx<T>(
-    fn: (c: ethers.Contract) => Promise<T>,
-    maxRetries = 3,
-): Promise<T> {
+export async function sendContractTx<T>(fn: (c: ethers.Contract) => Promise<T>, maxRetries = 3): Promise<T> {
     const rpcs = [PRIMARY_RPC, ...FALLBACK_RPCS];
     let lastError: Error | null = null;
 
@@ -62,7 +56,7 @@ export async function sendContractTx<T>(
                 const backoffMs = Math.min(1000 * Math.pow(2, attempt - 1), 8000);
                 console.warn(
                     `[web3] RPC ${rpcUrl} attempt ${attempt}/${maxRetries} failed: ${err.code || err.message}. ` +
-                    `Retrying in ${backoffMs}ms...`,
+                        `Retrying in ${backoffMs}ms...`,
                 );
                 await new Promise((r) => setTimeout(r, backoffMs));
             }

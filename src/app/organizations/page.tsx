@@ -50,10 +50,7 @@ export default function OrganizationsPage() {
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [myRes, allRes] = await Promise.all([
-                fetch("/api/organizations/me"),
-                fetch("/api/organizations"),
-            ]);
+            const [myRes, allRes] = await Promise.all([fetch("/api/organizations/me"), fetch("/api/organizations")]);
             if (myRes.ok) setMyOrgs(await myRes.json());
             if (allRes.ok) setAllOrgs(await allRes.json());
         } catch {
@@ -71,13 +68,14 @@ export default function OrganizationsPage() {
         setCurrentPage(1);
     }, [activeTab]);
 
-    const filteredOrgs = activeTab === "my" 
-        ? myOrgs 
-        : allOrgs.filter((org) => {
-            if (isSysAdmin) return true;
-            const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
-            return status === "APPROVED";
-        });
+    const filteredOrgs =
+        activeTab === "my"
+            ? myOrgs
+            : allOrgs.filter((org) => {
+                  if (isSysAdmin) return true;
+                  const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
+                  return status === "APPROVED";
+              });
 
     const totalPages = Math.ceil(filteredOrgs.length / ITEMS_PER_PAGE);
     const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
@@ -88,7 +86,9 @@ export default function OrganizationsPage() {
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">Manajemen Organisasi</h1>
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                        Manajemen Organisasi
+                    </h1>
                     <p className="text-sm text-[var(--text-tertiary)] mt-1">
                         Kelola organisasi Anda, atur anggota, atau ikuti organisasi baru melalui kode undangan.
                     </p>
@@ -194,8 +194,8 @@ export default function OrganizationsPage() {
                                                     org.type === "BUYER"
                                                         ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
-                                                        : "bg-purple-500/10 text-purple-400 border-purple-500/30"
+                                                          ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                                          : "bg-purple-500/10 text-purple-400 border-purple-500/30"
                                                 }`}
                                             >
                                                 {org.type}
@@ -209,7 +209,8 @@ export default function OrganizationsPage() {
                                             )}
                                             {isPending && (
                                                 <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
-                                                    <ShieldCheck className="w-3 h-3 text-amber-500/80" /> Pending Admin Approval
+                                                    <ShieldCheck className="w-3 h-3 text-amber-500/80" /> Pending Admin
+                                                    Approval
                                                 </span>
                                             )}
                                             {isRejected && (
@@ -221,10 +222,18 @@ export default function OrganizationsPage() {
 
                                         {memberRole && (
                                             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
-                                                {memberRole === "ORGANIZATION_ADMIN" && <Crown className="w-3 h-3 text-amber-600" />}
-                                                {memberRole === "PROCUREMENT_OFFICER" && <Briefcase className="w-3 h-3 text-[var(--accent)]" />}
-                                                {memberRole === "AUDITOR" && <Eye className="w-3 h-3 text-[var(--text-secondary)]" />}
-                                                {memberRole === "MEMBER" && <User className="w-3 h-3 text-[var(--text-tertiary)]" />}
+                                                {memberRole === "ORGANIZATION_ADMIN" && (
+                                                    <Crown className="w-3 h-3 text-amber-600" />
+                                                )}
+                                                {memberRole === "PROCUREMENT_OFFICER" && (
+                                                    <Briefcase className="w-3 h-3 text-[var(--accent)]" />
+                                                )}
+                                                {memberRole === "AUDITOR" && (
+                                                    <Eye className="w-3 h-3 text-[var(--text-secondary)]" />
+                                                )}
+                                                {memberRole === "MEMBER" && (
+                                                    <User className="w-3 h-3 text-[var(--text-tertiary)]" />
+                                                )}
                                                 {memberRole.replace("_", " ")}
                                             </span>
                                         )}
@@ -234,16 +243,17 @@ export default function OrganizationsPage() {
                                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{org.name}</h3>
                                         {org.email && (
                                             <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5">
-                                                <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.email}
+                                                <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />{" "}
+                                                {org.email}
                                             </p>
                                         )}
                                         {org.address && (
                                             <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5 line-clamp-1">
-                                                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.address}
+                                                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />{" "}
+                                                {org.address}
                                             </p>
                                         )}
                                     </div>
-
                                 </div>
 
                                 <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
@@ -256,19 +266,25 @@ export default function OrganizationsPage() {
                                         <Link
                                             href={`/organizations/${org.id}/manage`}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                                                memberRole === "ORGANIZATION_ADMIN" 
+                                                memberRole === "ORGANIZATION_ADMIN"
                                                     ? "bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
                                                     : "bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
                                             }`}
                                         >
                                             {memberRole === "ORGANIZATION_ADMIN" ? (
-                                                <><Settings className="w-3.5 h-3.5" /> Kelola</>
+                                                <>
+                                                    <Settings className="w-3.5 h-3.5" /> Kelola
+                                                </>
                                             ) : (
-                                                <><Eye className="w-3.5 h-3.5" /> Lihat Detail</>
+                                                <>
+                                                    <Eye className="w-3.5 h-3.5" /> Lihat Detail
+                                                </>
                                             )}
                                         </Link>
                                     ) : (
-                                        <span className="text-[11px] text-[var(--text-tertiary)] font-mono uppercase opacity-50 tracking-wider">Bukan Anggota</span>
+                                        <span className="text-[11px] text-[var(--text-tertiary)] font-mono uppercase opacity-50 tracking-wider">
+                                            Bukan Anggota
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -281,7 +297,7 @@ export default function OrganizationsPage() {
                 <div className="flex items-center justify-center pt-8 pb-4">
                     <div className="flex items-center gap-3">
                         <button
-                            onClick={() => setCurrentPage(p => Math.max(1, p - 1))}
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
                             disabled={currentPage === 1}
                             className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
                         >
@@ -299,10 +315,12 @@ export default function OrganizationsPage() {
                                     </option>
                                 ))}
                             </select>
-                            <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">dari {totalPages}</span>
+                            <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">
+                                dari {totalPages}
+                            </span>
                         </div>
                         <button
-                            onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
                             disabled={currentPage === totalPages}
                             className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
                         >
@@ -314,5 +332,3 @@ export default function OrganizationsPage() {
         </div>
     );
 }
-
-

@@ -12,7 +12,7 @@ import {
     CheckCircle2,
     AlertCircle,
     Hash,
-    ShieldCheck
+    ShieldCheck,
 } from "lucide-react";
 
 interface BidItem {
@@ -81,7 +81,9 @@ export default function BidsHistoryPage() {
             {/* Judul Halaman */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-[28px] font-bold text-[var(--text-primary)] tracking-tight">Riwayat Penawaran</h1>
+                    <h1 className="text-[28px] font-bold text-[var(--text-primary)] tracking-tight">
+                        Riwayat Penawaran
+                    </h1>
                     <p className="text-[14px] text-[var(--text-secondary)] mt-0.5">
                         Daftar seluruh bid terenkripsi yang pernah Anda atau organisasi Anda kirimkan.
                     </p>
@@ -110,7 +112,9 @@ export default function BidsHistoryPage() {
             ) : filteredBids.length === 0 ? (
                 <div className="bento-card p-12 text-center space-y-3 flex flex-col items-center border-dashed">
                     <FileText className="w-8 h-8 text-[var(--border)] mb-2" />
-                    <p className="text-[var(--text-primary)] font-display text-[18px] font-semibold tracking-tight">Tidak ada riwayat penawaran ditemukan</p>
+                    <p className="text-[var(--text-primary)] font-display text-[18px] font-semibold tracking-tight">
+                        Tidak ada riwayat penawaran ditemukan
+                    </p>
                     <p className="text-[var(--text-tertiary)] text-[14px] max-w-md mx-auto">
                         Organisasi Anda belum pernah mengirimkan bid pada tender apa pun.
                     </p>
@@ -118,10 +122,7 @@ export default function BidsHistoryPage() {
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredBids.map((bid) => (
-                        <div
-                            key={bid.id}
-                            className="bento-card p-6 flex flex-col justify-between space-y-4 group"
-                        >
+                        <div key={bid.id} className="bento-card p-6 flex flex-col justify-between space-y-4 group">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[11px] font-mono font-semibold text-[var(--text-tertiary)] tracking-wide flex items-center gap-1.5">
@@ -173,7 +174,7 @@ export default function BidsHistoryPage() {
                                             month: "short",
                                             year: "numeric",
                                             hour: "2-digit",
-                                            minute: "2-digit"
+                                            minute: "2-digit",
                                         })}
                                     </span>
                                 </div>

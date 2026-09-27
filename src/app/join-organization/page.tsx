@@ -3,14 +3,7 @@
 import { useState } from "react";
 import { useRouter } from "next/navigation";
 import { useSession } from "@/lib/auth-client";
-import {
-    Key,
-    ArrowRight,
-    Loader2,
-    AlertCircle,
-    CheckCircle2,
-    Building2,
-} from "lucide-react";
+import { Key, ArrowRight, Loader2, AlertCircle, CheckCircle2, Building2 } from "lucide-react";
 import Link from "next/link";
 
 export default function JoinOrganizationPage() {
@@ -53,7 +46,8 @@ export default function JoinOrganizationPage() {
         }
     };
 
-    const inputClass = "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
+    const inputClass =
+        "w-full pl-10 pr-4 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] font-mono text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-1 focus:ring-[var(--border-strong)] focus:border-[var(--text-primary)] transition-all";
 
     return (
         <div className="min-h-screen bg-[var(--background)] flex items-center justify-center p-4">
@@ -65,7 +59,9 @@ export default function JoinOrganizationPage() {
                             <Key className="w-5 h-5 text-white" />
                         </div>
                         <div className="text-center">
-                            <h1 className="text-[20px] font-bold text-[var(--text-primary)] tracking-tight">Gabung Organisasi</h1>
+                            <h1 className="text-[20px] font-bold text-[var(--text-primary)] tracking-tight">
+                                Gabung Organisasi
+                            </h1>
                             <p className="text-[13px] text-[var(--text-tertiary)] mt-1">
                                 Masukkan kode undangan dari Admin organisasi Anda
                             </p>
@@ -79,9 +75,14 @@ export default function JoinOrganizationPage() {
                                 <CheckCircle2 className="w-8 h-8 text-teal-600" />
                             </div>
                             <div>
-                                <p className="text-[var(--text-primary)] font-semibold text-[16px]">{success.orgName}</p>
+                                <p className="text-[var(--text-primary)] font-semibold text-[16px]">
+                                    {success.orgName}
+                                </p>
                                 <p className="text-[var(--text-secondary)] text-[13px] mt-1">
-                                    Bergabung sebagai <span className="font-semibold text-[var(--accent)]">{success.role.replace("_", " ")}</span>
+                                    Bergabung sebagai{" "}
+                                    <span className="font-semibold text-[var(--accent)]">
+                                        {success.role.replace("_", " ")}
+                                    </span>
                                 </p>
                             </div>
                             <p className="text-[12px] text-[var(--text-tertiary)]">Mengarahkan...</p>
@@ -97,7 +98,10 @@ export default function JoinOrganizationPage() {
 
                             <form onSubmit={handleJoin} className="space-y-4">
                                 <div className="space-y-1.5">
-                                    <label htmlFor="invite-code" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                                    <label
+                                        htmlFor="invite-code"
+                                        className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                                    >
                                         Kode Undangan
                                     </label>
                                     <div className="relative">
@@ -126,23 +130,25 @@ export default function JoinOrganizationPage() {
                                             Memproses...
                                         </>
                                     ) : (
-                                        <>
-                                            Gabung Organisasi
-                                        </>
+                                        <>Gabung Organisasi</>
                                     )}
                                 </button>
                             </form>
 
                             <div className="flex items-center gap-3">
                                 <div className="flex-1 h-px bg-[var(--border)]" />
-                                <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">atau</span>
+                                <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">
+                                    atau
+                                </span>
                                 <div className="flex-1 h-px bg-[var(--border)]" />
                             </div>
 
                             <p className="text-center text-[13px] text-[var(--text-secondary)]">
                                 Tidak punya kode undangan?{" "}
-                                <Link href="/setup-organization"
-                                    className="font-semibold text-blue-600 hover:underline">
+                                <Link
+                                    href="/setup-organization"
+                                    className="font-semibold text-blue-600 hover:underline"
+                                >
                                     Buat organisasi baru
                                 </Link>
                             </p>

@@ -14,9 +14,13 @@ export default function GlobalFooter() {
                 </div>
                 {pathname !== "/" && (
                     <div className="flex items-center gap-4 text-[var(--text-tertiary)]">
-                        <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">Jangan lupa bahagia</span>
+                        <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+                            Jangan lupa bahagia
+                        </span>
                         <span>·</span>
-                        <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">Indonesia lebih baik</span>
+                        <span className="hover:text-[var(--text-primary)] transition-colors cursor-pointer">
+                            Indonesia lebih baik
+                        </span>
                     </div>
                 )}
             </div>

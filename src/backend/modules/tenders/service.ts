@@ -371,9 +371,7 @@ export abstract class TenderService {
 
                     // require(false) tanpa message = kontrak revert — paling sering karena
                     // tender sudah terdaftar di blockchain sebelumnya. Lanjutkan saja.
-                    const isCallException =
-                        err.code === "CALL_EXCEPTION" ||
-                        err.reason === "require(false)";
+                    const isCallException = err.code === "CALL_EXCEPTION" || err.reason === "require(false)";
 
                     if (isAlreadyExists || isCallException) {
                         console.warn(
@@ -384,7 +382,8 @@ export abstract class TenderService {
                     } else {
                         console.error("Failed to create tender on smart contract:", err.code, err.reason);
                         throw new Error(
-                            "Gagal mendaftarkan tender ke Blockchain: " + (err.reason || err.shortMessage || err.message || "unknown error"),
+                            "Gagal mendaftarkan tender ke Blockchain: " +
+                                (err.reason || err.shortMessage || err.message || "unknown error"),
                         );
                     }
                 }
@@ -505,12 +504,7 @@ export abstract class TenderService {
             let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
             try {
                 txHash = await sendContractTx(async (c) => {
-                    const scTx = await c.finalizeTender(
-                        tenderId,
-                        "NO_WINNER",
-                        "0.00",
-                        evaluationHash,
-                    );
+                    const scTx = await c.finalizeTender(tenderId, "NO_WINNER", "0.00", evaluationHash);
                     const receipt = await scTx.wait();
                     return receipt.hash;
                 });
@@ -518,9 +512,10 @@ export abstract class TenderService {
                 console.error("Failed to finalize tender on smart contract (no winner):", err);
             }
 
-            const decisionNotes = tenderBids.length === 0
-                ? "Tender diselesaikan tanpa pemenang (tidak ada penawaran yang diajukan oleh vendor)."
-                : "Tender diselesaikan tanpa pemenang (tidak ada vendor yang melakukan reveal penawaran secara sah).";
+            const decisionNotes =
+                tenderBids.length === 0
+                    ? "Tender diselesaikan tanpa pemenang (tidak ada penawaran yang diajukan oleh vendor)."
+                    : "Tender diselesaikan tanpa pemenang (tidak ada vendor yang melakukan reveal penawaran secara sah).";
 
             const contractAddress = CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
 
@@ -610,7 +605,10 @@ export abstract class TenderService {
         const criteriaIds = new Set(criteria.map((criterion) => criterion.id));
         for (const bid of submittedBids) {
             const scoredCriteriaIds = new Set(bid.criteriaScores.map((score) => score.criterionId));
-            if (scoredCriteriaIds.size !== criteriaIds.size || [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))) {
+            if (
+                scoredCriteriaIds.size !== criteriaIds.size ||
+                [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))
+            ) {
                 throw new Error("Setiap bid harus memiliki skor untuk seluruh kriteria tender.");
             }
         }
@@ -618,7 +616,9 @@ export abstract class TenderService {
         const scoreByBidAndCriterion = new Map(
             submittedBids.map((bid) => [
                 bid.bidId,
-                new Map(bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)])),
+                new Map(
+                    bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)]),
+                ),
             ]),
         );
         const rankedBids = [...submittedBids].sort((left, right) => right.totalScore - left.totalScore);
@@ -837,9 +837,7 @@ export abstract class TenderService {
         if (!tender) throw new Error("Tender not found");
         if (tender.status !== "TIED") throw new Error("Tender is not awaiting tie resolution");
 
-        const candidateBidIds = Array.isArray(tender.tieCandidateBidIds)
-            ? (tender.tieCandidateBidIds as string[])
-            : [];
+        const candidateBidIds = Array.isArray(tender.tieCandidateBidIds) ? (tender.tieCandidateBidIds as string[]) : [];
         if (!candidateBidIds.includes(payload.winningBidId)) {
             throw new Error("Pemenang harus dipilih dari kandidat yang seri.");
         }

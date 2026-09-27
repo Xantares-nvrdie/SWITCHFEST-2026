@@ -55,15 +55,21 @@ export function CryptoVaultScene() {
                 <color attach="background" args={["transparent"]} />
                 <ambientLight intensity={0.5} />
                 <spotLight position={[10, 10, 10]} angle={0.15} penumbra={1} intensity={1} />
-                
+
                 <Vault />
-                
+
                 <Environment resolution={256}>
                     <group rotation={[-Math.PI / 4, -0.3, 0]}>
                         <Lightformer intensity={4} rotation-x={Math.PI / 2} position={[0, 5, -9]} scale={[10, 10, 1]} />
                         <Lightformer intensity={2} rotation-y={Math.PI / 2} position={[-5, 1, -1]} scale={[10, 2, 1]} />
                         <Lightformer intensity={2} rotation-y={-Math.PI / 2} position={[10, 1, 0]} scale={[20, 2, 1]} />
-                        <Lightformer type="ring" intensity={2} rotation-y={Math.PI / 2} position={[-0.1, -1, -5]} scale={10} />
+                        <Lightformer
+                            type="ring"
+                            intensity={2}
+                            rotation-y={Math.PI / 2}
+                            position={[-0.1, -1, -5]}
+                            scale={10}
+                        />
                     </group>
                 </Environment>
                 <ContactShadows position={[0, -2, 0]} opacity={0.4} scale={20} blur={2} far={4} color="#000000" />

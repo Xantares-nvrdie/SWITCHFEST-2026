@@ -62,10 +62,30 @@ interface Organization {
 }
 
 const roleMeta: Record<OrgRole, { label: string; icon: any; color: string; bg: string }> = {
-    ORGANIZATION_ADMIN: { label: "Admin", icon: Crown, color: "text-[var(--text-primary)]", bg: "bg-[var(--surface-secondary)] border-[var(--text-primary)]" },
-    PROCUREMENT_OFFICER: { label: "Procurement", icon: Briefcase, color: "text-[var(--text-secondary)]", bg: "bg-[var(--surface)] border-[var(--border-strong)]" },
-    AUDITOR: { label: "Auditor", icon: Eye, color: "text-[var(--text-secondary)]", bg: "bg-[var(--surface)] border-[var(--border)]" },
-    MEMBER: { label: "Member", icon: User, color: "text-[var(--text-tertiary)]", bg: "bg-transparent border-[var(--border-light)]" },
+    ORGANIZATION_ADMIN: {
+        label: "Admin",
+        icon: Crown,
+        color: "text-[var(--text-primary)]",
+        bg: "bg-[var(--surface-secondary)] border-[var(--text-primary)]",
+    },
+    PROCUREMENT_OFFICER: {
+        label: "Procurement",
+        icon: Briefcase,
+        color: "text-[var(--text-secondary)]",
+        bg: "bg-[var(--surface)] border-[var(--border-strong)]",
+    },
+    AUDITOR: {
+        label: "Auditor",
+        icon: Eye,
+        color: "text-[var(--text-secondary)]",
+        bg: "bg-[var(--surface)] border-[var(--border)]",
+    },
+    MEMBER: {
+        label: "Member",
+        icon: User,
+        color: "text-[var(--text-tertiary)]",
+        bg: "bg-transparent border-[var(--border-light)]",
+    },
 };
 
 function RoleBadge({ role }: { role: OrgRole }) {
@@ -136,7 +156,10 @@ export default function OrgManagePage() {
                 fetch(`/api/organizations/${orgId}/members`),
             ]);
 
-            if (!orgRes.ok) { setError("Organisasi tidak ditemukan"); return; }
+            if (!orgRes.ok) {
+                setError("Organisasi tidak ditemukan");
+                return;
+            }
             const orgData = await orgRes.json();
             setOrg(orgData);
             setFormData(orgData);
@@ -159,7 +182,9 @@ export default function OrgManagePage() {
         }
     }, [orgId, session?.user?.id]);
 
-    useEffect(() => { fetchData(); }, [fetchData]);
+    useEffect(() => {
+        fetchData();
+    }, [fetchData]);
 
     const handleUpdateProfile = async (e: React.FormEvent) => {
         e.preventDefault();
@@ -236,33 +261,44 @@ export default function OrgManagePage() {
         fetchData();
     };
 
-    const inputClass = "w-full pl-9 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
-    const selectClass = "appearance-none w-full pl-3 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all cursor-pointer";
+    const inputClass =
+        "w-full pl-9 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all";
+    const selectClass =
+        "appearance-none w-full pl-3 pr-8 py-2.5 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all cursor-pointer";
 
-    if (isLoading) return (
-        <div className="flex items-center justify-center h-64">
-            <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin" />
-        </div>
-    );
+    if (isLoading)
+        return (
+            <div className="flex items-center justify-center h-64">
+                <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin" />
+            </div>
+        );
 
-    if (error || !org) return (
-        <div className="flex flex-col items-center justify-center h-64 gap-4 card p-8">
-            <AlertCircle className="w-10 h-10 text-red-500" />
-            <p className="text-[14px] font-medium text-[var(--text-secondary)]">{error ?? "Organisasi tidak ditemukan"}</p>
-        </div>
-    );
+    if (error || !org)
+        return (
+            <div className="flex flex-col items-center justify-center h-64 gap-4 card p-8">
+                <AlertCircle className="w-10 h-10 text-red-500" />
+                <p className="text-[14px] font-medium text-[var(--text-secondary)]">
+                    {error ?? "Organisasi tidak ditemukan"}
+                </p>
+            </div>
+        );
 
     return (
         <div className="space-y-8 pb-16 max-w-4xl mx-auto">
             {/* Header */}
             <div className="flex items-start justify-between gap-4">
                 <div className="flex items-start gap-4">
-                    <button onClick={() => router.back()} className="mt-1 p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)]">
+                    <button
+                        onClick={() => router.back()}
+                        className="mt-1 p-2 rounded-lg text-[var(--text-tertiary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)] transition-all border border-transparent hover:border-[var(--border)]"
+                    >
                         <ArrowLeft className="w-4 h-4" />
                     </button>
                     <div>
                         <div className="flex items-center gap-3 mb-1">
-                            <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">{org.name}</h1>
+                            <h1 className="text-[24px] font-bold text-[var(--text-primary)] tracking-tight">
+                                {org.name}
+                            </h1>
                             <span className="text-[10px] font-bold px-2.5 py-0.5 rounded-full uppercase tracking-wide bg-[var(--surface-secondary)] border border-[var(--border)] text-[var(--text-secondary)]">
                                 {org.type}
                             </span>
@@ -270,7 +306,11 @@ export default function OrgManagePage() {
                         <p className="text-[13px] text-[var(--text-tertiary)] flex items-center gap-1.5">
                             <Users className="w-4 h-4" />
                             {members.length} anggota
-                            {isAdmin && <span className="ml-3 px-2 py-0.5 rounded-md bg-[var(--surface-secondary)] text-[var(--text-primary)] text-[11px] font-mono font-medium flex items-center gap-1.5 border border-[var(--text-primary)]"><Crown className="w-3 h-3" /> Admin</span>}
+                            {isAdmin && (
+                                <span className="ml-3 px-2 py-0.5 rounded-md bg-[var(--surface-secondary)] text-[var(--text-primary)] text-[11px] font-mono font-medium flex items-center gap-1.5 border border-[var(--text-primary)]">
+                                    <Crown className="w-3 h-3" /> Admin
+                                </span>
+                            )}
                         </p>
                     </div>
                 </div>
@@ -295,14 +335,25 @@ export default function OrgManagePage() {
 
             {/* Tabs */}
             <div className="flex items-center gap-1 p-1 rounded-xl bg-[var(--surface-secondary)] border border-[var(--border-light)] w-fit">
-                {([["overview", Building2, "Profil Organisasi"], ["members", Users, "Anggota Tim"], ["invites", Key, "Kode Undangan"]] as const).map(([tab, Icon, label]) => {
+                {(
+                    [
+                        ["overview", Building2, "Profil Organisasi"],
+                        ["members", Users, "Anggota Tim"],
+                        ["invites", Key, "Kode Undangan"],
+                    ] as const
+                ).map(([tab, Icon, label]) => {
                     const isActive = activeTab === tab;
                     if (tab === "invites" && !isAdmin) return null;
                     return (
-                        <button key={tab} onClick={() => setActiveTab(tab as typeof activeTab)}
+                        <button
+                            key={tab}
+                            onClick={() => setActiveTab(tab as typeof activeTab)}
                             className={`flex items-center gap-2 px-4 py-2 rounded-lg text-[13px] font-semibold transition-all ${
-                                isActive ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm" : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50"
-                            }`}>
+                                isActive
+                                    ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] shadow-sm"
+                                    : "text-[var(--text-tertiary)] hover:text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50"
+                            }`}
+                        >
                             <Icon className="w-4 h-4" />
                             {label}
                         </button>
@@ -319,17 +370,31 @@ export default function OrgManagePage() {
                             Profil & Informasi Dasar
                         </h2>
                     </div>
-                    
+
                     <form onSubmit={handleUpdateProfile} className="p-6 space-y-6">
                         <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nama Organisasi *</label>
-                                <input required type="text" value={formData.name || ""} onChange={e => setFormData(p => ({ ...p, name: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    Nama Organisasi *
+                                </label>
+                                <input
+                                    required
+                                    type="text"
+                                    value={formData.name || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, name: e.target.value }))}
+                                    className={inputClass}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                             <div className="space-y-1.5">
                                 <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Tipe *</label>
                                 <div className="relative">
-                                    <select value={formData.type || "BUYER"} onChange={e => setFormData(p => ({ ...p, type: e.target.value as any }))} className={selectClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"}>
+                                    <select
+                                        value={formData.type || "BUYER"}
+                                        onChange={(e) => setFormData((p) => ({ ...p, type: e.target.value as any }))}
+                                        className={selectClass}
+                                        disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                    >
                                         <option value="BUYER">BUYER (Pembeli/Panitia)</option>
                                         <option value="VENDOR">VENDOR (Penyedia)</option>
                                         <option value="BOTH">BOTH (Keduanya)</option>
@@ -338,31 +403,79 @@ export default function OrgManagePage() {
                                 </div>
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nama Legal (PT/CV)</label>
-                                <input type="text" value={formData.legalName || ""} onChange={e => setFormData(p => ({ ...p, legalName: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    Nama Legal (PT/CV)
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.legalName || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, legalName: e.target.value }))}
+                                    className={inputClass}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">NPWP / NIB</label>
-                                <input type="text" value={formData.registrationNumber || ""} onChange={e => setFormData(p => ({ ...p, registrationNumber: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    NPWP / NIB
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.registrationNumber || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, registrationNumber: e.target.value }))}
+                                    className={inputClass}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Email Perusahaan</label>
-                                <input type="email" value={formData.email || ""} onChange={e => setFormData(p => ({ ...p, email: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    Email Perusahaan
+                                </label>
+                                <input
+                                    type="email"
+                                    value={formData.email || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, email: e.target.value }))}
+                                    className={inputClass}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                             <div className="space-y-1.5">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Nomor Telepon</label>
-                                <input type="text" value={formData.phone || ""} onChange={e => setFormData(p => ({ ...p, phone: e.target.value }))} className={inputClass} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    Nomor Telepon
+                                </label>
+                                <input
+                                    type="text"
+                                    value={formData.phone || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, phone: e.target.value }))}
+                                    className={inputClass}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                             <div className="space-y-1.5 md:col-span-2">
-                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Alamat Lengkap</label>
-                                <textarea rows={3} value={formData.address || ""} onChange={e => setFormData(p => ({ ...p, address: e.target.value }))} className={`${inputClass} resize-none`} disabled={!isAdmin || org.verificationStatus === "REJECTED"} />
+                                <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                    Alamat Lengkap
+                                </label>
+                                <textarea
+                                    rows={3}
+                                    value={formData.address || ""}
+                                    onChange={(e) => setFormData((p) => ({ ...p, address: e.target.value }))}
+                                    className={`${inputClass} resize-none`}
+                                    disabled={!isAdmin || org.verificationStatus === "REJECTED"}
+                                />
                             </div>
                         </div>
 
                         {isAdmin && org.verificationStatus !== "REJECTED" && (
                             <div className="flex justify-end pt-4 border-t border-[var(--border)]">
-                                <button type="submit" disabled={isUpdating} className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all disabled:opacity-50">
-                                    {isUpdating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Check className="w-4 h-4" />}
+                                <button
+                                    type="submit"
+                                    disabled={isUpdating}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 transition-all disabled:opacity-50"
+                                >
+                                    {isUpdating ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Check className="w-4 h-4" />
+                                    )}
                                     Simpan Perubahan
                                 </button>
                             </div>
@@ -380,12 +493,15 @@ export default function OrgManagePage() {
                             Daftar Anggota
                         </h2>
                     </div>
-                    
+
                     <div className="divide-y divide-[var(--border)]">
                         {members.map((m) => {
                             const isSelf = m.user.id === session?.user?.id;
                             return (
-                                <div key={m.id} className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[var(--surface-secondary)]/50 transition-colors">
+                                <div
+                                    key={m.id}
+                                    className="px-6 py-5 flex flex-col sm:flex-row sm:items-center justify-between gap-4 hover:bg-[var(--surface-secondary)]/50 transition-colors"
+                                >
                                     {/* Profile */}
                                     <div className="flex items-center gap-4 flex-1">
                                         <div className="w-10 h-10 rounded-full bg-[var(--text-primary)] flex items-center justify-center shrink-0 shadow-sm">
@@ -393,11 +509,17 @@ export default function OrgManagePage() {
                                                 {m.user.name.charAt(0).toUpperCase()}
                                             </span>
                                         </div>
-                                        
+
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-2 flex-wrap mb-1">
-                                                <span className="text-[14px] font-bold text-[var(--text-primary)]">{m.user.name}</span>
-                                                {isSelf && <span className="text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--border-light)] px-1.5 py-0.5 rounded">(Anda)</span>}
+                                                <span className="text-[14px] font-bold text-[var(--text-primary)]">
+                                                    {m.user.name}
+                                                </span>
+                                                {isSelf && (
+                                                    <span className="text-[10px] font-medium text-[var(--text-tertiary)] bg-[var(--border-light)] px-1.5 py-0.5 rounded">
+                                                        (Anda)
+                                                    </span>
+                                                )}
                                                 <RoleBadge role={m.role} />
                                                 {m.status === "SUSPENDED" && (
                                                     <span className="text-[10px] px-2 py-0.5 rounded-full font-bold bg-red-500/10 text-red-500 border border-red-200">
@@ -416,7 +538,9 @@ export default function OrgManagePage() {
                                             <div className="relative">
                                                 <select
                                                     value={m.role}
-                                                    onChange={(e) => handleUpdateMemberRole(m.id, e.target.value as OrgRole)}
+                                                    onChange={(e) =>
+                                                        handleUpdateMemberRole(m.id, e.target.value as OrgRole)
+                                                    }
                                                     className="appearance-none text-[12px] font-medium pr-8 pl-3 py-1.5 rounded-lg cursor-pointer outline-none transition-all border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-primary)] hover:border-[var(--accent)]"
                                                 >
                                                     <option value="MEMBER">Member</option>
@@ -431,14 +555,19 @@ export default function OrgManagePage() {
                                             <button
                                                 onClick={() => handleToggleMemberStatus(m.id, m.status)}
                                                 className={`p-1.5 rounded-lg transition-all border ${
-                                                    m.status === "ACTIVE" 
-                                                        ? "border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:text-amber-600 hover:border-amber-200" 
+                                                    m.status === "ACTIVE"
+                                                        ? "border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-tertiary)] hover:text-amber-600 hover:border-amber-200"
                                                         : "border-teal-200 bg-teal-50 text-teal-600"
                                                 }`}
-                                                title={m.status === "ACTIVE" ? "Tangguhkan anggota" : "Aktifkan anggota"}>
-                                                {m.status === "ACTIVE"
-                                                    ? <ToggleRight className="w-5 h-5" />
-                                                    : <ToggleLeft className="w-5 h-5" />}
+                                                title={
+                                                    m.status === "ACTIVE" ? "Tangguhkan anggota" : "Aktifkan anggota"
+                                                }
+                                            >
+                                                {m.status === "ACTIVE" ? (
+                                                    <ToggleRight className="w-5 h-5" />
+                                                ) : (
+                                                    <ToggleLeft className="w-5 h-5" />
+                                                )}
                                             </button>
                                         </div>
                                     )}
@@ -471,10 +600,15 @@ export default function OrgManagePage() {
                             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                                 {/* Role */}
                                 <div className="space-y-1.5">
-                                    <label className="text-[12px] font-semibold text-[var(--text-secondary)]">Role</label>
+                                    <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
+                                        Role
+                                    </label>
                                     <div className="relative">
-                                        <select value={inviteRole} onChange={(e) => setInviteRole(e.target.value as OrgRole)}
-                                            className={selectClass}>
+                                        <select
+                                            value={inviteRole}
+                                            onChange={(e) => setInviteRole(e.target.value as OrgRole)}
+                                            className={selectClass}
+                                        >
                                             <option value="MEMBER">Member</option>
                                             <option value="AUDITOR">Auditor</option>
                                             <option value="PROCUREMENT_OFFICER">Procurement Officer</option>
@@ -487,40 +621,60 @@ export default function OrgManagePage() {
                                 {/* Max uses */}
                                 <div className="space-y-1.5">
                                     <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
-                                        Batas Penggunaan <span className="text-[var(--text-tertiary)] font-normal">(opsional)</span>
+                                        Batas Penggunaan{" "}
+                                        <span className="text-[var(--text-tertiary)] font-normal">(opsional)</span>
                                     </label>
                                     <div className="relative">
                                         <Hash className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
-                                        <input type="number" min={1} value={inviteMaxUses}
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            value={inviteMaxUses}
                                             onChange={(e) => setInviteMaxUses(e.target.value)}
                                             placeholder="Tak terbatas"
-                                            className={inputClass} />
+                                            className={inputClass}
+                                        />
                                     </div>
                                 </div>
 
                                 {/* Expiry */}
                                 <div className="space-y-1.5">
                                     <label className="text-[12px] font-semibold text-[var(--text-secondary)]">
-                                        Masa Berlaku (hari) <span className="text-[var(--text-tertiary)] font-normal">(opsional)</span>
+                                        Masa Berlaku (hari){" "}
+                                        <span className="text-[var(--text-tertiary)] font-normal">(opsional)</span>
                                     </label>
                                     <div className="relative">
                                         <Clock className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
-                                        <input type="number" min={1} max={365} value={inviteExpiry}
+                                        <input
+                                            type="number"
+                                            min={1}
+                                            max={365}
+                                            value={inviteExpiry}
                                             onChange={(e) => setInviteExpiry(e.target.value)}
                                             placeholder="Selamanya"
-                                            className={inputClass} />
+                                            className={inputClass}
+                                        />
                                     </div>
                                 </div>
                             </div>
 
                             <div className="flex items-center gap-3 pt-2">
-                                <button onClick={handleGenerateInvite} disabled={isGenerating}
-                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] disabled:opacity-50 transition-all hover:opacity-90">
-                                    {isGenerating ? <Loader2 className="w-4 h-4 animate-spin" /> : <Key className="w-4 h-4" />}
+                                <button
+                                    onClick={handleGenerateInvite}
+                                    disabled={isGenerating}
+                                    className="flex items-center gap-2 px-5 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] disabled:opacity-50 transition-all hover:opacity-90"
+                                >
+                                    {isGenerating ? (
+                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                    ) : (
+                                        <Key className="w-4 h-4" />
+                                    )}
                                     Generate Kode
                                 </button>
-                                <button onClick={() => setShowInviteForm(false)}
-                                    className="px-5 py-2.5 rounded-lg text-[13px] font-semibold text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)] transition-all">
+                                <button
+                                    onClick={() => setShowInviteForm(false)}
+                                    className="px-5 py-2.5 rounded-lg text-[13px] font-semibold text-[var(--text-secondary)] bg-[var(--surface-secondary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)] transition-all"
+                                >
                                     Batal
                                 </button>
                             </div>
@@ -532,24 +686,30 @@ export default function OrgManagePage() {
                         <div className="px-6 py-5 border-b border-[var(--border)]">
                             <h2 className="font-bold text-[var(--text-primary)] flex items-center gap-2 text-[16px]">
                                 <Key className="w-5 h-5 text-[var(--text-tertiary)]" />
-                                Kode Aktif ({invites.filter(i => i.isActive).length})
+                                Kode Aktif ({invites.filter((i) => i.isActive).length})
                             </h2>
                         </div>
 
                         {invites.length === 0 ? (
                             <div className="py-16 text-center">
                                 <Key className="w-10 h-10 mx-auto mb-3 text-[var(--border-strong)]" />
-                                <p className="text-[13px] text-[var(--text-secondary)]">Belum ada kode undangan. Generate baru di atas.</p>
+                                <p className="text-[13px] text-[var(--text-secondary)]">
+                                    Belum ada kode undangan. Generate baru di atas.
+                                </p>
                             </div>
                         ) : (
                             <div className="divide-y divide-[var(--border)]">
                                 {invites.map((inv) => (
-                                    <div key={inv.id} className={`px-6 py-5 flex items-center justify-between gap-4 transition-colors ${!inv.isActive ? "opacity-50 bg-[var(--surface-secondary)]" : "hover:bg-[var(--surface-secondary)]/50"}`}>
+                                    <div
+                                        key={inv.id}
+                                        className={`px-6 py-5 flex items-center justify-between gap-4 transition-colors ${!inv.isActive ? "opacity-50 bg-[var(--surface-secondary)]" : "hover:bg-[var(--surface-secondary)]/50"}`}
+                                    >
                                         {/* Code Info */}
                                         <div className="flex-1 min-w-0">
                                             <div className="flex items-center gap-3 flex-wrap mb-2">
                                                 <code
-                                                    className={`text-[16px] font-mono font-bold tracking-widest ${inv.isActive ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}>
+                                                    className={`text-[16px] font-mono font-bold tracking-widest ${inv.isActive ? "text-[var(--text-primary)]" : "text-[var(--text-tertiary)]"}`}
+                                                >
                                                     {inv.code}
                                                 </code>
                                                 {inv.isActive && <CopyButton text={inv.code} />}
@@ -563,7 +723,8 @@ export default function OrgManagePage() {
                                             <div className="flex items-center gap-4 text-[12px] text-[var(--text-tertiary)] flex-wrap">
                                                 <span className="flex items-center gap-1.5">
                                                     <Users className="w-3.5 h-3.5" />
-                                                    {inv.usesCount}{inv.maxUses ? ` / ${inv.maxUses}` : ""} Terpakai
+                                                    {inv.usesCount}
+                                                    {inv.maxUses ? ` / ${inv.maxUses}` : ""} Terpakai
                                                 </span>
                                                 {inv.expiresAt && (
                                                     <span className="flex items-center gap-1.5">
@@ -577,9 +738,11 @@ export default function OrgManagePage() {
 
                                         {/* Revoke */}
                                         {inv.isActive && org.verificationStatus !== "REJECTED" && (
-                                            <button onClick={() => handleRevoke(inv.id)}
+                                            <button
+                                                onClick={() => handleRevoke(inv.id)}
                                                 className="p-2 rounded-lg transition-all text-[var(--text-tertiary)] border border-transparent hover:border-red-200 hover:text-red-500 hover:bg-red-500/10"
-                                                title="Cabut kode">
+                                                title="Cabut kode"
+                                            >
                                                 <Trash2 className="w-5 h-5" />
                                             </button>
                                         )}

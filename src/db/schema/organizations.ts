@@ -24,4 +24,3 @@ export const organizations = pgTable("organizations", {
         .$onUpdate(() => new Date())
         .notNull(),
 });
-

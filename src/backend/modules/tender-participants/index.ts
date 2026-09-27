@@ -6,7 +6,8 @@ import betterAuthMiddleware from "@/backend/utils/better-auth/middleware";
 const tenderParticipantsModule = new Elysia({
     prefix: "/tenders/:id/participants",
     tags: ["Tender Participants"],
-}).use(betterAuthMiddleware)
+})
+    .use(betterAuthMiddleware)
     .get(
         "/",
         async ({ params }) => {
