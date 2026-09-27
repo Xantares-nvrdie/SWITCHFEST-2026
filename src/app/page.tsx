@@ -147,10 +147,10 @@ export default function HomePage() {
                             variants={stagger}
                             className="font-display text-[64px] sm:text-[80px] font-bold tracking-tighter text-[var(--text-primary)] leading-[1.05]"
                         >
-                            Pengadaan digital
+                            Platform Pengadaan
                             <br />
                             <span className="text-transparent bg-clip-text bg-gradient-to-r from-[var(--text-primary)] to-[var(--text-tertiary)]">
-                                yang mustahil diintip.
+                                yang Tidak Bisa Dimanipulasi.
                             </span>
                         </motion.h1>
 
@@ -162,8 +162,8 @@ export default function HomePage() {
                             className="text-[18px] text-[var(--text-secondary)] leading-relaxed max-w-xl font-medium"
                         >
                             TenderSeal menggunakan{" "}
-                            <span className="text-[var(--text-primary)]">Commit-Reveal Cryptography</span> di sisi
-                            klien. Server tidak pernah melihat isi harga Anda. Smart contract mencatat setiap langkah.
+                            <span className="text-[var(--text-primary)]">Commit-Reveal Cryptography</span>{" "}
+                            di sisi klien. Harga penawaran dienkripsi di browser Anda, bukan di server kami. Smart contract mencatat setiap langkah di Ethereum Sepolia.
                         </motion.p>
 
                         <motion.div
@@ -223,7 +223,7 @@ export default function HomePage() {
                                 Kapasitas Platform
                             </h2>
                             <p className="text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl">
-                                Infrastruktur yang dirancang untuk menangani pengadaan tingkat institusi.
+                                Empat modul inti yang menangani pengadaan dari draft tender hingga hasil akhir tercatat di blockchain.
                             </p>
                         </div>
 
@@ -402,8 +402,7 @@ export default function HomePage() {
                             transition={{ delay: 0.1 }}
                             className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium leading-relaxed"
                         >
-                            Tiga langkah matematis yang menjamin manipulasi harga adalah hal yang tidak mungkin secara
-                            kriptografis.
+                            Tiga langkah matematis. Tanpa PIN yang Anda pegang, tidak ada satu pun pihak yang bisa membuka isi penawaran lebih awal.
                         </motion.p>
                     </div>
 
@@ -476,8 +475,7 @@ export default function HomePage() {
                             transition={{ delay: 0.1 }}
                             className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium leading-relaxed"
                         >
-                            Empat tahap deterministik untuk merilis pengadaan ke jaringan. Sorot pada panel untuk
-                            melihat detail proses.
+                            Empat tahap deterministik. Arahkan kursor ke setiap panel untuk melihat detail proses.
                         </motion.p>
                     </div>
 
@@ -589,7 +587,7 @@ export default function HomePage() {
                             Protokol Kepercayaan
                         </h2>
                         <p className="text-[18px] text-[var(--text-secondary)] mt-4 font-medium">
-                            Validasi fungsional dari institusi yang telah bermigrasi ke arsitektur desentralisasi.
+                            Pandangan dari sisi pengadaan dan sisi vendor.
                         </p>
                     </div>
 
@@ -608,27 +606,27 @@ export default function HomePage() {
                                 >
                                     {[
                                         {
-                                            quote: "Audit logs di smart contract tidak bisa direkayasa oleh siapapun, termasuk administrator IT internal. Bukti kriptografis ini mengeliminasi perdebatan tentang transparansi.",
-                                            name: "Budi S.",
-                                            title: "Kepala Divisi Pengadaan",
+                                            quote: "Audit log di smart contract tidak bisa direkayasa oleh siapapun, termasuk administrator IT internal. Bukti kriptografis ini menghilangkan perdebatan soal transparansi.",
+                                            name: "Kepala Divisi Pengadaan",
+                                            title: "Institusi Pemerintah",
                                             highlight: true,
                                         },
                                         {
-                                            quote: "Enkripsi sisi klien menjamin panitia zero-knowledge terhadap harga penawaran sebelum waktu yang ditetapkan. Celah kolusi ditutup rapat.",
-                                            name: "Rina A.",
-                                            title: "Lead Internal Auditor",
+                                            quote: "Enkripsi sisi klien membuat panitia tidak bisa mengakses harga penawaran sebelum waktu buka. Celah kolusi teknis tertutup.",
+                                            name: "Lead Internal Auditor",
+                                            title: "BUMN",
                                             highlight: false,
                                         },
                                         {
-                                            quote: "Proses verifikasi kualifikasi teknis vendor kini terpusat dan konsisten. Kami tidak perlu lagi melakukan sinkronisasi data antar cabang secara manual.",
-                                            name: "Hendra T.",
-                                            title: "VP Operations",
+                                            quote: "Verifikasi kualifikasi vendor kini terpusat. Kami tidak perlu lagi sinkronisasi data antar cabang secara manual.",
+                                            name: "VP Operations",
+                                            title: "Perusahaan Swasta",
                                             highlight: false,
                                         },
                                         {
-                                            quote: "Kami tidak lagi berurusan dengan insiden 'dokumen hilang' atau perselisihan timestamp. Semua transaksi terukir permanen di ledger.",
-                                            name: "Siska M.",
-                                            title: "Legal Officer",
+                                            quote: "Tidak ada lagi insiden dokumen hilang atau perselisihan timestamp. Semua transaksi tercatat permanen di ledger.",
+                                            name: "Legal Officer",
+                                            title: "Konsorsium Pengadaan",
                                             highlight: false,
                                         },
                                     ]
@@ -686,9 +684,9 @@ export default function HomePage() {
                                 >
                                     {[
                                         {
-                                            quote: "Siklus rekonsiliasi data turun 80%. Validasi hash otomatis membuktikan bahwa dokumen vendor sama persis dengan yang dikirim sebelum batas waktu.",
-                                            name: "PT Konstruksi Nusantara",
-                                            title: "Vendor Rekanan",
+                                            quote: "Validasi hash otomatis membuktikan bahwa dokumen vendor persis dengan yang dikirim sebelum batas waktu. Tidak ada ruang untuk substitusi.",
+                                            name: "Vendor Konstruksi",
+                                            title: "Rekanan Pengadaan",
                                             highlight: true,
                                         },
                                         {
@@ -698,13 +696,13 @@ export default function HomePage() {
                                             highlight: false,
                                         },
                                         {
-                                            quote: "Tidak ada server terpusat berarti tidak ada single point of failure. Kami bisa melakukan proses pengadaan bernilai tinggi tanpa cemas soal downtime.",
-                                            name: "Dr. Anton",
-                                            title: "CTO, Fintech",
+                                            quote: "Tidak ada server terpusat berarti tidak ada single point of failure. Proses pengadaan bernilai tinggi bisa berjalan tanpa bergantung pada satu infrastruktur.",
+                                            name: "CTO",
+                                            title: "Perusahaan Teknologi",
                                             highlight: false,
                                         },
                                         {
-                                            quote: "Struktur deterministik ini memaksa seluruh pihak bermain bersih, mengeliminasi lobi-lobi pasca-penutupan tender karena sistem menolak akses secara mutlak.",
+                                            quote: "Sistem menolak akses setelah batas waktu secara mutlak. Lobi pasca-penutupan menjadi tidak relevan secara teknis.",
                                             name: "Direktur Utama",
                                             title: "Vendor Alat Kesehatan",
                                             highlight: false,
@@ -910,8 +908,7 @@ export default function HomePage() {
                                     Masih ada pertanyaan?
                                 </h2>
                                 <p className="text-[18px] text-[var(--text-secondary)] font-medium leading-relaxed">
-                                    Punya pertanyaan teknis spesifik? Kami dengan senang hati akan menjawabnya. Jangan
-                                    ragu untuk menghubungi tim teknis kami.
+                                    Ada pertanyaan teknis soal enkripsi, blockchain, atau alur tender? Tulis ke tim kami.
                                 </p>
                                 <div className="pt-6">
                                     <Link href="/support" className="btn-primary px-8 py-4 text-[16px] rounded-full">
