@@ -14,6 +14,7 @@ import {
     PlayCircle,
     PlusCircle,
     CheckCircle2,
+    Calculator,
 } from "lucide-react";
 import Link from "next/link";
 
@@ -25,6 +26,7 @@ export default function TutorialPage() {
         { id: "buat-tender", title: "Panduan Membuat Tender", icon: FileText },
         { id: "pin", title: "Fungsi PIN & Keamanan", icon: Key },
         { id: "bid", title: "Cara Melakukan Bid", icon: Lock },
+        { id: "penilaian", title: "Sistem Penilaian (Z-Score)", icon: Calculator },
     ];
 
     return (
@@ -247,6 +249,32 @@ export default function TutorialPage() {
                                             </ul>
                                         </div>
                                     </div>
+                                    <div className="flex gap-4">
+                                        <div className="w-8 h-8 rounded-full bg-blue-500 text-white font-bold flex items-center justify-center shrink-0 mt-1">
+                                            4
+                                        </div>
+                                        <div>
+                                            <h3 className="text-[18px] font-bold text-[var(--text-primary)] mb-2">
+                                                Kriteria Penilaian & Kustomisasi Kolom
+                                            </h3>
+                                            <p className="text-[14px] text-[var(--text-tertiary)] leading-relaxed mb-3">
+                                                Anda dapat menambahkan berbagai kriteria (kolom isian) tambahan seperti Pengalaman, 
+                                                Waktu Pengerjaan, atau Sertifikasi untuk dinilai oleh sistem Z-Score.
+                                            </p>
+                                            <div className="p-4 bg-[var(--surface-secondary)] border border-[var(--border)] rounded-lg text-[14px]">
+                                                <strong className="text-[var(--text-primary)] block mb-1">
+                                                    Penting: Input Pilihan Ganda (Dropdown/Radio)
+                                                </strong>
+                                                Jika Anda membuat field dengan tipe Pilihan (Select/Radio), Anda harus memasukkan opsi yang dapat dipilih oleh vendor.
+                                                <br/><br/>
+                                                <strong>Gunakan spasi (SPASI)</strong> untuk memisahkan setiap opsi, bukan koma. Gunakan CamelCase atau gabungkan kata jika opsi terdiri dari dua kata.
+                                                <br/><br/><span className="text-[var(--text-tertiary)] block mb-1">Contoh penulisan:</span> 
+                                                <code className="bg-[var(--background)] px-2 py-1 rounded text-[var(--accent)] border border-[var(--border)] font-mono text-xs">
+                                                    ISO9001 ISO27001 SNI TanpaSertifikasi
+                                                </code>
+                                            </div>
+                                        </div>
+                                    </div>
                                 </div>
 
                                 <div className="mt-8 p-5 rounded-xl bg-blue-500/10 border border-blue-500/20 text-blue-700 dark:text-blue-200 text-sm flex gap-3">
@@ -413,6 +441,70 @@ export default function TutorialPage() {
                                                 Langkah 2. Harga Anda akan tervalidasi dan muncul di papan klasemen
                                                 tender!
                                             </p>
+                                        </div>
+                                    </div>
+                                </div>
+                            </motion.div>
+                        )}
+
+                        {activeSection === "penilaian" && (
+                            <motion.div
+                                key="penilaian"
+                                initial={{ opacity: 0, y: 10 }}
+                                animate={{ opacity: 1, y: 0 }}
+                                exit={{ opacity: 0, y: -10 }}
+                                transition={{ duration: 0.3 }}
+                                className="space-y-8"
+                            >
+                                <div className="bento-card p-8">
+                                    <h2 className="text-2xl font-bold text-[var(--text-primary)] mb-4 flex items-center gap-3">
+                                        <Calculator className="w-6 h-6 text-[var(--accent)]" />
+                                        Metode Penilaian Z-Score
+                                    </h2>
+                                    <div className="prose prose-invert max-w-none text-[var(--text-secondary)] space-y-4">
+                                        <p>
+                                            TenderSeal menggunakan metode <strong>Z-Score Standardization</strong> untuk membandingkan 
+                                            penawaran yang memiliki satuan yang berbeda secara objektif. 
+                                            Z-Score mengukur seberapa jauh sebuah nilai dari rata-rata (mean) seluruh penawaran 
+                                            dalam hitungan standar deviasi.
+                                        </p>
+                                        
+                                        <div className="bg-[var(--surface-secondary)] border border-[var(--border)] p-5 rounded-xl space-y-3 my-6">
+                                            <h3 className="text-[var(--text-primary)] font-bold text-lg mb-2">Harga Tertinggi (Nilai Maksimal)</h3>
+                                            <p>
+                                                Dalam pengadaan, semakin rendah harga, semakin baik. Namun, secara matematis, 
+                                                Z-Score membutuhkan nilai patokan tertinggi agar nilai terendah mendapatkan bobot terbesar.
+                                            </p>
+                                            <p>
+                                                <strong>Harga Tertinggi</strong> adalah harga penawaran paling mahal yang masuk dari seluruh 
+                                                vendor yang sah. Harga tertinggi inilah yang akan diberikan nilai terendah (Z-Score = 0 atau negatif terkecil), 
+                                                sementara harga yang lebih murah akan mendapat nilai lebih tinggi.
+                                            </p>
+                                        </div>
+
+                                        <h3 className="text-xl font-bold text-[var(--text-primary)] mt-8 mb-4">Contoh Kasus</h3>
+                                        <p>
+                                            Misalkan sebuah tender memiliki kriteria "Harga" dengan bobot 60%, dan kriteria "Pengalaman" dengan bobot 40%.
+                                        </p>
+                                        <ul className="list-disc pl-5 space-y-2">
+                                            <li><strong>Vendor A:</strong> Harga Rp 100 Juta, Pengalaman 10 Tahun</li>
+                                            <li><strong>Vendor B:</strong> Harga Rp 120 Juta, Pengalaman 15 Tahun</li>
+                                            <li><strong>Vendor C:</strong> Harga Rp 150 Juta, Pengalaman 5 Tahun</li>
+                                        </ul>
+                                        
+                                        <p className="mt-4">
+                                            Dalam skenario ini, <strong>Rp 150 Juta</strong> (milik Vendor C) adalah "Harga Tertinggi".
+                                        </p>
+                                        <ol className="list-decimal pl-5 space-y-2 mt-2">
+                                            <li>Sistem menghitung rata-rata harga (Rp 123.3 Juta) dan standar deviasinya.</li>
+                                            <li>Sistem membalikkan perhitungan Z-Score untuk harga agar <strong>Rp 100 Juta</strong> (Vendor A) mendapat poin tertinggi.</li>
+                                            <li>Nilai dari Harga (Z-Score) kemudian dikalikan bobot 60%.</li>
+                                            <li>Hal yang sama dilakukan pada Pengalaman (Z-Score normal), dikalikan bobot 40%.</li>
+                                        </ol>
+
+                                        <div className="p-4 bg-[var(--accent-light)] text-[var(--accent)] rounded-lg font-medium border border-[var(--accent)]/30 mt-6">
+                                            Dengan Z-Score, sistem dapat menggabungkan kriteria "Rupiah" dan "Tahun" ke dalam satu skala 
+                                            penilaian yang setara dan adil (Apples-to-Apples) secara matematis tanpa intervensi manusia!
                                         </div>
                                     </div>
                                 </div>
