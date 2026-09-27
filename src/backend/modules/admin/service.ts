@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { organizations, user, tenders, bids } from "@/db/schema";
+import { organizations, user, tenders, bids, supportTickets } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { AdminModel } from "./model";
 
@@ -92,5 +92,16 @@ export abstract class AdminService {
     static async updateUserRole(userId: string, role: "admin" | "user") {
         await db.update(user).set({ role }).where(eq(user.id, userId));
         return { userId, role };
+    }
+
+    static async getTickets() {
+        return db.query.supportTickets.findMany({
+            orderBy: (t, { desc }) => [desc(t.createdAt)],
+        });
+    }
+
+    static async resolveTicket(ticketId: string, status: "OPEN" | "CLOSED") {
+        await db.update(supportTickets).set({ status }).where(eq(supportTickets.id, ticketId));
+        return { ticketId, status };
     }
 }

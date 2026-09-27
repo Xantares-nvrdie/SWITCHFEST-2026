@@ -38,12 +38,25 @@ interface Organization {
     members?: { id: string }[];
 }
 
+interface Ticket {
+    id: string;
+    fullName: string;
+    email: string;
+    category: string;
+    message: string;
+    status: "OPEN" | "CLOSED";
+    createdAt: string;
+}
+
 export default function AdminDashboardPage() {
     const [orgs, setOrgs] = useState<Organization[]>([]);
     const [isLoading, setIsLoading] = useState(true);
     const [filterStatus, setFilterStatus] = useState<"PENDING" | "APPROVED" | "REJECTED" | "ALL">("PENDING");
     const [searchQuery, setSearchQuery] = useState("");
     const [actionLoadingId, setActionLoadingId] = useState<string | null>(null);
+
+    const [activeTab, setActiveTab] = useState<"organizations" | "tickets">("organizations");
+    const [tickets, setTickets] = useState<Ticket[]>([]);
 
     // Rejection modal
     const [rejectingOrg, setRejectingOrg] = useState<Organization | null>(null);
@@ -64,9 +77,25 @@ export default function AdminDashboardPage() {
         }
     }, []);
 
+    const fetchTickets = useCallback(async () => {
+        setIsLoading(true);
+        try {
+            const res = await fetch("/api/admin/tickets");
+            if (res.ok) {
+                const data: Ticket[] = await res.json();
+                setTickets(data);
+            }
+        } catch {
+            // handle error
+        } finally {
+            setIsLoading(false);
+        }
+    }, []);
+
     useEffect(() => {
-        fetchOrgs();
-    }, [fetchOrgs]);
+        if (activeTab === "organizations") fetchOrgs();
+        else fetchTickets();
+    }, [activeTab, fetchOrgs, fetchTickets]);
 
     const handleVerify = async (orgId: string, status: "APPROVED" | "REJECTED", reason?: string) => {
         setActionLoadingId(orgId);
@@ -84,6 +113,23 @@ export default function AdminDashboardPage() {
                 setRejectingOrg(null);
                 setRejectionReason("");
                 await fetchOrgs();
+            }
+        } finally {
+            setActionLoadingId(null);
+        }
+    };
+
+    const handleResolveTicket = async (ticketId: string, status: "OPEN" | "CLOSED") => {
+        setActionLoadingId(ticketId);
+        try {
+            const res = await fetch(`/api/admin/tickets/${ticketId}/resolve`, {
+                method: "PATCH",
+                headers: { "Content-Type": "application/json" },
+                body: JSON.stringify({ status }),
+            });
+
+            if (res.ok) {
+                await fetchTickets();
             }
         } finally {
             setActionLoadingId(null);
@@ -134,21 +180,48 @@ export default function AdminDashboardPage() {
                             </span>
                         </div>
                         <p className="text-[13px] text-[var(--text-tertiary)] mt-0.5">
-                            Tinjau dan setujui pendaftaran organisasi baru.
+                            Kelola pendaftaran organisasi dan tiket dukungan.
                         </p>
                     </div>
                 </div>
 
-                <button
-                    onClick={fetchOrgs}
-                    className="self-start md:self-auto px-4 py-2 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
-                >
-                    <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
-                    Refresh Data
-                </button>
+                <div className="flex items-center gap-3">
+                    <button
+                        onClick={() => setActiveTab("organizations")}
+                        className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                            activeTab === "organizations"
+                                ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
+                                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                        }`}
+                    >
+                        Organisasi
+                    </button>
+                    <button
+                        onClick={() => setActiveTab("tickets")}
+                        className={`px-4 py-2 rounded-lg text-[13px] font-medium transition-all ${
+                            activeTab === "tickets"
+                                ? "bg-[var(--text-primary)] text-[var(--background)] shadow-md"
+                                : "text-[var(--text-secondary)] hover:text-[var(--text-primary)] hover:bg-[var(--surface-secondary)]"
+                        }`}
+                    >
+                        Tiket Dukungan
+                    </button>
+                    <button
+                        onClick={() => {
+                            if (activeTab === "organizations") fetchOrgs();
+                            else fetchTickets();
+                        }}
+                        className="ml-2 self-start md:self-auto px-4 py-2 rounded-lg text-[13px] font-medium text-[var(--text-secondary)] hover:text-[var(--text-primary)] border border-[var(--border)] hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
+                    >
+                        <RefreshCw className={`w-3.5 h-3.5 ${isLoading ? "animate-spin" : ""}`} />
+                        Refresh
+                    </button>
+                </div>
             </div>
 
-            {/* Metrics Bar */}
+            {activeTab === "organizations" ? (
+                <>
+                    {/* Metrics Bar */}
             <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
                 <div className="bento-card p-6 border-[var(--border)] bg-[var(--surface-secondary)] relative overflow-hidden group">
                     <div className="absolute -top-10 -right-10 w-32 h-32 bg-current opacity-0 group-hover:opacity-10 blur-[40px] rounded-full transition-opacity" />
@@ -478,6 +551,108 @@ export default function AdminDashboardPage() {
                             </button>
                         </div>
                     </div>
+                </div>
+            )}
+            </>
+            ) : (
+                <div className="space-y-6">
+                    <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
+                        <div className="relative flex-1 max-w-md">
+                            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-[var(--text-tertiary)]" />
+                            <input
+                                type="text"
+                                placeholder="Cari nama, email, kategori..."
+                                value={searchQuery}
+                                onChange={(e) => setSearchQuery(e.target.value)}
+                                className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)]/50 text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-all"
+                            />
+                        </div>
+                    </div>
+
+                    {isLoading ? (
+                        <div className="py-20 flex flex-col items-center justify-center gap-4">
+                            <Loader2 className="w-8 h-8 text-[var(--text-tertiary)] animate-spin" />
+                            <p className="text-[14px] text-[var(--text-tertiary)] font-medium">Memuat tiket...</p>
+                        </div>
+                    ) : tickets.length === 0 ? (
+                        <div className="py-20 flex flex-col items-center justify-center text-center">
+                            <div className="w-16 h-16 rounded-2xl bg-[var(--surface-secondary)] border border-[var(--border)] flex items-center justify-center mb-4">
+                                <Mail className="w-8 h-8 text-[var(--text-tertiary)]" />
+                            </div>
+                            <p className="text-[15px] font-medium text-[var(--text-primary)]">Belum Ada Tiket</p>
+                        </div>
+                    ) : (
+                        <div className="grid gap-4">
+                            {tickets
+                                .filter(
+                                    (t) =>
+                                        t.fullName.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        t.email.toLowerCase().includes(searchQuery.toLowerCase()) ||
+                                        t.category.toLowerCase().includes(searchQuery.toLowerCase())
+                                )
+                                .map((ticket) => (
+                                    <div
+                                        key={ticket.id}
+                                        className="bento-card p-5 border-[var(--border)] bg-[var(--surface-secondary)] hover:bg-[var(--surface)] transition-all"
+                                    >
+                                        <div className="flex flex-col lg:flex-row lg:items-start justify-between gap-6">
+                                            <div className="space-y-4 flex-1">
+                                                <div className="flex items-start justify-between">
+                                                    <div>
+                                                        <h3 className="text-[16px] font-bold text-[var(--text-primary)]">
+                                                            {ticket.fullName}
+                                                        </h3>
+                                                        <p className="text-[13px] text-[var(--text-tertiary)] flex items-center gap-1.5 mt-1">
+                                                            <Mail className="w-3.5 h-3.5" />
+                                                            {ticket.email}
+                                                        </p>
+                                                    </div>
+                                                    <span
+                                                        className={`px-3 py-1 rounded-full text-[11px] font-bold uppercase tracking-wider ${
+                                                            ticket.status === "CLOSED"
+                                                                ? "bg-[var(--accent)]/10 text-[var(--accent)] border border-[var(--accent)]/20"
+                                                                : "bg-amber-500/10 text-amber-500 border border-amber-500/20"
+                                                        }`}
+                                                    >
+                                                        {ticket.status}
+                                                    </span>
+                                                </div>
+
+                                                <div className="p-4 rounded-lg bg-[var(--surface)] border border-[var(--border)]">
+                                                    <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--text-tertiary)] mb-2">
+                                                        {ticket.category}
+                                                    </div>
+                                                    <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
+                                                        {ticket.message}
+                                                    </p>
+                                                </div>
+                                            </div>
+
+                                            <div className="flex items-center gap-3 self-end lg:self-auto shrink-0">
+                                                <button
+                                                    onClick={() => handleResolveTicket(ticket.id, ticket.status === "OPEN" ? "CLOSED" : "OPEN")}
+                                                    disabled={actionLoadingId === ticket.id}
+                                                    className={`px-4 py-2 rounded-lg font-semibold text-[13px] transition-colors flex items-center gap-2 ${
+                                                        ticket.status === "OPEN"
+                                                            ? "bg-[var(--accent)] text-white hover:bg-[var(--accent)]/90 shadow-md shadow-[var(--accent-light)]"
+                                                            : "bg-[var(--surface)] border border-[var(--border)] text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)] hover:text-[var(--text-primary)]"
+                                                    }`}
+                                                >
+                                                    {actionLoadingId === ticket.id ? (
+                                                        <Loader2 className="w-4 h-4 animate-spin" />
+                                                    ) : ticket.status === "OPEN" ? (
+                                                        <CheckCircle2 className="w-4 h-4" />
+                                                    ) : (
+                                                        <RefreshCw className="w-4 h-4" />
+                                                    )}
+                                                    {ticket.status === "OPEN" ? "Tandai Selesai" : "Buka Kembali"}
+                                                </button>
+                                            </div>
+                                        </div>
+                                    </div>
+                                ))}
+                        </div>
+                    )}
                 </div>
             )}
         </motion.div>
