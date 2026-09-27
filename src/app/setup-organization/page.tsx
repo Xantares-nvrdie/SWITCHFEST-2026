@@ -168,7 +168,7 @@ export default function SetupOrganizationPage() {
                                 <div
                                     className={`flex items-center justify-center w-6 h-6 rounded-full text-[11px] font-bold transition-all ${
                                         step >= s
-                                            ? "bg-[var(--text-primary)] text-white"
+                                            ? "bg-[var(--text-primary)] text-[var(--background)]"
                                             : "bg-[var(--border-light)] text-[var(--text-tertiary)]"
                                     }`}
                                 >
