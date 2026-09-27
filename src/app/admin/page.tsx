@@ -44,6 +44,7 @@ interface Ticket {
     email: string;
     category: string;
     message: string;
+    replyMessage?: string | null;
     status: "OPEN" | "CLOSED";
     createdAt: string;
 }
@@ -166,7 +167,7 @@ export default function AdminDashboardPage() {
     });
 
     return (
-        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-16 relative">
+        <motion.div initial={{ opacity: 0, y: 20 }} animate={{ opacity: 1, y: 0 }} className="space-y-8 pb-16 relative w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Holographic glowing orb background */}
             <div className="absolute top-0 left-1/2 -translate-x-1/2 w-[800px] h-[400px] bg-[var(--accent)]/5 blur-[120px] rounded-full pointer-events-none -z-10" />
 
@@ -588,7 +589,7 @@ export default function AdminDashboardPage() {
                             <p className="text-[15px] font-medium text-[var(--text-primary)]">Belum Ada Tiket</p>
                         </div>
                     ) : (
-                        <div className="grid gap-4">
+                        <div className="grid gap-8">
                             {tickets
                                 .filter(
                                     (t) =>
@@ -631,6 +632,16 @@ export default function AdminDashboardPage() {
                                                     <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
                                                         {ticket.message}
                                                     </p>
+                                                    {ticket.replyMessage && (
+                                                        <div className="mt-4 pt-4 border-t border-[var(--border)]">
+                                                            <div className="text-[11px] font-bold uppercase tracking-wider text-[var(--accent)] mb-2">
+                                                                Balasan Admin
+                                                            </div>
+                                                            <p className="text-[14px] text-[var(--text-secondary)] leading-relaxed">
+                                                                {ticket.replyMessage}
+                                                            </p>
+                                                        </div>
+                                                    )}
                                                 </div>
                                             </div>
 

@@ -101,7 +101,7 @@ export abstract class AdminService {
     }
 
     static async resolveTicket(ticketId: string, status: "OPEN" | "CLOSED", replyMessage?: string) {
-        const [ticket] = await db.update(supportTickets).set({ status }).where(eq(supportTickets.id, ticketId)).returning();
+        const [ticket] = await db.update(supportTickets).set({ status, replyMessage: replyMessage || null }).where(eq(supportTickets.id, ticketId)).returning();
         
         if (ticket && status === "CLOSED" && replyMessage && ticket.userId) {
             await db.insert(notifications).values({

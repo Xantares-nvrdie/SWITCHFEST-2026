@@ -107,8 +107,6 @@ const adminModule = new Elysia({ prefix: "/admin", tags: ["System Admin"] })
             },
         },
     )
-
-    // ── Get Support Tickets ──────────────────────────────────────────────────
     .get(
         "/tickets",
         async () => {

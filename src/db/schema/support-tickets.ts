@@ -11,6 +11,7 @@ export const supportTickets = pgTable("support_tickets", {
     status: text("status", { enum: ["OPEN", "IN_PROGRESS", "CLOSED"] })
         .default("OPEN")
         .notNull(),
+    replyMessage: text("reply_message"),
     createdAt: timestamp("created_at", { withTimezone: true }).defaultNow().notNull(),
     updatedAt: timestamp("updated_at", { withTimezone: true }).defaultNow().notNull(),
 });
