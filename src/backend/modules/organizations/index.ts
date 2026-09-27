@@ -33,7 +33,16 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
 
             const memberships = await db
                 .select({
-                    organization: organizations,
+                    id: organizations.id,
+                    name: organizations.name,
+                    type: organizations.type,
+                    legalName: organizations.legalName,
+                    registrationNumber: organizations.registrationNumber,
+                    email: organizations.email,
+                    walletAddress: organizations.walletAddress,
+                    verificationStatus: organizations.verificationStatus,
+                    isVerified: organizations.isVerified,
+                    isActive: organizations.isActive,
                     memberRole: organizationMembers.role,
                     memberStatus: organizationMembers.status,
                 })
@@ -41,11 +50,7 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
                 .innerJoin(organizations, eq(organizationMembers.organizationId, organizations.id))
                 .where(eq(organizationMembers.userId, user.id));
 
-            return memberships.map((m) => ({
-                ...m.organization,
-                memberRole: m.memberRole,
-                memberStatus: m.memberStatus,
-            }));
+            return memberships;
         },
         {
             auth: true,
@@ -194,10 +199,10 @@ const organizationsModule = new Elysia({ prefix: "/organizations", tags: ["Organ
             body: OrganizationModel.updateMemberBody,
             detail: {
                 summary: "Update organization member",
-                description: "Memperbarui role atau status keanggotaan seseorang dalam organisasi (Hanya Admin Organisasi).",
+                description:
+                    "Memperbarui role atau status keanggotaan seseorang dalam organisasi (Hanya Admin Organisasi).",
             },
         },
     );
-
 
 export default organizationsModule;

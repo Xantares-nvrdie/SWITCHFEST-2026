@@ -14,7 +14,15 @@ export class NotificationService {
 
     static async getUserNotifications(userId: string) {
         return await db
-            .select()
+            .select({
+                id: notifications.id,
+                title: notifications.title,
+                message: notifications.message,
+                type: notifications.type,
+                link: notifications.link,
+                isRead: notifications.isRead,
+                createdAt: notifications.createdAt,
+            })
             .from(notifications)
             .where(eq(notifications.userId, userId))
             .orderBy(desc(notifications.createdAt))

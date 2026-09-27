@@ -23,7 +23,10 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
     .post(
         "/:id/invites",
         async ({ params, body, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             // Must be ORGANIZATION_ADMIN of this org
             const member = await db.query.organizationMembers.findFirst({
@@ -92,7 +95,10 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
     .get(
         "/:id/invites",
         async ({ params, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             const member = await db.query.organizationMembers.findFirst({
                 where: (m, { eq, and }) =>
@@ -122,7 +128,10 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
     .patch(
         "/:id/invites/:inviteId/revoke",
         async ({ params, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             const member = await db.query.organizationMembers.findFirst({
                 where: (m, { eq, and }) =>
@@ -137,10 +146,7 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
                 .update(organizationInvites)
                 .set({ isActive: false, updatedAt: new Date() })
                 .where(
-                    and(
-                        eq(organizationInvites.id, params.inviteId),
-                        eq(organizationInvites.organizationId, params.id),
-                    ),
+                    and(eq(organizationInvites.id, params.inviteId), eq(organizationInvites.organizationId, params.id)),
                 );
 
             return { message: "Invite code revoked" };
@@ -156,14 +162,20 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
     .get(
         "/:id/members",
         async ({ params, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             // Must be a member of the org
             const self = await db.query.organizationMembers.findFirst({
                 where: (m, { eq, and }) =>
                     and(eq(m.organizationId, params.id), eq(m.userId, user.id), eq(m.status, "ACTIVE")),
             });
-            if (!self) { set.status = 403; return { message: "Forbidden" }; }
+            if (!self) {
+                set.status = 403;
+                return { message: "Forbidden" };
+            }
 
             const members = await db.query.organizationMembers.findMany({
                 where: (m, { eq }) => eq(m.organizationId, params.id),
@@ -184,7 +196,10 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
     .patch(
         "/:id/members/:memberId",
         async ({ params, body, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             const admin = await db.query.organizationMembers.findFirst({
                 where: (m, { eq, and }) =>
@@ -223,9 +238,7 @@ const invitesModule = new Elysia({ prefix: "/organizations", tags: ["Organizatio
                         t.Literal("MEMBER"),
                     ]),
                 ),
-                status: t.Optional(
-                    t.Union([t.Literal("ACTIVE"), t.Literal("SUSPENDED"), t.Literal("INVITED")]),
-                ),
+                status: t.Optional(t.Union([t.Literal("ACTIVE"), t.Literal("SUSPENDED"), t.Literal("INVITED")])),
             }),
             detail: { summary: "Update member role/status", description: "Mengubah role atau status anggota." },
         },
@@ -237,7 +250,10 @@ export const joinViaInviteModule = new Elysia({ prefix: "/invites", tags: ["Orga
     .post(
         "/join",
         async ({ body, user, set }) => {
-            if (!user) { set.status = 401; return { message: "Unauthorized" }; }
+            if (!user) {
+                set.status = 401;
+                return { message: "Unauthorized" };
+            }
 
             const code = body.code.toUpperCase().trim();
 
@@ -263,8 +279,7 @@ export const joinViaInviteModule = new Elysia({ prefix: "/invites", tags: ["Orga
 
             // Check if already a member
             const existing = await db.query.organizationMembers.findFirst({
-                where: (m, { eq, and }) =>
-                    and(eq(m.organizationId, invite.organizationId), eq(m.userId, user.id)),
+                where: (m, { eq, and }) => and(eq(m.organizationId, invite.organizationId), eq(m.userId, user.id)),
             });
             if (existing) {
                 set.status = 409;
@@ -304,7 +319,10 @@ export const joinViaInviteModule = new Elysia({ prefix: "/invites", tags: ["Orga
         {
             auth: true,
             body: t.Object({ code: t.String({ minLength: 5 }) }),
-            detail: { summary: "Join organization via invite code", description: "Bergabung ke organisasi menggunakan kode undangan." },
+            detail: {
+                summary: "Join organization via invite code",
+                description: "Bergabung ke organisasi menggunakan kode undangan.",
+            },
         },
     );
 

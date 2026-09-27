@@ -13,7 +13,7 @@ import {
 import { eq, sql } from "drizzle-orm";
 import { createHash } from "node:crypto";
 import type { TenderModel } from "./model";
-import { contract } from "@/lib/web3";
+import { contract, sendContractTx, CONTRACT_ADDRESS } from "@/lib/web3";
 import { NotificationService } from "../notifications/service";
 
 export abstract class TenderService {
@@ -246,8 +246,24 @@ export abstract class TenderService {
         return tender;
     }
 
-    static async getAll(page = 1, limit = 20) {
+    static async getAll(params: { page?: number; limit?: number; search?: string; status?: string; myOrgIds?: string[] }) {
+        const { page = 1, limit = 20, search, status, myOrgIds } = params;
         const offset = (page - 1) * limit;
+
+        const conditions = [];
+        if (search) {
+            conditions.push(sql`(t.title ILIKE ${'%' + search + '%'} OR t.code ILIKE ${'%' + search + '%'} OR o.name ILIKE ${'%' + search + '%'})`);
+        }
+        if (status && status !== 'ALL') {
+            conditions.push(sql`t.status = ${status}`);
+        }
+        if (myOrgIds && myOrgIds.length > 0) {
+            conditions.push(sql`(t.organization_id = ANY(${myOrgIds}) OR EXISTS (SELECT 1 FROM tender_participants p WHERE p.tender_id = t.id AND p.organization_id = ANY(${myOrgIds})))`);
+        }
+
+        const whereClause = conditions.length > 0 
+            ? sql`WHERE ${sql.join(conditions, sql` AND `)}` 
+            : sql``;
 
         const [results, countResult] = await Promise.all([
             db.execute(sql`
@@ -269,10 +285,16 @@ export abstract class TenderService {
                 ) as "bidCount"
             FROM tenders t
             LEFT JOIN organizations o ON t.organization_id = o.id
+            ${whereClause}
             ORDER BY t.created_at DESC
             LIMIT ${limit} OFFSET ${offset}
             `),
-            db.execute(sql`SELECT count(*) FROM tenders`),
+            db.execute(sql`
+            SELECT count(*) 
+            FROM tenders t
+            LEFT JOIN organizations o ON t.organization_id = o.id
+            ${whereClause}
+            `),
         ]);
 
         const rowsCount = (countResult as any).rows || countResult;
@@ -356,15 +378,14 @@ export abstract class TenderService {
                 updatePayload.tieBreakPolicyHash = tieBreakPolicyHash;
 
                 try {
-                    const { provider, relayerWallet, contract } = await import("@/lib/web3");
-                    const nonce = await provider.getTransactionCount(relayerWallet.address, "latest");
-                    const tx = await contract.createTender(
-                        id,
-                        Math.floor(tender.commitDeadline.getTime() / 1000),
-                        tieBreakPolicyHash,
-                        { nonce },
-                    );
-                    tx.wait().catch((err: any) => console.error("Tender mining failed:", err));
+                    await sendContractTx(async (c) => {
+                        const tx = await c.createTender(
+                            id,
+                            Math.floor(tender.commitDeadline.getTime() / 1000),
+                            tieBreakPolicyHash,
+                        );
+                        await tx.wait();
+                    });
                 } catch (err: any) {
                     const isAlreadyExists =
                         err.reason === "Tender already exists" ||
@@ -372,9 +393,7 @@ export abstract class TenderService {
 
                     // require(false) tanpa message = kontrak revert — paling sering karena
                     // tender sudah terdaftar di blockchain sebelumnya. Lanjutkan saja.
-                    const isCallException =
-                        err.code === "CALL_EXCEPTION" ||
-                        err.reason === "require(false)";
+                    const isCallException = err.code === "CALL_EXCEPTION" || err.reason === "require(false)";
 
                     if (isAlreadyExists || isCallException) {
                         console.warn(
@@ -385,7 +404,8 @@ export abstract class TenderService {
                     } else {
                         console.error("Failed to create tender on smart contract:", err.code, err.reason);
                         throw new Error(
-                            "Gagal mendaftarkan tender ke Blockchain: " + (err.reason || err.shortMessage || err.message || "unknown error"),
+                            "Gagal mendaftarkan tender ke Blockchain: " +
+                                (err.reason || err.shortMessage || err.message || "unknown error"),
                         );
                     }
                 }
@@ -505,28 +525,21 @@ export abstract class TenderService {
 
             let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
             try {
-                const scTx = await contract.finalizeTender(
-                    tenderId,
-                    "NO_WINNER",
-                    "0.00",
-                    evaluationHash,
-                );
-                const receipt = await scTx.wait();
-                txHash = receipt.hash;
+                txHash = await sendContractTx(async (c) => {
+                    const scTx = await c.finalizeTender(tenderId, "NO_WINNER", "0.00", evaluationHash);
+                    const receipt = await scTx.wait();
+                    return receipt.hash;
+                });
             } catch (err) {
                 console.error("Failed to finalize tender on smart contract (no winner):", err);
             }
 
-            const decisionNotes = tenderBids.length === 0
-                ? "Tender diselesaikan tanpa pemenang (tidak ada penawaran yang diajukan oleh vendor)."
-                : "Tender diselesaikan tanpa pemenang (tidak ada vendor yang melakukan reveal penawaran secara sah).";
+            const decisionNotes =
+                tenderBids.length === 0
+                    ? "Tender diselesaikan tanpa pemenang (tidak ada penawaran yang diajukan oleh vendor)."
+                    : "Tender diselesaikan tanpa pemenang (tidak ada vendor yang melakukan reveal penawaran secara sah).";
 
-            let contractAddress = "0x0000000000000000000000000000000000000000";
-            try {
-                contractAddress = await contract.getAddress();
-            } catch {
-                // fallback
-            }
+            const contractAddress = CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
 
             await db.transaction(async (tx) => {
                 await tx.insert(tenderResults).values({
@@ -614,7 +627,10 @@ export abstract class TenderService {
         const criteriaIds = new Set(criteria.map((criterion) => criterion.id));
         for (const bid of submittedBids) {
             const scoredCriteriaIds = new Set(bid.criteriaScores.map((score) => score.criterionId));
-            if (scoredCriteriaIds.size !== criteriaIds.size || [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))) {
+            if (
+                scoredCriteriaIds.size !== criteriaIds.size ||
+                [...scoredCriteriaIds].some((id) => !criteriaIds.has(id))
+            ) {
                 throw new Error("Setiap bid harus memiliki skor untuk seluruh kriteria tender.");
             }
         }
@@ -622,7 +638,9 @@ export abstract class TenderService {
         const scoreByBidAndCriterion = new Map(
             submittedBids.map((bid) => [
                 bid.bidId,
-                new Map(bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)])),
+                new Map(
+                    bid.criteriaScores.map((score) => [score.criterionId, TenderService.scoreKey(score.weightedScore)]),
+                ),
             ]),
         );
         const rankedBids = [...submittedBids].sort((left, right) => right.totalScore - left.totalScore);
@@ -660,8 +678,10 @@ export abstract class TenderService {
             const candidateBidIdsHash = TenderService.hashEvidence(candidateBidIds);
 
             try {
-                const transaction = await contract.recordTie(tenderId, candidateBidIdsHash, evaluationHash);
-                await transaction.wait();
+                await sendContractTx(async (c) => {
+                    const transaction = await c.recordTie(tenderId, candidateBidIdsHash, evaluationHash);
+                    await transaction.wait();
+                });
             } catch (error) {
                 console.error("Failed to record tie on smart contract:", error);
                 throw new Error("Gagal mencatat hasil seri ke Blockchain.");
@@ -728,14 +748,16 @@ export abstract class TenderService {
             // B. Send Final Result to Smart Contract
             let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
             try {
-                const scTx = await contract.finalizeTender(
-                    tenderId,
-                    payload.winningBidId!,
-                    (payload.finalScore ?? 0).toFixed(2),
-                    evaluationHash,
-                );
-                const receipt = await scTx.wait();
-                txHash = receipt.hash;
+                txHash = await sendContractTx(async (c) => {
+                    const scTx = await c.finalizeTender(
+                        tenderId,
+                        payload.winningBidId!,
+                        (payload.finalScore ?? 0).toFixed(2),
+                        evaluationHash,
+                    );
+                    const receipt = await scTx.wait();
+                    return receipt.hash;
+                });
             } catch (err) {
                 console.error("Failed to finalize tender on smart contract:", err);
             }
@@ -752,12 +774,7 @@ export abstract class TenderService {
             });
 
             // C. Blockchain Transaction Record
-            let contractAddress = "0x0000000000000000000000000000000000000000";
-            try {
-                contractAddress = await contract.getAddress();
-            } catch {
-                // fallback
-            }
+            const contractAddress = CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000";
 
             await tx.insert(blockchainTransactions).values({
                 id: crypto.randomUUID(),
@@ -842,9 +859,7 @@ export abstract class TenderService {
         if (!tender) throw new Error("Tender not found");
         if (tender.status !== "TIED") throw new Error("Tender is not awaiting tie resolution");
 
-        const candidateBidIds = Array.isArray(tender.tieCandidateBidIds)
-            ? (tender.tieCandidateBidIds as string[])
-            : [];
+        const candidateBidIds = Array.isArray(tender.tieCandidateBidIds) ? (tender.tieCandidateBidIds as string[]) : [];
         if (!candidateBidIds.includes(payload.winningBidId)) {
             throw new Error("Pemenang harus dipilih dari kandidat yang seri.");
         }
@@ -868,14 +883,16 @@ export abstract class TenderService {
 
         let txHash = `0xmocktxhash${crypto.randomUUID().replace(/-/g, "")}`;
         try {
-            const transaction = await contract.resolveTie(
-                tenderId,
-                payload.winningBidId,
-                winnerScore.toFixed(2),
-                tieBreakEvidenceHash,
-            );
-            const receipt = await transaction.wait();
-            txHash = receipt.hash;
+            txHash = await sendContractTx(async (c) => {
+                const transaction = await c.resolveTie(
+                    tenderId,
+                    payload.winningBidId,
+                    winnerScore.toFixed(2),
+                    tieBreakEvidenceHash,
+                );
+                const receipt = await transaction.wait();
+                return receipt.hash;
+            });
         } catch (error) {
             console.error("Failed to resolve tie on smart contract:", error);
             throw new Error("Gagal mencatat penyelesaian seri ke Blockchain.");
@@ -900,7 +917,7 @@ export abstract class TenderService {
                 transactionType: "RESULT",
                 txHash,
                 chainId: 31337,
-                contractAddress: await contract.getAddress().catch(() => "0x0000000000000000000000000000000000000000"),
+                contractAddress: CONTRACT_ADDRESS || "0x0000000000000000000000000000000000000000",
                 blockNumber: 0,
                 blockTimestamp: now,
                 metadata: {

@@ -12,7 +12,7 @@ import {
     CheckCircle2,
     AlertCircle,
     Hash,
-    ShieldCheck
+    ShieldCheck,
 } from "lucide-react";
 
 interface BidItem {
@@ -63,10 +63,10 @@ export default function BidsHistoryPage() {
     });
 
     const statusClasses: Record<string, string> = {
-        SEALED: "bg-blue-50 text-blue-600 border-blue-200",
-        REVEALED_VALID: "bg-emerald-50 text-emerald-600 border-emerald-200",
-        REVEALED_INVALID: "bg-red-50 text-red-600 border-red-200",
-        WITHDRAWN: "bg-slate-50 text-slate-600 border-slate-200",
+        SEALED: "bg-blue-500/10 text-blue-400 border-blue-500/30",
+        REVEALED_VALID: "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30",
+        REVEALED_INVALID: "bg-red-500/10 text-red-400 border-red-500/20",
+        WITHDRAWN: "bg-[var(--surface-secondary)] text-[var(--text-secondary)] border-[var(--border)]",
     };
 
     const statusLabels: Record<string, string> = {
@@ -77,11 +77,13 @@ export default function BidsHistoryPage() {
     };
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12 pt-4">
             {/* Judul Halaman */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-[28px] font-bold text-[var(--text-primary)] tracking-tight">Riwayat Penawaran</h1>
+                    <h1 className="text-[28px] font-bold text-[var(--text-primary)] tracking-tight">
+                        Riwayat Penawaran
+                    </h1>
                     <p className="text-[14px] text-[var(--text-secondary)] mt-0.5">
                         Daftar seluruh bid terenkripsi yang pernah Anda atau organisasi Anda kirimkan.
                     </p>
@@ -97,7 +99,7 @@ export default function BidsHistoryPage() {
                         placeholder="Cari berdasarkan judul tender, kode, atau vendor..."
                         value={searchQuery}
                         onChange={(e) => setSearchQuery(e.target.value)}
-                        className="w-full pl-9 pr-4 py-2 rounded-lg border border-[var(--border)] bg-white text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] transition-colors"
+                        className="w-full pl-9 pr-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[13px] text-[var(--text-primary)] placeholder-[var(--text-tertiary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] transition-all"
                     />
                 </div>
             </div>
@@ -108,19 +110,19 @@ export default function BidsHistoryPage() {
                     <Loader2 className="w-5 h-5 text-[var(--text-tertiary)] animate-spin" />
                 </div>
             ) : filteredBids.length === 0 ? (
-                <div className="card p-12 text-center space-y-2">
-                    <p className="text-[var(--text-secondary)] text-[15px] font-medium">Tidak ada riwayat penawaran ditemukan</p>
-                    <p className="text-[var(--text-tertiary)] text-[13px]">
+                <div className="bento-card p-12 text-center space-y-3 flex flex-col items-center border-dashed">
+                    <FileText className="w-8 h-8 text-[var(--border)] mb-2" />
+                    <p className="text-[var(--text-primary)] font-display text-[18px] font-semibold tracking-tight">
+                        Tidak ada riwayat penawaran ditemukan
+                    </p>
+                    <p className="text-[var(--text-tertiary)] text-[14px] max-w-md mx-auto">
                         Organisasi Anda belum pernah mengirimkan bid pada tender apa pun.
                     </p>
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {filteredBids.map((bid) => (
-                        <div
-                            key={bid.id}
-                            className="card p-6 flex flex-col justify-between space-y-4"
-                        >
+                        <div key={bid.id} className="bento-card p-6 flex flex-col justify-between space-y-4 group">
                             <div className="space-y-3">
                                 <div className="flex items-center justify-between">
                                     <span className="text-[11px] font-mono font-semibold text-[var(--text-tertiary)] tracking-wide flex items-center gap-1.5">
@@ -172,7 +174,7 @@ export default function BidsHistoryPage() {
                                             month: "short",
                                             year: "numeric",
                                             hour: "2-digit",
-                                            minute: "2-digit"
+                                            minute: "2-digit",
                                         })}
                                     </span>
                                 </div>

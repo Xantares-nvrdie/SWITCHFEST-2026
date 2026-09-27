@@ -9,7 +9,12 @@ export namespace AdminModel {
     export const updateUserRoleBody = t.Object({
         role: t.Union([t.Literal("admin"), t.Literal("user")]),
     });
+    export const resolveTicketBody = t.Object({
+        status: t.Union([t.Literal("CLOSED"), t.Literal("OPEN")]),
+        replyMessage: t.Optional(t.String()),
+    });
 
     export type verifyOrgInput = typeof verifyOrgBody.static;
     export type updateUserRoleInput = typeof updateUserRoleBody.static;
+    export type resolveTicketInput = typeof resolveTicketBody.static;
 }

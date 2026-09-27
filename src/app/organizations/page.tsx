@@ -42,16 +42,15 @@ export default function OrganizationsPage() {
     const [allOrgs, setAllOrgs] = useState<Organization[]>([]);
     const [activeTab, setActiveTab] = useState<"my" | "all">("my");
     const [isLoading, setIsLoading] = useState(true);
+    const [currentPage, setCurrentPage] = useState(1);
+    const ITEMS_PER_PAGE = 6;
     const { data: session } = useSession();
     const isSysAdmin = (session?.user as any)?.role === "admin";
 
     const loadData = async () => {
         setIsLoading(true);
         try {
-            const [myRes, allRes] = await Promise.all([
-                fetch("/api/organizations/me"),
-                fetch("/api/organizations"),
-            ]);
+            const [myRes, allRes] = await Promise.all([fetch("/api/organizations/me"), fetch("/api/organizations")]);
             if (myRes.ok) setMyOrgs(await myRes.json());
             if (allRes.ok) setAllOrgs(await allRes.json());
         } catch {
@@ -65,20 +64,31 @@ export default function OrganizationsPage() {
         loadData();
     }, []);
 
-    const orgsToDisplay = activeTab === "my" 
-        ? myOrgs 
-        : allOrgs.filter((org) => {
-            if (isSysAdmin) return true;
-            const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
-            return status === "APPROVED";
-        });
+    useEffect(() => {
+        setCurrentPage(1);
+    }, [activeTab]);
+
+    const filteredOrgs =
+        activeTab === "my"
+            ? myOrgs
+            : allOrgs.filter((org) => {
+                  if (isSysAdmin) return true;
+                  const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
+                  return status === "APPROVED";
+              });
+
+    const totalPages = Math.ceil(filteredOrgs.length / ITEMS_PER_PAGE);
+    const startIndex = (currentPage - 1) * ITEMS_PER_PAGE;
+    const paginatedOrgs = filteredOrgs.slice(startIndex, startIndex + ITEMS_PER_PAGE);
 
     return (
-        <div className="space-y-8">
+        <div className="space-y-8 w-full max-w-[1920px] mx-auto px-4 md:px-8 lg:px-12">
             {/* Header */}
             <div className="flex flex-col md:flex-row md:items-center justify-between gap-4">
                 <div>
-                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">Manajemen Organisasi</h1>
+                    <h1 className="text-3xl font-extrabold text-[var(--text-primary)] tracking-tight">
+                        Manajemen Organisasi
+                    </h1>
                     <p className="text-sm text-[var(--text-tertiary)] mt-1">
                         Kelola organisasi Anda, atur anggota, atau ikuti organisasi baru melalui kode undangan.
                     </p>
@@ -87,14 +97,14 @@ export default function OrganizationsPage() {
                 <div className="flex items-center gap-3">
                     <Link
                         href="/join-organization"
-                        className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--accent)] font-semibold text-sm hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
+                        className="px-4 py-2.5 rounded-xl border border-[var(--border)] bg-[var(--surface-secondary)] text-[var(--text-secondary)] hover:text-[var(--text-primary)] font-semibold text-sm hover:bg-[var(--surface-secondary)] transition-all flex items-center gap-2"
                     >
                         <Key className="w-4 h-4" />
                         Join via Kode
                     </Link>
                     <Link
                         href="/setup-organization"
-                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-white font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
+                        className="px-5 py-2.5 rounded-lg bg-[var(--text-primary)] text-[var(--background)] shadow-md shadow-[var(--border)] font-semibold text-[13px] hover:opacity-90 transition-opacity flex items-center justify-center gap-2"
                     >
                         <PlusCircle className="w-4 h-4" />
                         Buat Organisasi Baru
@@ -108,8 +118,8 @@ export default function OrganizationsPage() {
                     onClick={() => setActiveTab("my")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "my"
-                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
-                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 border border-transparent"
                     }`}
                 >
                     Organisasi Saya ({myOrgs.length})
@@ -118,8 +128,8 @@ export default function OrganizationsPage() {
                     onClick={() => setActiveTab("all")}
                     className={`px-4 py-2 rounded-lg text-sm font-semibold transition-all ${
                         activeTab === "all"
-                            ? "bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200"
-                            : "text-[var(--text-tertiary)] hover:text-[var(--text-primary)]"
+                            ? "bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm"
+                            : "text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]/50 border border-transparent"
                     }`}
                 >
                     Semua Organisasi ({allOrgs.length})
@@ -131,7 +141,7 @@ export default function OrganizationsPage() {
                 <div className="flex items-center justify-center py-16">
                     <Loader2 className="w-8 h-8 text-[var(--accent)] animate-spin" />
                 </div>
-            ) : orgsToDisplay.length === 0 ? (
+            ) : filteredOrgs.length === 0 ? (
                 <div className="text-center py-16 rounded-2xl card border-[var(--border)] space-y-4">
                     <Building2 className="w-12 h-12 text-[var(--text-tertiary)] mx-auto" />
                     <div>
@@ -148,13 +158,13 @@ export default function OrganizationsPage() {
                         <div className="flex items-center justify-center gap-3 pt-2">
                             <Link
                                 href="/join-organization"
-                                className="px-4 py-2 rounded-lg bg-white border border-[var(--border)] text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
+                                className="px-4 py-2 rounded-lg bg-[var(--surface-secondary)] border border-[var(--border)] text-[13px] font-semibold text-[var(--text-secondary)] hover:text-[var(--text-primary)]"
                             >
                                 Input Kode Undangan
                             </Link>
                             <Link
                                 href="/setup-organization"
-                                className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[13px] font-semibold text-white hover:opacity-90"
+                                className="px-4 py-2 rounded-lg bg-[var(--text-primary)] text-[13px] font-semibold text-[var(--background)] hover:opacity-90"
                             >
                                 Buat Organisasi
                             </Link>
@@ -163,7 +173,7 @@ export default function OrganizationsPage() {
                 </div>
             ) : (
                 <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-                    {orgsToDisplay.map((org) => {
+                    {paginatedOrgs.map((org) => {
                         const isMine = myOrgs.some((m) => m.id === org.id);
                         const memberRole = org.memberRole ?? myOrgs.find((m) => m.id === org.id)?.memberRole;
                         const status = org.verificationStatus ?? (org.isVerified ? "APPROVED" : "PENDING");
@@ -174,7 +184,7 @@ export default function OrganizationsPage() {
                         return (
                             <div
                                 key={org.id}
-                                className="card card-hover p-6 rounded-2xl border-[var(--border)] flex flex-col justify-between space-y-4 relative"
+                                className="bento-card p-6 flex flex-col justify-between space-y-4 relative"
                             >
                                 <div className="space-y-3">
                                     <div className="flex items-center justify-between gap-2 flex-wrap">
@@ -182,10 +192,10 @@ export default function OrganizationsPage() {
                                             <span
                                                 className={`text-xs font-bold px-2.5 py-1 rounded-full border ${
                                                     org.type === "BUYER"
-                                                        ? "bg-[var(--accent-light)] text-[var(--accent)] border-teal-200"
+                                                        ? "bg-[var(--accent)]/10 text-[var(--accent)] border-[var(--accent)]/30"
                                                         : org.type === "VENDOR"
-                                                        ? "bg-blue-50 text-[var(--accent)] border-blue-200"
-                                                        : "bg-indigo-500/20 text-indigo-300 border-blue-200"
+                                                          ? "bg-blue-500/10 text-blue-400 border-blue-500/30"
+                                                          : "bg-purple-500/10 text-purple-400 border-purple-500/30"
                                                 }`}
                                             >
                                                 {org.type}
@@ -193,17 +203,18 @@ export default function OrganizationsPage() {
 
                                             {/* Verification status badge */}
                                             {isApproved && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--accent-light)] text-[var(--accent)] border border-teal-200 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-primary)] border border-[var(--border)] shadow-sm flex items-center gap-1">
                                                     <CheckCircle2 className="w-3 h-3" /> Approved
                                                 </span>
                                             )}
                                             {isPending && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-amber-500/10 text-amber-600 border border-amber-200 flex items-center gap-1">
-                                                    <ShieldCheck className="w-3 h-3" /> Pending Admin Approval
+                                                <span className="text-[10px] font-medium px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
+                                                    <ShieldCheck className="w-3 h-3 text-amber-500/80" /> Pending Admin
+                                                    Approval
                                                 </span>
                                             )}
                                             {isRejected && (
-                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-50 text-red-600 border border-red-500/30 flex items-center gap-1">
+                                                <span className="text-[10px] font-semibold px-2 py-0.5 rounded-full bg-red-500/10 text-red-500 border border-red-500/30 flex items-center gap-1">
                                                     Ditolak
                                                 </span>
                                             )}
@@ -211,10 +222,18 @@ export default function OrganizationsPage() {
 
                                         {memberRole && (
                                             <span className="text-[11px] font-semibold px-2 py-0.5 rounded-full bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)] flex items-center gap-1">
-                                                {memberRole === "ORGANIZATION_ADMIN" && <Crown className="w-3 h-3 text-amber-600" />}
-                                                {memberRole === "PROCUREMENT_OFFICER" && <Briefcase className="w-3 h-3 text-[var(--accent)]" />}
-                                                {memberRole === "AUDITOR" && <Eye className="w-3 h-3 text-[var(--text-secondary)]" />}
-                                                {memberRole === "MEMBER" && <User className="w-3 h-3 text-[var(--text-tertiary)]" />}
+                                                {memberRole === "ORGANIZATION_ADMIN" && (
+                                                    <Crown className="w-3 h-3 text-amber-600" />
+                                                )}
+                                                {memberRole === "PROCUREMENT_OFFICER" && (
+                                                    <Briefcase className="w-3 h-3 text-[var(--accent)]" />
+                                                )}
+                                                {memberRole === "AUDITOR" && (
+                                                    <Eye className="w-3 h-3 text-[var(--text-secondary)]" />
+                                                )}
+                                                {memberRole === "MEMBER" && (
+                                                    <User className="w-3 h-3 text-[var(--text-tertiary)]" />
+                                                )}
                                                 {memberRole.replace("_", " ")}
                                             </span>
                                         )}
@@ -224,16 +243,17 @@ export default function OrganizationsPage() {
                                         <h3 className="text-lg font-bold text-[var(--text-primary)]">{org.name}</h3>
                                         {org.email && (
                                             <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5">
-                                                <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.email}
+                                                <Mail className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />{" "}
+                                                {org.email}
                                             </p>
                                         )}
                                         {org.address && (
                                             <p className="text-xs text-[var(--text-tertiary)] mt-1 flex items-center gap-1.5 line-clamp-1">
-                                                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" /> {org.address}
+                                                <MapPin className="w-3.5 h-3.5 text-[var(--text-tertiary)] shrink-0" />{" "}
+                                                {org.address}
                                             </p>
                                         )}
                                     </div>
-
                                 </div>
 
                                 <div className="pt-3 border-t border-[var(--border)] flex items-center justify-between">
@@ -246,19 +266,25 @@ export default function OrganizationsPage() {
                                         <Link
                                             href={`/organizations/${org.id}/manage`}
                                             className={`px-3 py-1.5 rounded-lg text-xs font-semibold flex items-center gap-1.5 transition-all ${
-                                                memberRole === "ORGANIZATION_ADMIN" 
-                                                    ? "bg-[var(--accent-light)] hover:opacity-90 text-[var(--accent)] border border-teal-200"
-                                                    : "bg-white hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
+                                                memberRole === "ORGANIZATION_ADMIN"
+                                                    ? "bg-[var(--accent)]/10 hover:bg-[var(--accent)]/20 text-[var(--accent)] border border-[var(--accent)]/30 shadow-[0_0_15px_rgba(16,185,129,0.1)]"
+                                                    : "bg-[var(--surface-secondary)] hover:bg-[var(--surface-secondary)] text-[var(--text-secondary)] border border-[var(--border)]"
                                             }`}
                                         >
                                             {memberRole === "ORGANIZATION_ADMIN" ? (
-                                                <><Settings className="w-3.5 h-3.5" /> Kelola</>
+                                                <>
+                                                    <Settings className="w-3.5 h-3.5" /> Kelola
+                                                </>
                                             ) : (
-                                                <><Eye className="w-3.5 h-3.5" /> Lihat Detail</>
+                                                <>
+                                                    <Eye className="w-3.5 h-3.5" /> Lihat Detail
+                                                </>
                                             )}
                                         </Link>
                                     ) : (
-                                        <span className="text-[11px] text-[var(--text-tertiary)] italic">Bukan Anggota</span>
+                                        <span className="text-[11px] text-[var(--text-tertiary)] font-mono uppercase opacity-50 tracking-wider">
+                                            Bukan Anggota
+                                        </span>
                                     )}
                                 </div>
                             </div>
@@ -266,8 +292,43 @@ export default function OrganizationsPage() {
                     })}
                 </div>
             )}
+
+            {!isLoading && totalPages > 1 && (
+                <div className="flex items-center justify-center pt-8 pb-4">
+                    <div className="flex items-center gap-3">
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.max(1, p - 1))}
+                            disabled={currentPage === 1}
+                            className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
+                        >
+                            Sebelumnya
+                        </button>
+                        <div className="flex items-center gap-2 px-1">
+                            <select
+                                value={currentPage}
+                                onChange={(e) => setCurrentPage(Number(e.target.value))}
+                                className="px-3 py-2 rounded-lg border border-[var(--border)] bg-[var(--surface-secondary)] text-[14px] font-bold text-[var(--text-primary)] focus:outline-none focus:ring-1 focus:ring-[var(--accent)] cursor-pointer appearance-none"
+                            >
+                                {Array.from({ length: totalPages }).map((_, i) => (
+                                    <option key={i + 1} value={i + 1}>
+                                        Hal {i + 1}
+                                    </option>
+                                ))}
+                            </select>
+                            <span className="text-[14px] font-medium text-[var(--text-secondary)] hidden sm:inline">
+                                dari {totalPages}
+                            </span>
+                        </div>
+                        <button
+                            onClick={() => setCurrentPage((p) => Math.min(totalPages, p + 1))}
+                            disabled={currentPage === totalPages}
+                            className="px-4 py-2 rounded-full text-[14px] font-semibold border border-[var(--border)] text-[var(--text-primary)] disabled:opacity-40 disabled:cursor-not-allowed hover:bg-[var(--surface-secondary)] hover:border-[var(--text-tertiary)] transition-all"
+                        >
+                            Selanjutnya
+                        </button>
+                    </div>
+                </div>
+            )}
         </div>
     );
 }
-
-

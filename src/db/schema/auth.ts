@@ -19,26 +19,28 @@ export const user = pgTable("user", {
     banExpires: timestamp("ban_expires"),
 });
 
-
-
-export const session = pgTable("session", {
-    id: text("id").primaryKey(),
-    expiresAt: timestamp("expires_at").notNull(),
-    token: text("token").notNull().unique(),
-    createdAt: timestamp("created_at").defaultNow().notNull(),
-    updatedAt: timestamp("updated_at")
-        .$onUpdate(() => /* @__PURE__ */ new Date())
-        .notNull(),
-    ipAddress: text("ip_address"),
-    userAgent: text("user_agent"),
-    userId: text("user_id")
-        .notNull()
-        .references(() => user.id, { onDelete: "cascade" }),
-    impersonatedBy: text("impersonated_by"),
-}, (table) => ({
-    userIdIdx: index("session_user_id_idx").on(table.userId),
-    tokenIdx: index("session_token_idx").on(table.token),
-}));
+export const session = pgTable(
+    "session",
+    {
+        id: text("id").primaryKey(),
+        expiresAt: timestamp("expires_at").notNull(),
+        token: text("token").notNull().unique(),
+        createdAt: timestamp("created_at").defaultNow().notNull(),
+        updatedAt: timestamp("updated_at")
+            .$onUpdate(() => /* @__PURE__ */ new Date())
+            .notNull(),
+        ipAddress: text("ip_address"),
+        userAgent: text("user_agent"),
+        userId: text("user_id")
+            .notNull()
+            .references(() => user.id, { onDelete: "cascade" }),
+        impersonatedBy: text("impersonated_by"),
+    },
+    (table) => ({
+        userIdIdx: index("session_user_id_idx").on(table.userId),
+        tokenIdx: index("session_token_idx").on(table.token),
+    }),
+);
 
 export const account = pgTable("account", {
     id: text("id").primaryKey(),

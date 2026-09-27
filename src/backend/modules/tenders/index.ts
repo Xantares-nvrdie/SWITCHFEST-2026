@@ -16,12 +16,20 @@ const tendersModule = new Elysia({ prefix: "/tenders", tags: ["Tenders"] })
             const requestedLimit = query.limit ? parseInt(query.limit as string, 10) : 20;
             const page = Number.isFinite(requestedPage) ? Math.max(1, requestedPage) : 1;
             const limit = Number.isFinite(requestedLimit) ? Math.min(Math.max(1, requestedLimit), 100) : 20;
-            return await TenderService.getAll(page, limit);
+            
+            const search = query.search as string | undefined;
+            const status = query.status as string | undefined;
+            const myOrgIds = query.myOrgIds ? (query.myOrgIds as string).split(",") : undefined;
+
+            return await TenderService.getAll({ page, limit, search, status, myOrgIds });
         },
         {
             query: t.Object({
                 page: t.Optional(t.String()),
                 limit: t.Optional(t.String()),
+                search: t.Optional(t.String()),
+                status: t.Optional(t.String()),
+                myOrgIds: t.Optional(t.String()),
             }),
             detail: {
                 summary: "Get all tenders",

@@ -71,10 +71,9 @@ export const app = new Elysia({ prefix: "/api" })
                 } catch (e) {
                     console.error("Cron tender-status-updater failed:", e);
                 }
-            }
-        })
+            },
+        }),
     );
-
 
 export type app = typeof app;
 

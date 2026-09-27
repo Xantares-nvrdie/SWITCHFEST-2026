@@ -118,9 +118,7 @@ export default function ProfilePage() {
     return (
         <div className="max-w-3xl mx-auto py-12 space-y-8 animate-fade-in">
             <div className="space-y-1">
-                <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)]">
-                    Profil Saya
-                </h1>
+                <h1 className="text-[28px] font-bold tracking-tight text-[var(--text-primary)]">Profil Saya</h1>
                 <p className="text-[15px] text-[var(--text-secondary)]">
                     Kelola informasi pribadi dan identitas Web3 Anda.
                 </p>
@@ -131,7 +129,7 @@ export default function ProfilePage() {
                 <div className="flex flex-col sm:flex-row gap-8">
                     {/* Avatar Upload (Clickable Circle) */}
                     <div className="flex flex-col items-center gap-3">
-                        <div 
+                        <div
                             className="relative w-28 h-28 rounded-full overflow-hidden bg-[var(--surface-secondary)] border-4 border-white shadow-md flex items-center justify-center shrink-0 group cursor-pointer transition-transform hover:scale-105"
                             onClick={() => document.getElementById("avatar-upload")?.click()}
                         >
@@ -142,7 +140,7 @@ export default function ProfilePage() {
                                     {name.substring(0, 2) || "U"}
                                 </span>
                             )}
-                            
+
                             <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex flex-col items-center justify-center text-white">
                                 <Upload className="w-6 h-6 mb-1" />
                                 <span className="text-[10px] font-bold tracking-wider">UBAH</span>
@@ -162,7 +160,9 @@ export default function ProfilePage() {
 
                     <div className="flex-1 space-y-6">
                         <div className="space-y-2">
-                            <label className="text-[13px] font-medium text-[var(--text-primary)]">Email (Tidak bisa diubah)</label>
+                            <label className="text-[13px] font-medium text-[var(--text-primary)]">
+                                Email (Tidak bisa diubah)
+                            </label>
                             <input
                                 type="text"
                                 value={session.user.email}
@@ -231,14 +231,18 @@ export default function ProfilePage() {
                                 disabled={isDeleting}
                                 className="px-4 py-2 bg-red-600 text-white rounded-lg text-[13px] hover:bg-red-700 flex items-center gap-2"
                             >
-                                {isDeleting ? <Loader2 className="w-4 h-4 animate-spin" /> : <Trash2 className="w-4 h-4" />}
+                                {isDeleting ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <Trash2 className="w-4 h-4" />
+                                )}
                                 Ya, Hapus!
                             </button>
                         </div>
                     ) : (
                         <button
                             onClick={() => setShowDeleteConfirm(true)}
-                            className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-[13px] font-medium hover:bg-red-50 transition-colors"
+                            className="px-4 py-2 border border-red-200 text-red-600 rounded-lg text-[13px] font-medium hover:bg-red-500/10 transition-colors"
                         >
                             Hapus Akun
                         </button>

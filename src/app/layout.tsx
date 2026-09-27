@@ -1,18 +1,27 @@
 import type { Metadata } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Space_Grotesk, Geist } from "next/font/google";
 import "./globals.css";
 import Navbar from "@/components/navbar";
 import SmoothScroll from "@/components/smooth-scroll";
+import GlobalFooter from "@/components/global-footer";
+import { cn } from "@/lib/utils";
+import { ThemeProvider } from "@/components/theme-provider";
+
+const geist = Geist({ subsets: ["latin"], variable: "--font-sans" });
 
 const inter = Inter({
     subsets: ["latin"],
     variable: "--font-inter",
 });
 
+const spaceGrotesk = Space_Grotesk({
+    subsets: ["latin"],
+    variable: "--font-space-grotesk",
+});
+
 export const metadata: Metadata = {
-    title: "TenderSeal",
-    description:
-        "Platform pengadaan digital terenkripsi dengan Commit-Reveal Scheme dan Smart Contract Audit Trail.",
+    title: "TenderSeal | Cryptographic E-Procurement",
+    description: "Platform pengadaan digital terenkripsi dengan Commit-Reveal Scheme dan Smart Contract Audit Trail.",
 };
 
 export default function RootLayout({
@@ -21,26 +30,19 @@ export default function RootLayout({
     children: React.ReactNode;
 }>) {
     return (
-        <html lang="id" className="scroll-smooth">
+        <html lang="id" className={cn("scroll-smooth", "font-sans", geist.variable)} suppressHydrationWarning>
             <body
-                className={`${inter.variable} font-sans bg-[var(--background)] text-[var(--text-primary)] min-h-screen antialiased selection:bg-teal-100 selection:text-teal-900`}
+                className={`${inter.variable} ${spaceGrotesk.variable} font-sans bg-[var(--background)] text-[var(--text-primary)] min-h-screen antialiased selection:bg-[var(--accent)] selection:text-white`}
             >
-                <SmoothScroll>
-                    <div className="flex flex-col min-h-screen">
+                <ThemeProvider attribute="class" defaultTheme="dark" enableSystem={false}>
+                    <SmoothScroll>
+                        <div className="flex flex-col min-h-screen">
                             <Navbar />
-                            <main className="flex-1 max-w-6xl w-full mx-auto px-4 sm:px-6 lg:px-8 py-10">{children}</main>
-                            <footer className="border-t border-[var(--border)] py-8 text-center text-xs text-[var(--text-tertiary)]">
-                                <div className="max-w-6xl mx-auto px-4 flex flex-col sm:flex-row items-center justify-between gap-3">
-                                    <p>© 2026 TenderSeal</p>
-                                    <div className="flex items-center gap-3 text-[var(--text-tertiary)]">
-                                        <span>SDG 16</span>
-                                        <span>·</span>
-                                        <span>SDG 9</span>
-                                    </div>
-                                </div>
-                            </footer>
+                            <main className="flex-1 w-full flex flex-col">{children}</main>
+                            <GlobalFooter />
                         </div>
-                </SmoothScroll>
+                    </SmoothScroll>
+                </ThemeProvider>
             </body>
         </html>
     );

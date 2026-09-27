@@ -101,7 +101,10 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
             const isApproved = org.verificationStatus === "APPROVED" || org.isVerified;
             if (!isApproved) {
                 set.status = 403;
-                return { message: "Forbidden: Vendor organization must be approved by TenderSeal Admin before submitting bids" };
+                return {
+                    message:
+                        "Forbidden: Vendor organization must be approved by TenderSeal Admin before submitting bids",
+                };
             }
 
             // 3. Check user membership in vendor organization
@@ -117,7 +120,7 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
 
             try {
                 const result = await BidService.submitSealed(params.tenderId, body);
-                
+
                 // Log activity
                 await AuditLogService.log({
                     userId: user.id,
@@ -135,21 +138,25 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
                 return { message: "Sealed bid submitted successfully", data: result };
             } catch (error: any) {
                 set.status = 500;
-                
+
                 // Extract inner cause from DrizzleError if available
                 const cause = error.cause || error;
                 const causeMsg = cause.message || "";
                 const causeCode = cause.code || "";
-                
+
                 // If it's a unique constraint violation
-                if (causeMsg.includes("duplicate key") || causeCode === "23505" || causeMsg.includes("uq_bids_tender_org")) {
+                if (
+                    causeMsg.includes("duplicate key") ||
+                    causeCode === "23505" ||
+                    causeMsg.includes("uq_bids_tender_org")
+                ) {
                     set.status = 400;
                     return { message: "Organisasi Anda sudah pernah mensubmit bid untuk tender ini." };
                 }
                 console.error("Bid submission error:", error);
-                
-                return { 
-                    message: "Terjadi kesalahan internal pada server saat memproses bid."
+
+                return {
+                    message: "Terjadi kesalahan internal pada server saat memproses bid.",
                 };
             }
         },
@@ -159,7 +166,8 @@ const bidsModule = new Elysia({ prefix: "/bids", tags: ["Bids"] })
             body: BidModel.submitSealedBody,
             detail: {
                 summary: "Submit sealed bid",
-                description: "Mengirimkan penawaran terenkripsi (AES-GCM) dan commitment hash sebelum deadline (Hanya Vendor Terverifikasi).",
+                description:
+                    "Mengirimkan penawaran terenkripsi (AES-GCM) dan commitment hash sebelum deadline (Hanya Vendor Terverifikasi).",
             },
         },
     )

@@ -34,8 +34,6 @@ export const requireSystemAdmin = async ({ request, set }: Context) => {
     }
 };
 
-
-
 // ─── Org-scoped Role Guards ──────────────────────────────────────────────────
 
 /**
@@ -67,11 +65,7 @@ export const requireOrgRole =
 
         const member = await db.query.organizationMembers.findFirst({
             where: (m, { eq, and }) =>
-                and(
-                    eq(m.userId, session.user.id),
-                    eq(m.organizationId, orgId),
-                    eq(m.status, "ACTIVE"),
-                ),
+                and(eq(m.userId, session.user.id), eq(m.organizationId, orgId), eq(m.status, "ACTIVE")),
         });
 
         if (!member || !allowedRoles.includes(member.role as OrgRole)) {
@@ -112,4 +106,3 @@ export async function checkUserOrgRole(userId: string, organizationId: string, a
     if (!member) return false;
     return allowedRoles.includes(member.role as OrgRole);
 }
-

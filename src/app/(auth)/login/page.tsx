@@ -51,7 +51,7 @@ export default function LoginPage() {
 
                 {/* Error */}
                 {error && (
-                    <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px] bg-red-50 border border-red-100 text-red-700">
+                    <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[13px] bg-red-500/10 border border-red-500/20 text-red-400">
                         <AlertCircle className="w-4 h-4 mt-0.5 shrink-0" />
                         <span>{error}</span>
                     </div>
@@ -79,7 +79,10 @@ export default function LoginPage() {
                     </div>
 
                     <div className="space-y-1.5">
-                        <label htmlFor="password" className="block text-[13px] font-medium text-[var(--text-secondary)]">
+                        <label
+                            htmlFor="password"
+                            className="block text-[13px] font-medium text-[var(--text-secondary)]"
+                        >
                             Kata Sandi
                         </label>
                         <div className="relative">
@@ -109,7 +112,7 @@ export default function LoginPage() {
                         id="login-submit"
                         type="submit"
                         disabled={isLoading}
-                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-white hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="w-full flex items-center justify-center gap-2 py-2.5 rounded-lg text-[13px] font-semibold bg-[var(--text-primary)] text-[var(--background)] hover:opacity-90 transition-opacity disabled:opacity-50 disabled:cursor-not-allowed"
                     >
                         {isLoading ? (
                             <>
@@ -125,17 +128,16 @@ export default function LoginPage() {
                 {/* Separator */}
                 <div className="flex items-center gap-3">
                     <div className="flex-1 h-px bg-[var(--border)]" />
-                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">atau</span>
+                    <span className="text-[11px] text-[var(--text-tertiary)] font-medium uppercase tracking-wide">
+                        atau
+                    </span>
                     <div className="flex-1 h-px bg-[var(--border)]" />
                 </div>
 
                 {/* Register */}
                 <p className="text-center text-[13px] text-[var(--text-secondary)]">
                     Belum punya akun?{" "}
-                    <Link
-                        href="/register"
-                        className="font-semibold text-[var(--accent)] hover:underline"
-                    >
+                    <Link href="/register" className="font-semibold text-[var(--accent)] hover:underline">
                         Buat akun
                     </Link>
                 </p>

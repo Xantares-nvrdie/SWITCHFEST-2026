@@ -26,8 +26,8 @@ export function NotificationBell() {
 
         fetchNotifications();
 
-        // Simple polling every 30 seconds
-        const interval = setInterval(fetchNotifications, 30000);
+        // Polling setiap 10 detik agar lebih responsif
+        const interval = setInterval(fetchNotifications, 10000);
         return () => clearInterval(interval);
     }, [session?.user?.id]);
 

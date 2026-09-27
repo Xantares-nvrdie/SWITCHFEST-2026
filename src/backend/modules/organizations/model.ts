@@ -56,4 +56,3 @@ export namespace OrganizationModel {
     export type addMemberInput = typeof addMemberBody.static;
     export type updateMemberInput = typeof updateMemberBody.static;
 }
-

@@ -1,20 +1,20 @@
 const hre = require("hardhat");
 
 async function main() {
-  const TenderSeal = await hre.ethers.getContractFactory("TenderSeal");
-  const tenderSeal = await TenderSeal.deploy();
+    const TenderSeal = await hre.ethers.getContractFactory("TenderSeal");
+    const tenderSeal = await TenderSeal.deploy();
 
-  await tenderSeal.waitForDeployment();
+    await tenderSeal.waitForDeployment();
 
-  const address = await tenderSeal.getAddress();
-  console.log(`TenderSeal deployed to: ${address}`);
-  
-  // The first account is the deployer, which is the relayer.
-  const [deployer] = await hre.ethers.getSigners();
-  console.log(`Relayer Address: ${deployer.address}`);
+    const address = await tenderSeal.getAddress();
+    console.log(`TenderSeal deployed to: ${address}`);
+
+    // The first account is the deployer, which is the relayer.
+    const [deployer] = await hre.ethers.getSigners();
+    console.log(`Relayer Address: ${deployer.address}`);
 }
 
 main().catch((error) => {
-  console.error(error);
-  process.exitCode = 1;
+    console.error(error);
+    process.exitCode = 1;
 });

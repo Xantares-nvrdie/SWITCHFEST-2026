@@ -106,6 +106,42 @@ const adminModule = new Elysia({ prefix: "/admin", tags: ["System Admin"] })
                 description: "Mengubah role sistem pengguna menjadi 'admin' atau 'user'.",
             },
         },
+    )
+    .get(
+        "/tickets",
+        async () => {
+            return await AdminService.getTickets();
+        },
+        {
+            auth: true,
+            beforeHandle: [requireSystemAdmin],
+            detail: {
+                summary: "List all support tickets",
+                description: "Mengambil daftar seluruh tiket dukungan pengguna.",
+            },
+        },
+    )
+
+    // ── Resolve Support Ticket ───────────────────────────────────────────────
+    .patch(
+        "/tickets/:id/resolve",
+        async ({ params, body }) => {
+            const result = await AdminService.resolveTicket(params.id, body.status, body.replyMessage);
+            return {
+                message: `Ticket status updated to ${body.status}`,
+                data: result,
+            };
+        },
+        {
+            auth: true,
+            beforeHandle: [requireSystemAdmin],
+            params: t.Object({ id: t.String() }),
+            body: AdminModel.resolveTicketBody,
+            detail: {
+                summary: "Resolve a support ticket",
+                description: "Memperbarui status tiket dukungan menjadi CLOSED atau OPEN.",
+            },
+        },
     );
 
 export default adminModule;

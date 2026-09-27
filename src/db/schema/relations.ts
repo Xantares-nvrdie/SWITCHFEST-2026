@@ -31,7 +31,6 @@ export const organizationsRelations = relations(organizations, ({ one, many }) =
     }),
 }));
 
-
 export const organizationMembersRelations = relations(organizationMembers, ({ one }) => ({
     organization: one(organizations, {
         fields: [organizationMembers.organizationId],
@@ -53,7 +52,6 @@ export const organizationInvitesRelations = relations(organizationInvites, ({ on
         references: [user.id],
     }),
 }));
-
 
 // ─── Tender Relations ─────────────────────────────────────────────────────────
 export const tendersRelations = relations(tenders, ({ one, many }) => ({
@@ -156,4 +154,3 @@ export const auditLogsRelations = relations(auditLogs, ({ one }) => ({
         references: [bids.id],
     }),
 }));
-
