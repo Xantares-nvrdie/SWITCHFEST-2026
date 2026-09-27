@@ -1,6 +1,7 @@
 import { NextResponse } from "next/server";
 import { db } from "@/db";
-import { supportTickets } from "@/db/schema";
+import { supportTickets, user, notifications } from "@/db/schema";
+import { eq } from "drizzle-orm";
 import { auth } from "@/auth";
 import { headers } from "next/headers";
 
@@ -27,6 +28,20 @@ export async function POST(request: Request) {
             message,
             status: "OPEN",
         });
+
+        // Notify System Admins
+        const admins = await db.select().from(user).where(eq(user.role, "admin"));
+        if (admins.length > 0) {
+            const newNotifs = admins.map(admin => ({
+                id: crypto.randomUUID(),
+                userId: admin.id,
+                title: "Tiket Dukungan Baru",
+                message: `Ada tiket baru dari ${fullName} mengenai: ${category}.`,
+                type: "WARNING",
+                link: "/admin",
+            }));
+            await db.insert(notifications).values(newNotifs);
+        }
 
         return NextResponse.json({ success: true, message: "Tiket berhasil dikirim" }, { status: 201 });
     } catch (error) {
