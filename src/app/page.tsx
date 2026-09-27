@@ -218,20 +218,20 @@ export default function HomePage() {
                 {/* Horizontal Scroll Feature Section */}
                 <section ref={targetRef} className="relative h-[400vh]">
                     <div className="sticky top-0 h-[100vh] flex flex-col justify-center overflow-hidden bg-[var(--background)] z-10">
-                        <div className="absolute top-12 left-6 md:left-16 z-20">
-                            <h2 className="font-display text-[40px] font-bold text-[var(--text-primary)] tracking-tight">
+                        <div className="absolute top-0 left-0 right-0 pt-8 md:pt-12 px-6 md:px-16 pb-8 z-20 bg-gradient-to-b from-[var(--background)] via-[var(--background)] to-transparent pointer-events-none">
+                            <h2 className="font-display text-[32px] md:text-[40px] font-bold text-[var(--text-primary)] tracking-tight pointer-events-auto">
                                 Kapasitas Platform
                             </h2>
-                            <p className="text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl">
+                            <p className="text-[15px] md:text-[18px] text-[var(--text-secondary)] mt-2 max-w-xl pointer-events-auto">
                                 Empat modul inti yang menangani pengadaan dari draft tender hingga hasil akhir tercatat di blockchain.
                             </p>
                         </div>
 
-                        <motion.div style={{ x }} className="flex w-[400%] h-full items-center pt-24">
+                        <motion.div style={{ x }} className="flex w-[400%] h-full items-center pt-32 md:pt-24">
                             {/* Card 1 */}
                             <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                                 <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
-                                    <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <div className="w-full md:w-1/2 relative h-[45%] md:h-full shrink-0">
                                         <Image
                                             src="/assets/Edmond%20Dantes%20Photo.jpg"
                                             alt="Efisiensi Tim"
@@ -239,11 +239,11 @@ export default function HomePage() {
                                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
                                     </div>
-                                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                        <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">
+                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center flex-1 overflow-y-auto">
+                                        <h3 className="font-display text-[26px] md:text-[32px] font-bold text-[var(--text-primary)] mb-2 md:mb-4">
                                             Fokus pada Keputusan
                                         </h3>
-                                        <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        <p className="text-[15px] md:text-[18px] text-[var(--text-secondary)] leading-relaxed">
                                             Sistem mengotomatisasi pencatatan dan keamanan data agar tim pengadaan Anda
                                             dapat memfokuskan waktu pada evaluasi kualitas vendor, bukan administrasi
                                             teknis.
@@ -255,7 +255,7 @@ export default function HomePage() {
                             {/* Card 2 */}
                             <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                                 <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
-                                    <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <div className="w-full md:w-1/2 relative h-[45%] md:h-full shrink-0">
                                         <Image
                                             src="/assets/Mining%20Photo%20from%20Pexels.jpg"
                                             alt="Skala Industri"
@@ -263,11 +263,11 @@ export default function HomePage() {
                                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
                                     </div>
-                                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                        <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">
+                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center flex-1 overflow-y-auto">
+                                        <h3 className="font-display text-[26px] md:text-[32px] font-bold text-[var(--text-primary)] mb-2 md:mb-4">
                                             Infrastruktur Kelas Berat
                                         </h3>
-                                        <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        <p className="text-[15px] md:text-[18px] text-[var(--text-secondary)] leading-relaxed">
                                             Dirancang untuk pengadaan skala industri. Sistem sanggup memproses tender
                                             dengan ribuan baris rincian teknis tanpa penurunan kecepatan respons.
                                         </p>
@@ -278,7 +278,7 @@ export default function HomePage() {
                             {/* Card 3 */}
                             <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                                 <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
-                                    <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <div className="w-full md:w-1/2 relative h-[45%] md:h-full shrink-0">
                                         <Image
                                             src="/assets/Office%20Photo%207750129.jpg"
                                             alt="Kolaborasi Transparan"
@@ -286,11 +286,11 @@ export default function HomePage() {
                                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
                                     </div>
-                                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                        <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">
+                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center flex-1 overflow-y-auto">
+                                        <h3 className="font-display text-[26px] md:text-[32px] font-bold text-[var(--text-primary)] mb-2 md:mb-4">
                                             Ruang Kontrol Terpusat
                                         </h3>
-                                        <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        <p className="text-[15px] md:text-[18px] text-[var(--text-secondary)] leading-relaxed">
                                             Semua anggota komite memantau status secara serentak dari satu sumber data.
                                             Tidak ada dokumen tertinggal atau informasi asimetris.
                                         </p>
@@ -301,7 +301,7 @@ export default function HomePage() {
                             {/* Card 4 */}
                             <div className="w-[25%] px-4 md:px-16 flex-shrink-0 flex items-center justify-center">
                                 <div className="bento-card w-full max-w-6xl h-[60vh] flex flex-col md:flex-row overflow-hidden group">
-                                    <div className="w-full md:w-1/2 relative h-1/2 md:h-full">
+                                    <div className="w-full md:w-1/2 relative h-[45%] md:h-full shrink-0">
                                         <Image
                                             src="/assets/Working%20Photo%20from%20Pexels.jpg"
                                             alt="Evaluasi Akurat"
@@ -309,11 +309,11 @@ export default function HomePage() {
                                             className="object-cover transition-transform duration-700 group-hover:scale-105"
                                         />
                                     </div>
-                                    <div className="w-full md:w-1/2 p-8 md:p-12 flex flex-col justify-center">
-                                        <h3 className="font-display text-[32px] font-bold text-[var(--text-primary)] mb-4">
+                                    <div className="w-full md:w-1/2 p-6 md:p-12 flex flex-col justify-center flex-1 overflow-y-auto">
+                                        <h3 className="font-display text-[26px] md:text-[32px] font-bold text-[var(--text-primary)] mb-2 md:mb-4">
                                             Verifikasi Otentik
                                         </h3>
-                                        <p className="text-[18px] text-[var(--text-secondary)] leading-relaxed">
+                                        <p className="text-[15px] md:text-[18px] text-[var(--text-secondary)] leading-relaxed">
                                             Jejak hash kriptografis mencegah manipulasi pasca-batas waktu. Anda
                                             mengevaluasi data otentik yang dapat dibuktikan kebenarannya melalui smart
                                             contract.
