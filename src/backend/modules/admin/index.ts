@@ -128,7 +128,7 @@ const adminModule = new Elysia({ prefix: "/admin", tags: ["System Admin"] })
     .patch(
         "/tickets/:id/resolve",
         async ({ params, body }) => {
-            const result = await AdminService.resolveTicket(params.id, body.status);
+            const result = await AdminService.resolveTicket(params.id, body.status, body.replyMessage);
             return {
                 message: `Ticket status updated to ${body.status}`,
                 data: result,

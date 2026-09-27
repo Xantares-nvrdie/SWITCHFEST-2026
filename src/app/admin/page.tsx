@@ -61,6 +61,10 @@ export default function AdminDashboardPage() {
     // Rejection modal
     const [rejectingOrg, setRejectingOrg] = useState<Organization | null>(null);
     const [rejectionReason, setRejectionReason] = useState("");
+    
+    // Ticket resolving modal
+    const [resolvingTicket, setResolvingTicket] = useState<Ticket | null>(null);
+    const [replyMessage, setReplyMessage] = useState("");
 
     const fetchOrgs = useCallback(async () => {
         setIsLoading(true);
@@ -119,16 +123,18 @@ export default function AdminDashboardPage() {
         }
     };
 
-    const handleResolveTicket = async (ticketId: string, status: "OPEN" | "CLOSED") => {
+    const handleResolveTicket = async (ticketId: string, status: "OPEN" | "CLOSED", message?: string) => {
         setActionLoadingId(ticketId);
         try {
             const res = await fetch(`/api/admin/tickets/${ticketId}/resolve`, {
                 method: "PATCH",
                 headers: { "Content-Type": "application/json" },
-                body: JSON.stringify({ status }),
+                body: JSON.stringify({ status, replyMessage: message }),
             });
 
             if (res.ok) {
+                setResolvingTicket(null);
+                setReplyMessage("");
                 await fetchTickets();
             }
         } finally {
@@ -630,7 +636,13 @@ export default function AdminDashboardPage() {
 
                                             <div className="flex items-center gap-3 self-end lg:self-auto shrink-0">
                                                 <button
-                                                    onClick={() => handleResolveTicket(ticket.id, ticket.status === "OPEN" ? "CLOSED" : "OPEN")}
+                                                    onClick={() => {
+                                                        if (ticket.status === "OPEN") {
+                                                            setResolvingTicket(ticket);
+                                                        } else {
+                                                            handleResolveTicket(ticket.id, "OPEN");
+                                                        }
+                                                    }}
                                                     disabled={actionLoadingId === ticket.id}
                                                     className={`px-4 py-2 rounded-lg font-semibold text-[13px] transition-colors flex items-center gap-2 ${
                                                         ticket.status === "OPEN"
@@ -653,6 +665,60 @@ export default function AdminDashboardPage() {
                                 ))}
                         </div>
                     )}
+                </div>
+            )}
+
+            {/* Resolve Ticket Modal */}
+            {resolvingTicket && (
+                <div className="fixed inset-0 z-50 flex items-center justify-center p-4 bg-black/20 backdrop-blur-sm">
+                    <div className="card max-w-md w-full p-6 space-y-4">
+                        <div className="flex items-center gap-2">
+                            <CheckCircle2 className="w-5 h-5 text-[var(--accent)]" />
+                            <h3 className="text-[16px] font-bold text-[var(--text-primary)]">Selesaikan Tiket</h3>
+                        </div>
+
+                        <p className="text-[13px] text-[var(--text-secondary)] leading-relaxed">
+                            Kirim pesan balasan ke pengguna untuk memberi tahu bahwa masalah/kendala mereka telah diselesaikan.
+                        </p>
+
+                        <div className="space-y-1.5">
+                            <label className="text-[13px] font-medium text-[var(--text-secondary)]">
+                                Pesan Balasan (Opsional)
+                            </label>
+                            <textarea
+                                rows={3}
+                                value={replyMessage}
+                                onChange={(e) => setReplyMessage(e.target.value)}
+                                placeholder="Tulis balasan di sini..."
+                                className="w-full p-3 rounded-lg border border-[var(--border)] bg-[var(--surface)] text-[13px] text-[var(--text-primary)] placeholder:text-[var(--text-tertiary)] outline-none focus:ring-2 focus:ring-[var(--accent)]/20 focus:border-[var(--accent)] resize-none transition-all"
+                            />
+                        </div>
+
+                        <div className="flex justify-end gap-3 pt-2">
+                            <button
+                                type="button"
+                                onClick={() => {
+                                    setResolvingTicket(null);
+                                    setReplyMessage("");
+                                }}
+                                className="px-4 py-2 rounded-lg bg-[var(--surface)] border border-[var(--border)] text-[13px] font-medium text-[var(--text-secondary)] hover:bg-[var(--surface-secondary)]"
+                            >
+                                Batal
+                            </button>
+                            <button
+                                type="button"
+                                onClick={() => handleResolveTicket(resolvingTicket.id, "CLOSED", replyMessage)}
+                                className="px-4 py-2 rounded-lg bg-[var(--accent)] hover:bg-[var(--accent)]/90 text-white font-semibold text-[13px] transition-colors flex items-center gap-2 shadow-md shadow-[var(--accent-light)]"
+                            >
+                                {actionLoadingId === resolvingTicket.id ? (
+                                    <Loader2 className="w-4 h-4 animate-spin" />
+                                ) : (
+                                    <CheckCircle2 className="w-4 h-4" />
+                                )}
+                                Tandai Selesai
+                            </button>
+                        </div>
+                    </div>
                 </div>
             )}
         </motion.div>

@@ -1,5 +1,5 @@
 import { db } from "@/db";
-import { organizations, user, tenders, bids, supportTickets } from "@/db/schema";
+import { organizations, user, tenders, bids, supportTickets, notifications } from "@/db/schema";
 import { eq, desc } from "drizzle-orm";
 import type { AdminModel } from "./model";
 
@@ -100,8 +100,20 @@ export abstract class AdminService {
         });
     }
 
-    static async resolveTicket(ticketId: string, status: "OPEN" | "CLOSED") {
-        await db.update(supportTickets).set({ status }).where(eq(supportTickets.id, ticketId));
-        return { ticketId, status };
+    static async resolveTicket(ticketId: string, status: "OPEN" | "CLOSED", replyMessage?: string) {
+        const [ticket] = await db.update(supportTickets).set({ status }).where(eq(supportTickets.id, ticketId)).returning();
+        
+        if (ticket && status === "CLOSED" && replyMessage && ticket.userId) {
+            await db.insert(notifications).values({
+                id: crypto.randomUUID(),
+                userId: ticket.userId,
+                title: "Balasan Tiket Dukungan",
+                message: replyMessage,
+                type: "INFO",
+                link: undefined,
+            });
+        }
+        
+        return { ticketId, status, notificationSent: !!(ticket?.userId && replyMessage) };
     }
 }
