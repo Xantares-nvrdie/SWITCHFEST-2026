@@ -877,7 +877,7 @@ export default function TenderDetailPage() {
                                 >
                                     {isPublishing ? (
                                         <>
-                                            <RefreshCw className="w-4 h-4 animate-spin" /> Mempublikasikan...
+                                            <RefreshCw className="w-4 h-4 animate-spin" /> Mempublikasikan (Estimasi 5-25 detik)...
                                         </>
                                     ) : (
                                         <>
@@ -1339,7 +1339,7 @@ export default function TenderDetailPage() {
                                     {submittingBid ? (
                                         <>
                                             <div className="w-5 h-5 border-2 border-white/30 border-t-white rounded-full animate-spin"></div>
-                                            Mengenkripsi & Mengirim ke Blockchain...
+                                            Mengenkripsi & Mengirim ke Blockchain... (Estimasi 5-15 detik)
                                         </>
                                     ) : (
                                         <>
@@ -1558,7 +1558,10 @@ export default function TenderDetailPage() {
                                 className="w-full sm:w-auto px-4 py-2.5 bg-amber-500 hover:bg-amber-600 disabled:opacity-50 text-white font-bold rounded-lg text-sm transition-colors flex items-center justify-center gap-2"
                             >
                                 {isFinalizing ? (
-                                    <RefreshCw className="w-4 h-4 animate-spin" />
+                                    <>
+                                        <RefreshCw className="w-4 h-4 animate-spin" />
+                                        Memproses ke Blockchain... (Estimasi 5-15 detik)
+                                    </>
                                 ) : (
                                     <ShieldCheck className="w-4 h-4" />
                                 )}
