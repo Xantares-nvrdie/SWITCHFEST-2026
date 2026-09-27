@@ -107,7 +107,7 @@ export default function RegisterPage() {
                 </div>
 
                 {/* Info */}
-                <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[12px] bg-blue-50 border border-blue-100 text-blue-700">
+                <div className="flex items-start gap-2.5 rounded-lg px-3 py-2.5 text-[12px] bg-blue-500/10 border border-blue-500/20 text-blue-600 dark:text-blue-400">
                     <Info className="w-4 h-4 mt-0.5 shrink-0" />
                     <span>
                         Setelah pendaftaran, Anda bisa{" "}
